@@ -1,7 +1,7 @@
 import yaml
 import os
 
-CONFIG_PATH = os.path.expanduser("~/../config.yaml")
+CONFIG_PATH = os.path.expanduser("~/.askai_config.yaml")
 
 def load_config():
     if not os.path.exists(CONFIG_PATH):

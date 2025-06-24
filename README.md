@@ -41,10 +41,10 @@ pip install -r requirements.txt
 Copy the example config and add your [OpenRouter.ai](https://openrouter.ai) API key:
 
 ```bash
-cp config_example.yaml ~/.config.yaml
+cp config/config_example.yaml ~/.askai_config.yaml
 ```
 
-Edit `~/.config.yaml`:
+Edit `~/.askai_config.yaml`:
 
 ```yaml
 api_key: "your_openrouter_api_key"
