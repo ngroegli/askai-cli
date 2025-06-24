@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 CONFIG_FILE="$HOME/.askai_config.yml"
-DEFAULT_CONFIG="$SCRIPT_DIR/config_example.yml"
+DEFAULT_CONFIG="$SCRIPT_DIR/config/config_example.yml"
 
 echo "==> Setting up Python virtual environment..."
 
