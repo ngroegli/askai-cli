@@ -1,4 +1,24 @@
 # Ask AI CLI
+- [Ask AI CLI](#ask-ai-cli)
+  - [🚀 Features](#-features)
+  - [🔧 Setup Instructions](#-setup-instructions)
+    - [1. Clone the Repository](#1-clone-the-repository)
+    - [2. Create and Activate a Virtual Environment](#2-create-and-activate-a-virtual-environment)
+    - [3. Install Dependencies](#3-install-dependencies)
+    - [4. Setup Configuration](#4-setup-configuration)
+  - [⚡ Usage Examples](#-usage-examples)
+    - [General Question](#general-question)
+    - [Interpret Previous Terminal Output](#interpret-previous-terminal-output)
+    - [Error analysis:](#error-analysis)
+    - [Save Response to File (Markdown)](#save-response-to-file-markdown)
+    - [Override Default Model](#override-default-model)
+  - [🛠 Aliasing for Global Access](#-aliasing-for-global-access)
+  - [☢️ Security Note](#️-security-note)
+  - [🧩 Requirements](#-requirements)
+  - [📄 License](#-license)
+- [⚡ **Optional: Install as System-Wide Executable**](#-optional-install-as-system-wide-executable)
+
+
 A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openrouter.ai) using Python and `requests`. Ask general questions, analyze previous command-line output, and save responses to files — all from your terminal.
 
 ---
@@ -68,6 +88,12 @@ askai -q "What is the capital of Japan?"
 ls -la | askai -c -q "Explain this output."
 ```
 
+### Error analysis:
+
+```bash
+cat nonexistent.txt 2>&1 | askai -c -q "Why can't I read this file?"
+```
+
 ### Save Response to File (Markdown)
 
 ```bash
@@ -114,7 +140,7 @@ Your API key is stored locally in `~/.config.yaml`. Ensure this file is excluded
 ---
 
 ## 📄 License
-TBD
+[Please refer to GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007](./LICENSE)
 
 # ⚡ **Optional: Install as System-Wide Executable**
 
