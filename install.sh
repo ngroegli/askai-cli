@@ -5,6 +5,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
+CONFIG_FILE="$HOME/.askai_config.yml"
+DEFAULT_CONFIG="$SCRIPT_DIR/config_example.yml"
 
 echo "==> Setting up Python virtual environment..."
 
@@ -28,6 +30,20 @@ else
 fi
 
 deactivate
+
+echo "==> Checking config file..."
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    if [ -f "$DEFAULT_CONFIG" ]; then
+        cp "$DEFAULT_CONFIG" "$CONFIG_FILE"
+        echo "Copied default config to $CONFIG_FILE"
+        echo "Please review and edit your config file as needed."
+    else
+        echo "Default config file ($DEFAULT_CONFIG) not found! Please create $CONFIG_FILE manually."
+    fi
+else
+    echo "Config file $CONFIG_FILE already exists."
+fi
 
 echo "==> Setting up alias for askai command..."
 
