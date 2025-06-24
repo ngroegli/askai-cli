@@ -3,24 +3,42 @@ import subprocess
 import sys
 from openrouter_api import ask_openrouter
 
+# Check if data is piped into stdin
+def get_piped_input():
+    if not sys.stdin.isatty():
+        data = sys.stdin.read()
+        return data
+    return None
+
 def main():
-    parser = argparse.ArgumentParser(description="Ask OpenRouter AI from your terminal.")
-    parser.add_argument("-q", "--question", type=str, help="Your prompt/question.")
-    parser.add_argument("-c", "--cli", action="store_true", help="Interpret previous CLI output.")
-    parser.add_argument("-o", "--output", type=str, help="Write response to file.")
-    parser.add_argument("-m", "--model", type=str, help="Override default model.")
+    parser = argparse.ArgumentParser(description="askai - AI assistant for your terminal")
+    parser.add_argument('-q', '--question', help='Your question for the AI')
+    parser.add_argument('-c', '--context', action='store_true', help='Use piped stdin as context')
+    parser.add_argument('-o', '--output', help='Output file to save result')
+    parser.add_argument('-m', '--model', help='Override default model')
     
     args = parser.parse_args()
+
+    context_input = get_piped_input() if args.context else None
 
     if not args.question:
         print("Error: Provide a question with -q")
         sys.exit(1)
     
-    previous_output = None
-    if args.cli:
-        previous_output = sys.stdin.read()
+    if args.context and context_input is None:
+        print("Error: -c flag used but no piped input detected.")
+        sys.exit(1)
 
-    response = ask_openrouter(prompt=args.question, previous=previous_output, model=args.model)
+    # Compose message for AI
+    messages = []
+
+    if context_input:
+        messages.append({"role": "system", "content": "Previous terminal output:\n" + context_input})
+
+    if args.question:
+        messages.append({"role": "user", "content": args.question})
+
+    response = ask_openrouter(messages=messages, model=args.model)
 
     if args.output:
         with open(args.output, "w") as f:

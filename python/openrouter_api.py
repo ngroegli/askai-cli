@@ -2,7 +2,7 @@ import requests
 import json
 from config import load_config
 
-def ask_openrouter(prompt, previous=None, model=None):
+def ask_openrouter(messages, model=None):
     config = load_config()
     headers = {
         "Authorization": f"Bearer {config['api_key']}",
@@ -10,11 +10,6 @@ def ask_openrouter(prompt, previous=None, model=None):
     }
     
     chosen_model = model if model else config["default_model"]
-    
-    messages = []
-    if previous:
-        messages.append({"role": "system", "content": f"Previous Output:\n{previous}"})
-    messages.append({"role": "user", "content": prompt})
     
     payload = {
         "model": chosen_model,
