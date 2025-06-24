@@ -1,7 +1,19 @@
 import argparse
 import subprocess
 import sys
+import itertools
+import threading
+import time
 from openrouter_api import ask_openrouter
+from tqdm import tqdm
+
+
+def tqdm_spinner(stop_event):
+    with tqdm(total=1, bar_format="{desc} {bar}") as pbar:
+        spinner_cycle = itertools.cycle(['|', '/', '-', '\\'])
+        while not stop_event.is_set():
+            pbar.set_description_str(f"Thinking {next(spinner_cycle)}")
+            time.sleep(0.1)
 
 # Check if data is piped into stdin
 def get_piped_input():
@@ -47,7 +59,18 @@ def main():
     if args.question:
         messages.append({"role": "user", "content": args.question})
 
-    response = ask_openrouter(messages=messages, model=args.model)
+
+
+    stop_spinner = threading.Event()
+    spinner = threading.Thread(target=tqdm_spinner, args=(stop_spinner,))
+    spinner.start()
+
+    try:
+        response = ask_openrouter(messages=messages, model=args.model)
+    finally:
+        stop_spinner.set()
+        spinner.join()
+
 
     if args.output:
         with open(args.output, "w") as f:
