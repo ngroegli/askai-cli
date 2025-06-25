@@ -18,6 +18,7 @@
   - [📄 License](#-license)
 - [⚡ **Optional: Install as System-Wide Executable**](#-optional-install-as-system-wide-executable)
 
+> **ℹ️ Usage of AI clarification:** To boost efficiency, many parts of the code, content and even the README are AI-generated.
 
 A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openrouter.ai) using Python and `requests`. Ask general questions, analyze previous command-line output, and save responses to files — all from your terminal.
 
