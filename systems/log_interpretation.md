@@ -28,5 +28,3 @@ log_interpretation: (string)
   * List of anomalies or outlier log lines with explanations.
   * Groupings of similar log events.
   * Optional visual indicators (e.g., counts, rarity scores) for quick assessment.
-
-

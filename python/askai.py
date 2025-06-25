@@ -8,7 +8,9 @@ from utils import (
     get_piped_input,
     get_file_input,
     get_system_context,
-    build_format_instruction
+    build_format_instruction,
+    list_system_files,
+    view_system_file
 )
 
 
@@ -20,6 +22,8 @@ def parse_arguments():
     parser.add_argument('-f', '--format', default="rawtext", choices=["rawtext", "json", "md"], help='Instruct AI to respond in rawtext (default), json, or md format')
     parser.add_argument('-m', '--model', help='Override default AI model')
     parser.add_argument('-s', '--system', help='Add system-specific context from systems folder')
+    parser.add_argument('-l', '--list-systems', action='store_true', help='List all available system files')
+    parser.add_argument('-vs', '--view-system', help='View specific system file')
 
     return parser.parse_args()
 
@@ -49,12 +53,20 @@ def build_messages(args, base_path):
 
 def main():
     args = parse_arguments()
+    base_path = base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    if args.list_systems:
+        list_system_files(base_path)
+        sys.exit(0)
+
+    if args.view_system:
+        view_system_file(base_path, args.view_system)
+        sys.exit(0)
 
     if not args.question and not args.system:
         print("Error: Provide a question with -q or a dedicated system with -s")
         sys.exit(1)
 
-    base_path = base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     messages = build_messages(args, base_path)
 
     stop_spinner = threading.Event()

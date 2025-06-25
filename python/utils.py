@@ -63,3 +63,42 @@ def capture_command_output(command):
     if result.returncode != 0:
         raise Exception(f"Command failed: {result.stderr}")
     return result.stdout
+
+def list_system_files(base_path):
+    """Lists all available system files"""
+    systems_dir = os.path.join(base_path, "systems")
+    
+    if not os.path.isdir(systems_dir):
+        print(f"No 'systems' directory found at {systems_dir}")
+        sys.exit(1)
+
+    system_files = sorted(os.listdir(systems_dir))
+
+    if not system_files:
+        print("No system files found.")
+    else:
+        print("\nAvailable system files:\n")
+        for file in system_files:
+            if not file.startswith("_"):
+                print(f" - {file}")
+
+def view_system_file(base_path, system):
+    """Prints system files content"""
+    systems_dir = os.path.join(base_path, "systems")
+    system = "{0}.md".format(system)
+    
+    if not os.path.isdir(systems_dir):
+        print(f"No 'systems' directory found at {systems_dir}")
+        sys.exit(1)
+
+    system_files = sorted(os.listdir(systems_dir))
+
+    if not system_files:
+        print("No system files found.")
+    else:
+        for file in system_files:
+            if file == system:
+                with open(os.path.join(systems_dir, system), "r") as f:
+                    print(f.read())
+                    sys.exit(0)
+        print("System file does not exists")
