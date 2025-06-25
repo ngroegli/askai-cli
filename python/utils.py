@@ -40,7 +40,7 @@ def get_file_input(file_path):
 def get_system_context(system_name, base_path):
     """Loads system-specific context file from the systems directory."""
     systems_dir = os.path.join(base_path, "systems")
-    system_file = os.path.join(systems_dir, system_name)
+    system_file = os.path.join(systems_dir, "{0}.md".format(system_name))
 
     if os.path.exists(system_file):
         with open(system_file, "r") as f:
