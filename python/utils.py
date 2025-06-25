@@ -80,7 +80,7 @@ def list_system_files(base_path):
         print("\nAvailable system files:\n")
         for file in system_files:
             if not file.startswith("_"):
-                print(f" - {file}")
+                print(f" - {file.removesuffix(".md")}")
 
 def view_system_file(base_path, system):
     """Prints system files content"""
