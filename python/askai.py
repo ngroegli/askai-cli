@@ -11,7 +11,8 @@ from utils import (
     get_system_context,
     build_format_instruction,
     list_system_files,
-    view_system_file
+    view_system_file,
+    render_markdown
 )
 
 
@@ -83,8 +84,13 @@ def main():
     if args.output:
         write_to_file(args.output, response)
         print(f"Response written to {args.output}")
-    else:
-        print(response)
+        sys.exit(0) # No output since output is in file
+    
+    if args.format == "md":
+        render_markdown(response)
+        sys.exit(0) # No other output since output is rendered markdown
+    
+    print(response) # Catch if no other output is used
 
 
 if __name__ == "__main__":

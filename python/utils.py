@@ -4,6 +4,8 @@ import itertools
 import time
 import subprocess
 from tqdm import tqdm
+from rich.console import Console
+from rich.markdown import Markdown
 
 def write_to_file(path, content):
     with open(path, "w") as f:
@@ -98,3 +100,9 @@ def view_system_file(base_path, system):
                     print(f.read())
                     sys.exit(0)
         print("System file does not exists")
+
+def render_markdown(markdown_content):
+    """This prints the markdown text as rendered markdown to the console"""
+    console = Console()
+    md = Markdown(markdown_content)
+    console.print(md)
