@@ -22,6 +22,7 @@ def parse_arguments():
     parser.add_argument('-i', '--input', help='Input file to include as context')
     parser.add_argument('-o', '--output', help='Output file to save result')
     parser.add_argument('-f', '--format', default="rawtext", choices=["rawtext", "json", "md"], help='Instruct AI to respond in rawtext (default), json, or md format')
+    parser.add_argument('--plain-md', action='store_true', help='If used with -f md, outputs raw markdown as plain text instead of rendering')
     parser.add_argument('-m', '--model', help='Override default AI model')
     parser.add_argument('-s', '--system', help='Add system-specific context from systems folder')
     parser.add_argument('-l', '--list-systems', action='store_true', help='List all available system files')
@@ -69,6 +70,9 @@ def main():
         print("Error: Provide a question with -q or a dedicated system with -s")
         sys.exit(1)
 
+    if args.plain_md and args.format != "md":
+        print("Error: --plain-md can only be used with -f md. The parameter --plain-md will be ignored.")
+
     messages = build_messages(args, base_path)
 
     stop_spinner = threading.Event()
@@ -86,7 +90,7 @@ def main():
         print(f"Response written to {args.output}")
         sys.exit(0) # No output since output is in file
     
-    if args.format == "md":
+    if args.format == "md" and not args.plain_md:
         render_markdown(response)
         sys.exit(0) # No other output since output is rendered markdown
     
