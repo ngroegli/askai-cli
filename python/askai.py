@@ -4,6 +4,7 @@ import sys
 import threading
 from openrouter_api import ask_openrouter
 from utils import (
+    write_to_file,
     tqdm_spinner,
     get_piped_input,
     get_file_input,
@@ -80,8 +81,7 @@ def main():
         spinner.join()
 
     if args.output:
-        with open(args.output, "w") as f:
-            f.write(response)
+        write_to_file(args.output, response)
         print(f"Response written to {args.output}")
     else:
         print(response)

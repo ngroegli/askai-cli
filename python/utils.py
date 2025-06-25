@@ -20,13 +20,11 @@ def tqdm_spinner(stop_event):
             pbar.set_description_str(f"Thinking {next(spinner_cycle)}")
             time.sleep(0.1)
 
-
 def get_piped_input():
     """Reads piped stdin input, if available."""
     if not sys.stdin.isatty():
         return sys.stdin.read()
     return None
-
 
 def get_file_input(file_path):
     """Reads content from a file if it exists."""
@@ -35,7 +33,6 @@ def get_file_input(file_path):
             return f.read()
     print(f"File {file_path} does not exist.")
     return None
-
 
 def get_system_context(system_name, base_path):
     """Loads system-specific context file from the systems directory."""
@@ -47,7 +44,6 @@ def get_system_context(system_name, base_path):
             return f.read()
     print(f"System file {system_file} not found.")
     return None
-
 
 def build_format_instruction(format_type):
     """Returns AI instruction based on the desired response format."""
