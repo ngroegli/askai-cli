@@ -194,4 +194,4 @@ cython_debug/
 .cursorindexingignore
 
 # Exclude config from Git
-.askai_config.yaml
+.askai_config.yml

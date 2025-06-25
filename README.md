@@ -1,76 +1,132 @@
 # Ask AI CLI
+
 - [Ask AI CLI](#ask-ai-cli)
   - [🚀 Features](#-features)
   - [🔧 Setup Instructions](#-setup-instructions)
-    - [1. Clone the Repository](#1-clone-the-repository)
-    - [2. Create and Activate a Virtual Environment](#2-create-and-activate-a-virtual-environment)
-    - [3. Install Dependencies](#3-install-dependencies)
-    - [4. Setup Configuration](#4-setup-configuration)
+    - [Option 1: Quick Install via Script](#option-1-quick-install-via-script)
+    - [Option 2: Manual Installation](#option-2-manual-installation)
   - [⚡ Usage Examples](#-usage-examples)
     - [General Question](#general-question)
     - [Interpret Previous Terminal Output](#interpret-previous-terminal-output)
-    - [Error analysis:](#error-analysis)
+    - [Use System Files as Additional Context](#use-system-files-as-additional-context)
+    - [List Available System Files](#list-available-system-files)
+    - [Error Analysis with Previous Output](#error-analysis-with-previous-output)
     - [Save Response to File (Markdown)](#save-response-to-file-markdown)
     - [Override Default Model](#override-default-model)
-  - [🛠 Aliasing for Global Access](#-aliasing-for-global-access)
   - [☢️ Security Note](#️-security-note)
   - [🧩 Requirements](#-requirements)
   - [📄 License](#-license)
-- [⚡ **Optional: Install as System-Wide Executable**](#-optional-install-as-system-wide-executable)
 
-> **ℹ️ Usage of AI clarification:** To boost efficiency, many parts of the code, content and even the README are AI-generated.
 
-A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openrouter.ai) using Python and `requests`. Ask general questions, analyze previous command-line output, and save responses to files — all from your terminal.
+> **ℹ️ Usage of AI clarification:** To boost efficiency, many parts of the code, content, and even this README are AI-generated.
+
+A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openrouter.ai) using Python and `requests`. Ask general questions, analyze previous command-line output, load system-specific instructions, and save responses to files — all from your terminal.
 
 ---
 
 ## 🚀 Features
 
-- Ask general AI questions via CLI
-- Feed previous terminal output for AI interpretation
-- Output responses to Markdown or text files
-- Supports default model via config file
-- Override model with a simple CLI flag
-- No bulky SDKs — pure Python with `requests`
+* Ask general AI questions via CLI
+* Feed previous terminal output via stdin
+* Load predefined system instructions from `systems/` folder
+* Output responses to Markdown, JSON, or plain text
+* Supports default model via config file
+* Override model easily via CLI
+* List available system files for quick selection
+* No bulky SDKs — pure Python with `requests`
 
 ---
 
 ## 🔧 Setup Instructions
 
-### 1. Clone the Repository
+### Option 1: Quick Install via Script
+
+The installer handles:
+
+✔️ Python virtual environment setup
+✔️ Dependency installation
+✔️ Shell alias creation
+✔️ Initial configuration template
+
+
+```bash
+git clone https://github.com/ngroegli/askai-cli
+cd askai-cli
+chmod +x install.sh
+./install.sh
+```
+
+After installation, edit your configuration:
+
+```bash
+nano ~/.askai_config.yml
+```
+
+Example content:
+
+```yaml
+api_key: "your_openrouter_api_key"
+default_model: "openai/gpt-4o"
+base_url: "https://openrouter.ai/api/v1/chat/completions"
+```
+
+Reload your shell:
+
+```bash
+source ~/.zshrc   # or ~/.bashrc
+```
+
+---
+
+### Option 2: Manual Installation
+
+For manual control:
+
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/ngroegli/askai-cli
 cd askai-cli
 ```
 
-### 2. Create and Activate a Virtual Environment
+2. Create and activate a virtual environment:
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Setup Configuration
-
-Copy the example config and add your [OpenRouter.ai](https://openrouter.ai) API key:
+4. Copy the example config:
 
 ```bash
-cp config/config_example.yaml ~/.askai_config.yaml
+cp config/config_example.yml ~/.askai_config.yml
 ```
 
-Edit `~/.askai_config.yaml`:
+Edit `~/.askai_config.yml` with your API key and preferences.
 
-```yaml
-api_key: "your_openrouter_api_key"
-default_model: "openai/gpt-4o"
-base_url: "https://openrouter.ai/api/v1/chat/completions"
+5. Create an alias for easy access:
+
+```bash
+alias askai="python /full/path/to/askai/askai.py"
+```
+
+Add this to your `.bashrc`, `.zshrc`, or `.profile`, then reload your shell:
+
+```bash
+source ~/.zshrc   # or ~/.bashrc
+```
+
+Alternatively, for true system-wide installation:
+
+```bash
+chmod +x askai.py
+sudo ln -s /full/path/to/askai/askai.py /usr/local/bin/askai
 ```
 
 ---
@@ -86,19 +142,35 @@ askai -q "What is the capital of Japan?"
 ### Interpret Previous Terminal Output
 
 ```bash
-ls -la | askai -c -q "Explain this output."
+ls -la | askai -q "Explain this output."
 ```
 
-### Error analysis:
+### Use System Files as Additional Context
 
 ```bash
-cat nonexistent.txt 2>&1 | askai -c -q "Why can't I read this file?"
+askai -s log_interpretation -i /var/log/auth.log
+```
+
+System files live inside the `systems/` folder and contain reusable instructions for the AI.
+
+### List Available System Files
+
+```bash
+askai --list-system
+```
+
+Displays all files available under `systems/`.
+
+### Error Analysis with Previous Output
+
+```bash
+cat nonexistent.txt 2>&1 | askai -q "Why can't I read this file?"
 ```
 
 ### Save Response to File (Markdown)
 
 ```bash
-askai -q "List 5 AI use cases" -o output.md
+askai -q "List 5 AI use cases" -o output.md -f md
 ```
 
 ### Override Default Model
@@ -107,62 +179,19 @@ askai -q "List 5 AI use cases" -o output.md
 askai -q "Tell me a joke" -m "anthropic/claude-3-opus-2024-06-20"
 ```
 
----
-
-## 🛠 Aliasing for Global Access
-
-Add to your `.bashrc`, `.zshrc`, or `.profile`:
-
-```bash
-alias askai="python /path/to/askai/askai.py"
-```
-
-Reload your shell:
-
-```bash
-source ~/.zshrc   # or ~/.bashrc
-```
-
-You can now run `askai` directly.
-
----
-
 ## ☢️ Security Note
 
-Your API key is stored locally in `~/.config.yaml`. Ensure this file is excluded from version control with `.gitignore`.
+Your API key is stored locally in `~/.askai_config.yml`. Ensure this file is excluded from version control with `.gitignore`.
 
 ---
 
 ## 🧩 Requirements
 
 * Python 3.7+
-* Dependencies in `requirements.txt`
+* Dependencies listed in `requirements.txt`
 
 ---
 
 ## 📄 License
+
 [Please refer to GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007](./LICENSE)
-
-# ⚡ **Optional: Install as System-Wide Executable**
-
-For true system-wide `askai` without aliasing:
-
-1. Make script executable:
-
-```bash
-chmod +x askai.py
-```
-
-2. Create a symlink:
-
-```bash
-ln -s /full/path/to/askai/askai.py /usr/local/bin/askai
-```
-
-Then run:
-
-```bash
-askai -q "What's up?"
-```
-
-
