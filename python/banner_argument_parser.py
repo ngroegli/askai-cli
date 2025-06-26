@@ -1,3 +1,4 @@
+import sys
 import argparse
 from termcolor import colored
 
@@ -9,7 +10,7 @@ def print_ascii_banner():
     /::\  \     /::\  \     /:/  /      /::\  \      /\  \  
    /:/\:\  \   /:/\ \  \   /:/__/      /:/\:\  \     \:\  \ 
   /::\~\:\  \ _\:\~\ \  \ /::\__\____ /::\~\:\  \    /::\__\ 
- /:/\:\ \:\__/\ \:\ \ \__/:/\:::::\__/:/\:\ \:\__\__/:/\/__/
+ /:/\:\ \:\__/\ \:\ \ \__/:/\:::::\__/:/\:\ \:\__\__/:/\/__/ 
  \/__\:\/:/  \:\ \:\ \/__\/_|:|~~|~  \/__\:\/:/  /\/:/  /   
       \::/  / \:\ \:\__\    |:|  |        \::/  /\::/__/    
       /:/  /   \:\/:/  /    |:|  |        /:/  /  \:\__\    
@@ -21,6 +22,10 @@ def print_ascii_banner():
 
 
 class BannerArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        print(colored(f"Error: {message}", "red"))
+        sys.exit(2)
+
     def print_help(self, *args, **kwargs):
         print_ascii_banner()
         super().print_help(*args, **kwargs)
