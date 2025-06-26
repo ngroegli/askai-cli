@@ -12,7 +12,7 @@ The purpose of `market_analysis_gen` is to generate comprehensive market analysi
 * Produces a comprehensive table comparing competitors, highlighting:
 
   * Name of the product and system.
-  * Core features and functionalities.
+  * Features and functionalities.
   * Pros and cons for each solution.
   * Pricing models and structures.
   * Deployment options (Cloud, On-premises, Hybrid).

@@ -6,21 +6,25 @@ import subprocess
 from tqdm import tqdm
 from rich.console import Console
 from rich.markdown import Markdown
+from termcolor import colored, cprint
+
 
 def write_to_file(path, content):
     with open(path, "w") as f:
         f.write(content)
 
-def clean_response_text(text):
-    return text.strip()
-
 def tqdm_spinner(stop_event):
     """Displays a rotating spinner using tqdm."""
-    with tqdm(total=1, bar_format="{desc} {bar}") as pbar:
+    thinking_color = "light_cyan"
+    result_color = "green"
+
+    with tqdm(total=1, bar_format="{desc} {bar}", leave=False) as pbar:
         spinner_cycle = itertools.cycle(['|', '/', '-', '\\'])
         while not stop_event.is_set():
-            pbar.set_description_str(f"Thinking {next(spinner_cycle)}")
+            pbar.set_description_str(colored(f"Thinking {next(spinner_cycle)}", thinking_color))
             time.sleep(0.1)
+        pbar.close()
+        cprint("HERE THE RESULT:", result_color)
 
 def get_piped_input():
     """Reads piped stdin input, if available."""
@@ -106,3 +110,11 @@ def render_markdown(markdown_content):
     console = Console()
     md = Markdown(markdown_content)
     console.print(md)
+
+def print_error_or_warnings(text,warning_only=False):
+    color = "red"
+
+    if warning_only:
+        color = "light_yellow"
+
+    cprint(text, color)

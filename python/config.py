@@ -1,6 +1,7 @@
 import yaml
 import os
 
+
 CONFIG_PATH = os.path.expanduser("~/.askai_config.yml")
 
 def load_config():

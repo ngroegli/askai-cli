@@ -12,7 +12,8 @@ from utils import (
     build_format_instruction,
     list_system_files,
     view_system_file,
-    render_markdown
+    render_markdown,
+    print_error_or_warnings
 )
 
 
@@ -67,11 +68,11 @@ def main():
         sys.exit(0)
 
     if not args.question and not args.system:
-        print("Error: Provide a question with -q or a dedicated system with -s")
+        print_error_or_warnings(text="ERROR: Provide a question with -q or a dedicated system with -s")
         sys.exit(1)
 
     if args.plain_md and args.format != "md":
-        print("Error: --plain-md can only be used with -f md. The parameter --plain-md will be ignored.")
+        print_error_or_warnings(text="WARN: --plain-md can only be used with -f md. The parameter --plain-md will be ignored.", warning_only=True)
 
     messages = build_messages(args, base_path)
 

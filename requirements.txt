@@ -2,3 +2,4 @@ requests
 PyYAML
 tqdm
 rich
+termcolor
