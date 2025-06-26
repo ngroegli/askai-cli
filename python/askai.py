@@ -2,6 +2,7 @@ import os
 import argparse
 import sys
 import threading
+from banner_argument_parser import BannerArgumentParser
 from openrouter_api import ask_openrouter
 from utils import (
     write_to_file,
@@ -18,7 +19,7 @@ from utils import (
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="askai - AI assistant for your terminal")
+    parser = BannerArgumentParser(description="askai - AI assistant for your terminal")
     parser.add_argument('-q', '--question', help='Your question for the AI')
     parser.add_argument('-i', '--input', help='Input file to include as context')
     parser.add_argument('-o', '--output', help='Output file to save result')
@@ -56,6 +57,10 @@ def build_messages(args, base_path):
 
 
 def main():
+    # Display --help option if no arguments are provided
+    if len(sys.argv) == 1:
+        sys.argv.append('--help')
+
     args = parse_arguments()
     base_path = base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

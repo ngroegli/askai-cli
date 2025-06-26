@@ -118,3 +118,4 @@ def print_error_or_warnings(text,warning_only=False):
         color = "light_yellow"
 
     cprint(text, color)
+    
