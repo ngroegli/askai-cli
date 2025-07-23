@@ -3,9 +3,9 @@ import json
 from config import load_config
 from logger import setup_logger
 
-def ask_openrouter(messages, model=None):
+def ask_openrouter(messages, model=None, debug=False):
     config = load_config()
-    logger = setup_logger(config)
+    logger = setup_logger(config, debug)
 
     headers = {
         "Authorization": f"Bearer {config['api_key']}",

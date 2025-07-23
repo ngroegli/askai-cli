@@ -21,8 +21,7 @@ from utils import (
     print_error_or_warnings
 )
 
-
-def parse_arguments(logger):
+def parse_arguments():
     parser = BannerArgumentParser(description="askai - AI assistant for your terminal")
     parser.add_argument('-q', '--question', help='Your question for the AI')
     parser.add_argument('-i', '--input', help='Input file to include as context')
@@ -34,8 +33,6 @@ def parse_arguments(logger):
     parser.add_argument('-l', '--list-systems', action='store_true', help='List all available system files')
     parser.add_argument('-vs', '--view-system', help='View specific system file')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging for this session')
-
-    logger.info(json.dumps({"log_message": "Prepared argument parser"}))
 
     return parser.parse_args()
 
@@ -68,18 +65,21 @@ def build_messages(args, base_path, logger):
 
 def main():
     config = load_config()
-    logger = setup_logger(config)
 
     # Display --help option if no arguments are provided
     if len(sys.argv) == 1:
         sys.argv.append('--help')
 
-    args = parse_arguments(logger)
+    args = parse_arguments()
     base_path = base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+    cli_debug = False
     if args.debug:
-        logger.setLevel(logging.DEBUG)
-        logger.debug(json.dumps({"log_message": "Debug mode activated via CLI"}))
+        cli_debug = True
+        
+    logger = setup_logger(config, cli_debug)
+
+    logger.info(json.dumps({"log_message": "AskAI started and arguments parsed"}))
 
     if args.list_systems:
         logger.info(json.dumps({"log_message": "User requested to list all available system files"}))
@@ -109,8 +109,8 @@ def main():
 
     try:
         logger.info(json.dumps({"log_message": "Messages sending to ai"}))
-        response = ask_openrouter(messages=messages, model=args.model)
-        logger.debug(json.dumps({"log_message": "Response from ai", "response_type": str(type(response))}))
+        response = ask_openrouter(messages=messages, model=args.model, debug=cli_debug)
+        logger.debug(json.dumps({"log_message": "Response from ai", "response": str(response)}))
         logger.info(json.dumps({"log_message": "Response received from ai"}))
     finally:
         stop_spinner.set()
