@@ -12,13 +12,11 @@ from utils import (
     tqdm_spinner,
     get_piped_input,
     get_file_input,
-    get_system_context,
     build_format_instruction,
-    list_system_files,
-    view_system_file,
     render_markdown,
     print_error_or_warnings
 )
+from system_manager import SystemManager
 from chat_manager import ChatManager
 
 
@@ -40,13 +38,23 @@ def setup_argument_parser():
                        action='store_true', 
                        help='If used with -f md, outputs raw markdown as plain text instead of rendering')
     
-    # Model and system options
+    # Model options
     parser.add_argument('-m', '--model', help='Override default AI model')
-    parser.add_argument('-s', '--system', help='Add system-specific context from systems folder')
-    parser.add_argument('-l', '--list-systems', 
+    
+    # System options
+    system_group = parser.add_argument_group('System logic')
+    system_group.add_argument('-s', '--system',
+                       nargs='?',
+                       const='new',  # When -s is used without value
+                       metavar='SYSTEM_ID',
+                       help='Add system-specific context. Use without ID to select from available systems')
+    system_group.add_argument('-l', '--list-systems', 
                        action='store_true', 
                        help='List all available system files')
-    parser.add_argument('-vs', '--view-system', help='View specific system file')
+    system_group.add_argument('-vs', '--view-system',
+                       nargs='?',
+                       const='',  # When -vs is used without value
+                       help='View system content. Use without ID to select from available systems')
     
     # Debug options
     parser.add_argument('--debug', 
@@ -84,12 +92,12 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def build_messages(args, base_path, logger):
+def build_messages(args, system_manager, logger):
     """Builds the message list for OpenRouter.
     
     Args:
         args: Parsed command line arguments
-        base_path: Base path of the application
+        system_manager: SystemManager instance
         logger: Logger instance for recording operations
         
     Returns:
@@ -117,16 +125,30 @@ def build_messages(args, base_path, logger):
         })
 
     # Add system-specific context if specified
-    if args.system:
+    if args.system is not None:  # -s was used
+        system_id = None
+        if args.system == 'new':  # No specific system ID was provided
+            system_id = system_manager.select_system()
+            if system_id is None:
+                print("System selection cancelled.")
+                sys.exit(0)
+        else:  # Specific system ID was provided
+            system_id = args.system
+            
         logger.info(json.dumps({
             "log_message": "System used", 
-            "system": args.system
+            "system": system_id
         }))
-        if system_context := get_system_context(args.system, base_path):
-            messages.append({
-                "role": "system", 
-                "content": system_context
-            })
+        
+        system_context = system_manager.get_system_content(system_id)
+        if system_context is None:
+            print(f"Error: System '{system_id}' does not exist")
+            sys.exit(1)
+            
+        messages.append({
+            "role": "system", 
+            "content": system_context
+        })
 
     # Add format instructions
     messages.append({
@@ -144,56 +166,77 @@ def build_messages(args, base_path, logger):
     return messages
 
 
-def handle_system_commands(args, base_path, logger, chat_manager=None):
-    """Handle system-related commands like listing and viewing system files or chats."""
-    # Handle system file commands
+def handle_system_commands(args, system_manager, logger):
+    """Handle system-related commands."""
     if args.list_systems:
         logger.info(json.dumps({"log_message": "User requested to list all available system files"}))
-        list_system_files(base_path)
-        return True
-
-    if args.view_system:
-        logger.info(json.dumps({
-            "log_message": "User requested to view system file", 
-            "system": args.view_system
-        }))
-        view_system_file(base_path, args.view_system)
-        return True
-
-    # Handle chat-related commands
-    if chat_manager:
-        if args.list_chats:
-            logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
-            chats = chat_manager.list_chats()
-            if not chats:
-                print("No chat history found.")
-            else:
-                print("\nAvailable chats:")
+        systems = system_manager.list_systems()
+        if not systems:
+            print("No system files found.")
+        else:
+            print("\nAvailable systems:")
+            print("-" * 60)
+            for system in systems:
+                print(f"ID: {system['system_id']}")
+                print(f"Name: {system['name']}")
                 print("-" * 60)
-                for chat in chats:
-                    print(f"ID: {chat['chat_id']}")
-                    print(f"Created: {chat['created_at']}")
-                    print(f"Messages: {chat['conversation_count']}")
-                    print("-" * 60)
-            return True
+        return True
 
-        if args.view_chat is not None:  # -vc was used
-            # If no specific chat ID was provided, show selection
-            chat_id = args.view_chat or chat_manager.select_chat(allow_new=False)
-            
-            if chat_id is None:
-                print("Chat selection cancelled.")
-                return True
-                
-            logger.info(json.dumps({
-                "log_message": "User requested to view chat history",
-                "chat_id": chat_id
-            }))
-            try:
-                chat_manager.display_chat(chat_id)
-            except ValueError as e:
-                print(f"Error: {str(e)}")
+    if args.view_system is not None:  # -vs was used
+        # If no specific system ID was provided, show selection
+        system_id = args.view_system or system_manager.select_system()
+        
+        if system_id is None:
+            print("System selection cancelled.")
             return True
+            
+        logger.info(json.dumps({
+            "log_message": "User requested to view system file",
+            "system": system_id
+        }))
+        try:
+            system_manager.display_system(system_id)
+        except ValueError as e:
+            print(f"Error: {str(e)}")
+        return True
+
+    return False
+
+
+def handle_chat_commands(args, chat_manager, logger):
+    """Handle chat-related commands."""
+    if args.list_chats:
+        logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
+        chats = chat_manager.list_chats()
+        if not chats:
+            print("No chat history found.")
+        else:
+            print("\nAvailable chats:")
+            print("-" * 60)
+            for chat in chats:
+                print(f"ID: {chat['chat_id']}")
+                print(f"Created: {chat['created_at']}")
+                print(f"Messages: {chat['conversation_count']}")
+                print("-" * 60)
+        return True
+
+    if args.view_chat is not None:  # -vc was used
+        # If no specific chat ID was provided, show selection
+        chat_id = args.view_chat or chat_manager.select_chat(allow_new=False)
+        
+        if chat_id is None:
+            print("Chat selection cancelled.")
+            return True
+            
+        logger.info(json.dumps({
+            "log_message": "User requested to view chat history",
+            "chat_id": chat_id
+        }))
+        try:
+            chat_manager.display_chat(chat_id)
+        except ValueError as e:
+            print(f"Error: {str(e)}")
+        return True
 
     return False
 
@@ -267,18 +310,21 @@ def main():
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     logger = setup_logger(config, args.debug)
     chat_manager = ChatManager(config)
+    system_manager = SystemManager(base_path)
 
     logger.info(json.dumps({"log_message": "AskAI started and arguments parsed"}))
 
-    # Handle system commands (list/view systems)
-    if handle_system_commands(args, base_path, logger, chat_manager):
+    # Handle chat and system commands
+    if handle_chat_commands(args, chat_manager, logger):
+        sys.exit(0)
+    if handle_system_commands(args, system_manager, logger):
         sys.exit(0)
 
     # Validate arguments
     validate_arguments(args, logger)
 
     # Build and send messages to AI
-    messages = build_messages(args, base_path, logger)
+    messages = build_messages(args, system_manager, logger)
 
     # Handle persistent chat
     chat_id = None
