@@ -19,6 +19,7 @@ from utils import (
     render_markdown,
     print_error_or_warnings
 )
+from chat_manager import ChatManager
 
 
 def setup_argument_parser():
@@ -51,6 +52,21 @@ def setup_argument_parser():
     parser.add_argument('--debug', 
                        action='store_true', 
                        help='Enable debug logging for this session')
+    
+    # Chat persistence options
+    chat_group = parser.add_argument_group('Chat persistence')
+    chat_group.add_argument('-pc', '--persistent-chat',
+                        nargs='?', 
+                        const='new',
+                        metavar='CHAT_ID',
+                        help='Enable persistent chat. Use without value to create new chat, '
+                             'or provide chat ID to continue existing chat')
+    chat_group.add_argument('-lc', '--list-chats',
+                        action='store_true',
+                        help='List all available chat files')
+    chat_group.add_argument('-vc', '--view-chat',
+                        metavar='CHAT_ID',
+                        help='View the conversation history of a specific chat')
     
     return parser
 
@@ -126,8 +142,9 @@ def build_messages(args, base_path, logger):
     return messages
 
 
-def handle_system_commands(args, base_path, logger):
-    """Handle system-related commands like listing and viewing system files."""
+def handle_system_commands(args, base_path, logger, chat_manager=None):
+    """Handle system-related commands like listing and viewing system files or chats."""
+    # Handle system file commands
     if args.list_systems:
         logger.info(json.dumps({"log_message": "User requested to list all available system files"}))
         list_system_files(base_path)
@@ -140,6 +157,34 @@ def handle_system_commands(args, base_path, logger):
         }))
         view_system_file(base_path, args.view_system)
         return True
+
+    # Handle chat-related commands
+    if chat_manager:
+        if args.list_chats:
+            logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
+            chats = chat_manager.list_chats()
+            if not chats:
+                print("No chat history found.")
+            else:
+                print("\nAvailable chats:")
+                print("-" * 60)
+                for chat in chats:
+                    print(f"ID: {chat['chat_id']}")
+                    print(f"Created: {chat['created_at']}")
+                    print(f"Messages: {chat['conversation_count']}")
+                    print("-" * 60)
+            return True
+
+        if args.view_chat:
+            logger.info(json.dumps({
+                "log_message": "User requested to view chat history",
+                "chat_id": args.view_chat
+            }))
+            try:
+                chat_manager.display_chat(args.view_chat)
+            except ValueError as e:
+                print(f"Error: {str(e)}")
+            return True
 
     return False
 
@@ -212,11 +257,12 @@ def main():
     args = parse_arguments()
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     logger = setup_logger(config, args.debug)
+    chat_manager = ChatManager(config)
 
     logger.info(json.dumps({"log_message": "AskAI started and arguments parsed"}))
 
     # Handle system commands (list/view systems)
-    if handle_system_commands(args, base_path, logger):
+    if handle_system_commands(args, base_path, logger, chat_manager):
         sys.exit(0)
 
     # Validate arguments
@@ -224,10 +270,32 @@ def main():
 
     # Build and send messages to AI
     messages = build_messages(args, base_path, logger)
+
+    # Handle persistent chat
+    chat_id = None
+    if args.persistent_chat:
+        if args.persistent_chat == 'new':
+            chat_id = chat_manager.create_chat()
+            print(f"\nCreated new chat with ID: {chat_id}")
+        else:
+            chat_id = args.persistent_chat
+            try:
+                # Add context from chat history
+                context_messages = chat_manager.build_context_messages(chat_id)
+                messages = context_messages + messages
+                print(f"\nContinuing chat: {chat_id}")
+            except ValueError as e:
+                print(f"Error: {str(e)}")
+                sys.exit(1)
+
     logger.debug(json.dumps({"log_message": "Messages content", "messages": messages}))
     
     # Get AI response
     response = get_ai_response(messages, args, logger)
+
+    # Store chat history if using persistent chat
+    if chat_id:
+        chat_manager.add_conversation(chat_id, messages, response)
 
     # Handle output and exit if needed
     if handle_output(response, args, logger):

@@ -6,3 +6,7 @@ enable_logging: true
 log_path: "~/.askai/askai.log"
 log_level: "INFO"
 log_rotation: 5  # keep 5 backups
+
+chat:
+  storage_path: "~/.askai/chats"  # Where to store chat history files
+  max_history: 10  # Number of past conversations to include as context
