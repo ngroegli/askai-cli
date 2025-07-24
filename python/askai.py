@@ -282,7 +282,10 @@ def main():
             try:
                 # Add context from chat history
                 context_messages = chat_manager.build_context_messages(chat_id)
-                messages = context_messages + messages
+                # Insert context messages before the system messages
+                system_messages = [msg for msg in messages if msg['role'] == 'system']
+                user_messages = [msg for msg in messages if msg['role'] == 'user']
+                messages = system_messages + context_messages + user_messages
                 print(f"\nContinuing chat: {chat_id}")
             except ValueError as e:
                 print(f"Error: {str(e)}")

@@ -69,9 +69,22 @@ class ChatManager:
         with open(chat_file, 'r') as f:
             chat_data = json.load(f)
 
+        # Extract only the new messages (not from history)
+        current_messages = []
+        
+        # Add system messages if present
+        system_messages = [msg for msg in messages if msg['role'] == 'system']
+        if system_messages:
+            current_messages.extend(system_messages)
+        
+        # Add only the last user message
+        user_messages = [msg for msg in messages if msg['role'] == 'user']
+        if user_messages:
+            current_messages.append(user_messages[-1])  # Only keep the latest user message
+
         chat_data['conversations'].append({
             "timestamp": datetime.now().isoformat(),
-            "messages": messages,
+            "messages": current_messages,
             "response": response
         })
 
@@ -134,13 +147,19 @@ class ChatManager:
         conversations = self.get_chat_history(chat_id, self.max_history)
         
         for conv in conversations:
+            # Only include the user question and AI response for context
+            # Find the last user message in the conversation
+            user_message = None
             for msg in conv['messages']:
-                if msg['role'] != 'system':  # Don't include system messages from history
-                    context_messages.append(msg)
-            context_messages.append({
-                "role": "assistant",
-                "content": conv['response']
-            })
+                if msg['role'] == 'user':
+                    user_message = msg
+            
+            if user_message:
+                context_messages.append(user_message)
+                context_messages.append({
+                    "role": "assistant",
+                    "content": conv['response']
+                })
             
         return context_messages
 
@@ -164,10 +183,14 @@ class ChatManager:
             print(f"\nConversation {i} - {conv['timestamp']}")
             print("-" * 50)
             
-            # Print user messages
+            # Print conversations
             for msg in conv['messages']:
                 if msg['role'] == 'user':
                     print(f"\nUser: {msg['content']}")
+
+                if msg['role'] == 'assistant':
+                    print(f"\nAssistant: {msg['content']}")
+                    print("-" * 25) # Print line after eacht answer
                     
             # Print AI response
             print(f"\nAssistant: {conv['response']}\n")
