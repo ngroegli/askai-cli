@@ -134,6 +134,58 @@ class ChatManager:
                     })
         return sorted(chats, key=lambda x: x['created_at'], reverse=True)
 
+    def select_chat(self, allow_new: bool = True) -> Optional[str]:
+        """Display an interactive chat selection menu.
+        
+        Args:
+            allow_new: Whether to show the option to create a new chat
+            
+        Returns:
+            Optional[str]: Selected chat ID, 'new' for new chat, or None if selection cancelled
+        """
+        chats = self.list_chats()
+        
+        if not chats:
+            print("No existing chats found.")
+            if allow_new:
+                print("Use -pc to create a new chat.")
+            return None
+            
+        print("\nAvailable chats:")
+        print("-" * 60)
+        
+        # Display chats with index
+        for i, chat in enumerate(chats, 1):
+            print(f"{i}. Chat ID: {chat['chat_id']}")
+            print(f"   Created: {chat['created_at']}")
+            print(f"   Messages: {chat['conversation_count']}")
+            print("-" * 60)
+        
+        print("\nOptions:")
+        if allow_new:
+            print("0. Create new chat")
+        print("1-{0}. Select existing chat".format(len(chats)))
+        print("q. Quit")
+        
+        while True:
+            max_choice = len(chats)
+            min_choice = 0 if allow_new else 1
+            choice = input(f"\nEnter your choice ({min_choice}-{max_choice} or q): ").lower()
+            
+            if choice == 'q':
+                return None
+            
+            try:
+                choice_num = int(choice)
+                if allow_new and choice_num == 0:
+                    return 'new'
+                elif 1 <= choice_num <= len(chats):
+                    return chats[choice_num - 1]['chat_id']
+                else:
+                    print(f"Please enter a number between {min_choice} and {max_choice}")
+            except ValueError:
+                print("Please enter a valid number or 'q' to quit")
+
     def build_context_messages(self, chat_id: str) -> List[Dict[str, str]]:
         """Build context messages from chat history.
         

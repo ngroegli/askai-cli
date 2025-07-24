@@ -65,8 +65,10 @@ def setup_argument_parser():
                         action='store_true',
                         help='List all available chat files')
     chat_group.add_argument('-vc', '--view-chat',
+                        nargs='?',
+                        const='',  # When -vc is used without value
                         metavar='CHAT_ID',
-                        help='View the conversation history of a specific chat')
+                        help='View chat history. Use without ID to select from available chats')
     
     return parser
 
@@ -175,13 +177,20 @@ def handle_system_commands(args, base_path, logger, chat_manager=None):
                     print("-" * 60)
             return True
 
-        if args.view_chat:
+        if args.view_chat is not None:  # -vc was used
+            # If no specific chat ID was provided, show selection
+            chat_id = args.view_chat or chat_manager.select_chat(allow_new=False)
+            
+            if chat_id is None:
+                print("Chat selection cancelled.")
+                return True
+                
             logger.info(json.dumps({
                 "log_message": "User requested to view chat history",
-                "chat_id": args.view_chat
+                "chat_id": chat_id
             }))
             try:
-                chat_manager.display_chat(args.view_chat)
+                chat_manager.display_chat(chat_id)
             except ValueError as e:
                 print(f"Error: {str(e)}")
             return True
@@ -273,12 +282,26 @@ def main():
 
     # Handle persistent chat
     chat_id = None
-    if args.persistent_chat:
-        if args.persistent_chat == 'new':
+    if args.persistent_chat is not None:  # Check if -pc was used at all
+        if args.persistent_chat == 'n':  # Explicit request for new chat
             chat_id = chat_manager.create_chat()
             print(f"\nCreated new chat with ID: {chat_id}")
-        else:
+        elif args.persistent_chat == 'new':  # No chat ID provided, show selection
+            selected_chat = chat_manager.select_chat(allow_new=True)
+            
+            if selected_chat is None:
+                print("Chat selection cancelled.")
+                sys.exit(0)
+            elif selected_chat == 'new':
+                chat_id = chat_manager.create_chat()
+                print(f"\nCreated new chat with ID: {chat_id}")
+            else:
+                chat_id = selected_chat
+        else:  # Specific chat ID provided
             chat_id = args.persistent_chat
+            
+        # If we have a chat_id, load its context
+        if chat_id:
             try:
                 # Add context from chat history
                 context_messages = chat_manager.build_context_messages(chat_id)
