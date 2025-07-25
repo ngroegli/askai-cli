@@ -117,14 +117,14 @@ def build_messages(args, system_manager, logger):
         })
 
     # Handle input file content
-    if args.file_input and (file_content := get_file_input(args.file)):
+    if args.file_input and (file_content := get_file_input(args.file_input)):
         logger.info(json.dumps({
             "log_message": "Input file read successfully", 
-            "file_path": args.file
+            "file_path": args.file_input
         }))
         messages.append({
             "role": "system", 
-            "content": f"The file content of {args.file} to work with:\n{file_content}"
+            "content": f"The file content of {args.file_input} to work with:\n{file_content}"
         })
 
     # Add system-specific context if specified
