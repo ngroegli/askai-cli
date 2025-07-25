@@ -13,11 +13,50 @@ The purpose of `log_interpretation` is to analyze raw log content to identify me
 * Provide human-readable interpretations of discovered patterns and anomalies.
 * Operate without requiring predefined log format specifications but can leverage known structures if provided.
 
-## Input Format:
+## System Inputs:
 
-* Freeform raw log content as plain text.
-* May include a mix of timestamps, message levels, source identifiers, and message bodies.
-* Optionally, user can specify known fields (e.g., timestamp pattern) to improve detection accuracy.
+```yaml
+inputs:
+  - name: log_content
+    description: Log content to analyze
+    type: text
+    required: true
+    alternative_to: log_file
+
+  - name: log_file
+    description: Path to the log file
+    type: file
+    required: true
+    alternative_to: log_content
+
+  - name: time_pattern
+    description: Known timestamp pattern in the logs (e.g., 'YYYY-MM-DD HH:mm:ss')
+    type: text
+    ignore_undefined: true
+    required: false
+
+  - name: log_level
+    description: Type of log levels to focus on
+    type: select
+    options: 
+      - ERROR
+      - WARN
+      - INFO
+      - DEBUG
+      - ALL
+    ignore_undefined: true
+    required: false
+    default: ALL
+
+  - name: max_patterns
+    description: Maximum number of patterns to identify
+    type: number
+    ignore_undefined: true
+    required: false
+    default: 10
+    min: 1
+    max: 100
+```
 
 ## Output Format:
 

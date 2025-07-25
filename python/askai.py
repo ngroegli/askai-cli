@@ -1,8 +1,8 @@
 import os
 import argparse
 import sys
-import threading
 import json
+import threading
 from banner_argument_parser import BannerArgumentParser
 from openrouter_api import ask_openrouter
 from config import load_config
@@ -26,7 +26,7 @@ def setup_argument_parser():
     
     # Input options
     parser.add_argument('-q', '--question', help='Your question for the AI')
-    parser.add_argument('-i', '--input', help='Input file to include as context')
+    parser.add_argument('-fi', '--file-input', help='Input file to include as context')
     
     # Output options
     parser.add_argument('-o', '--output', help='Output file to save result')
@@ -43,18 +43,21 @@ def setup_argument_parser():
     
     # System options
     system_group = parser.add_argument_group('System logic')
-    system_group.add_argument('-s', '--system',
+    system_group.add_argument('-us', '--use-system',
                        nargs='?',
                        const='new',  # When -s is used without value
                        metavar='SYSTEM_ID',
                        help='Add system-specific context. Use without ID to select from available systems')
-    system_group.add_argument('-l', '--list-systems', 
+    system_group.add_argument('-ls', '--list-systems', 
                        action='store_true', 
                        help='List all available system files')
     system_group.add_argument('-vs', '--view-system',
                        nargs='?',
                        const='',  # When -vs is used without value
                        help='View system content. Use without ID to select from available systems')
+    system_group.add_argument('-si', '--system-input',
+                       type=json.loads,
+                       help='Provide system inputs as JSON object')
     
     # Debug options
     parser.add_argument('--debug', 
@@ -114,36 +117,50 @@ def build_messages(args, system_manager, logger):
         })
 
     # Handle input file content
-    if args.input and (file_content := get_file_input(args.input)):
+    if args.file_input and (file_content := get_file_input(args.file)):
         logger.info(json.dumps({
             "log_message": "Input file read successfully", 
-            "file_path": args.input
+            "file_path": args.file
         }))
         messages.append({
             "role": "system", 
-            "content": f"The file content of {args.input} to work with:\n{file_content}"
+            "content": f"The file content of {args.file} to work with:\n{file_content}"
         })
 
     # Add system-specific context if specified
-    if args.system is not None:  # -s was used
+    if args.use_system is not None:  # -s was used
         system_id = None
-        if args.system == 'new':  # No specific system ID was provided
+        if args.use_system == 'new':  # No specific system ID was provided
             system_id = system_manager.select_system()
             if system_id is None:
                 print("System selection cancelled.")
                 sys.exit(0)
         else:  # Specific system ID was provided
-            system_id = args.system
+            system_id = args.use_system
             
         logger.info(json.dumps({
             "log_message": "System used", 
             "system": system_id
         }))
         
-        system_context = system_manager.get_system_content(system_id)
-        if system_context is None:
+        system_data = system_manager.get_system_content(system_id)
+        if system_data is None:
             print(f"Error: System '{system_id}' does not exist")
             sys.exit(1)
+            
+        # Process system inputs
+        system_inputs = system_manager.process_system_inputs(
+            system_id=system_id,
+            input_values=args.system_input
+        )
+        
+        if system_inputs is None:
+            sys.exit(1)
+            
+        # Combine system content with processed inputs
+        system_context = system_data['content']
+        if system_inputs:
+            system_context += "\n\nSystem Inputs:\n" + json.dumps(system_inputs, indent=2)
             
         messages.append({
             "role": "system", 
@@ -243,7 +260,7 @@ def handle_chat_commands(args, chat_manager, logger):
 
 def validate_arguments(args, logger):
     """Validate command line arguments and log warnings/errors."""
-    if not args.question and not args.system:
+    if not args.question and not args.use_system:
         logger.error(json.dumps({
             "log_message": "User did not provide a question with -q or a dedicated system with -s"
         }))
