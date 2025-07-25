@@ -17,26 +17,44 @@ The purpose of `one_page_website_generation` is to rapidly generate lightweight,
 * Ensure accessible, fast-loading, and mobile-friendly design.
 * Generate clean, well-structured, and maintainable code for easy customization.
 
-## Input Format:
+## System Inputs:
 
-* Basic website details provided as structured text:
-  * Brand Name
-  * Logo Image (optional, placeholder if none provided)
-  * Color Scheme (optional, defaults to clean neutral palette)
-  * Contact Address (physical or email)
-  * Image or graphic for spinner (optional, placeholder if none provided)
-  * Optional tagline or short description
+```yaml
+inputs:
+  - name: brand_name
+    description: Name of the brand or website
+    type: text
+    required: true
 
-Example Input:
-```
+  - name: logo_file
+    description: Path to the logo image file
+    type: file
+    required: false
+    ignore_undefined: true
 
-Brand Name: SwiftSites
-Logo: logo.png
-Color Scheme: White background, blue accents
-Contact: [contact@swiftsites.io](mailto:contact@swiftsites.io)
-Spinner Image: spinner.gif
-Tagline: "Sleek, Simple, One Page"
+  - name: color_scheme
+    description: Color scheme preferences (e.g., 'White background, blue accents')
+    type: text
+    required: false
+    ignore_undefined: true
+    default: "Clean neutral palette"
 
+  - name: contact_info
+    description: Contact information (email or physical address)
+    type: text
+    required: true
+
+  - name: spinner_image
+    description: Path to the spinner image file
+    type: file
+    required: false
+    ignore_undefined: true
+
+  - name: tagline
+    description: Optional tagline or short description
+    type: text
+    required: false
+    ignore_undefined: true
 ```
 
 ## Output Format:

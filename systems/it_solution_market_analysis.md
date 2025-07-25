@@ -21,33 +21,43 @@ The purpose of `market_analysis_gen` is to generate comprehensive market analysi
 * Ensures all online references are scrutinized for correctness and updated information.
 * Outputs the analysis in markdown format to facilitate easy sharing and documentation.
 
-## Input Format:
+## System Inputs:
 
-* **Product Descriptions** (structured data):
+```yaml
+inputs:
+  - name: product_description
+    description: Main product information including name, type, key features, and benefits
+    type: text
+    required: true
 
-  Includes information such as product type, key features, and list of benefits.
-  Format example:
-  ```
-  - Product Name: XyzSolution
-  - Type: Cloud Data Storage
-  - Key Features: Scalability, Security, Cost-effective
-  - Benefits: Flexible usage, High security standards
-  - Cons: High initial setup cost
-  ```
+  - name: competitor_data
+    description: List of competitors with their features, pros, cons, pricing, and deployment options
+    type: text
+    required: false
+    ignore_undefined: true
 
-* **Competitor Data** (structured list):
+  - name: focus_aspects
+    description: Specific aspects to focus on in the analysis (e.g., 'pricing', 'security', 'scalability')
+    type: text
+    required: false
+    ignore_undefined: true
+    
+  - name: market_region
+    description: Specific geographic region to focus the analysis on
+    type: text
+    required: false
+    ignore_undefined: true
+    default: "global"
 
-  List of competitors with their respective attributes.
-  Format example:
-  ```
-  - Competitor 1: 
-    - Name: AlphaStorage
-    - Features: Redundancy, Encryption
-    - Pros: High reliability
-    - Cons: Expensive subscription
-    - Pricing: Tiered model
-    - Deployment: Cloud
-    - References: https://example.com/alphastorage-review
+  - name: max_competitors
+    description: Maximum number of competitors to include in the analysis
+    type: number
+    required: false
+    ignore_undefined: true
+    default: 5
+    min: 1
+    max: 10
+```
   ```
 
 ## Output Format:

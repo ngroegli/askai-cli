@@ -17,33 +17,33 @@ The purpose of `system_md_generator` is to automatically create structured syste
 * Ensure consistency and adherence to documentation standards.
 * Produce human-readable, ready-to-use markdown files.
 
-## Input Format:
+## System Inputs:
 
-* **Template** (`-t` argument):
+```yaml
+inputs:
+  - name: goal_description
+    description: A concise description of the desired AI system's goal or functionality
+    type: text
+    required: true
 
-  A markdown-formatted template containing placeholders such as `<TITLE>`.
-  Example template:
+  - name: template_file
+    description: Path to the markdown template file (defaults to _template.md)
+    type: file
+    required: false
+    ignore_undefined: true
 
-  ```
-  # System: <TITLE>
+  - name: system_name
+    description: Optional custom name for the system (derived from goal if not provided)
+    type: text
+    required: false
+    ignore_undefined: true
 
-  ## Purpose:
-
-
-  ## Functionality:
-
-
-  ## Input Format:
-
-
-  ## Output Format:
-  ```
-
-* **Goal Description** (string):
-
-  A concise description of the desired AI system's goal or functionality.
-  Example:
-  `"The system analyzes log files to find patterns and outliers."`
+  - name: output_path
+    description: Path where the generated system file should be saved
+    type: text
+    required: false
+    ignore_undefined: true
+```
 
 ## Output Format:
 

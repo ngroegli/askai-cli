@@ -11,13 +11,33 @@ This system takes natural language input and generates corresponding Splunk Sear
 * Outputs a valid, best-matching SPL query based on that input. If multiple valid approaches exist, up to three solutions are provided.
 * Optionally incorporates contextual hints, such as known index names, source types, or time filters.
 
-## Input Format:
+## System Inputs:
 
-`question`: *(string)*
-A natural language description of the information or analysis the user wants from Splunk.
+```yaml
+inputs:
+  - name: question
+    description: A natural language description of what information or analysis you want from Splunk
+    type: text
+    required: true
 
-**Example:**
-*"Show failed login attempts from the last 7 days grouped by username"*
+  - name: index_hints
+    description: Known Splunk index names that should be used in the query
+    type: text
+    required: false
+    ignore_undefined: true
+
+  - name: sourcetype_hints
+    description: Known sourcetypes that should be considered
+    type: text
+    required: false
+    ignore_undefined: true
+
+  - name: time_range
+    description: Specific time range to consider (e.g., '-7d', '-24h')
+    type: text
+    required: false
+    ignore_undefined: true
+```
 
 ## Output Format:
 

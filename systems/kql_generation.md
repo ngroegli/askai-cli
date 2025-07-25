@@ -14,11 +14,27 @@ Outputs a valid, best-matching KQL query based on that input. If there exists va
 
 Optional support for contextual hints like table names or time filters.
 
-## Input Format:
+## System Inputs:
 
-question: (string)
-A natural language question describing what the user wants to retrieve or analyze.
-Example: "Show the count of errors in the last 24 hours"
+```yaml
+inputs:
+  - name: question
+    description: A natural language question describing what the user wants to retrieve or analyze
+    type: text
+    required: true
+
+  - name: table_hints
+    description: Known table names that should be used in the query
+    type: text
+    required: false
+    ignore_undefined: true
+
+  - name: time_range
+    description: Specific time range to consider (e.g., '24h', '7d')
+    type: text
+    required: false
+    ignore_undefined: true
+```
 
 ## Output Format:
 
