@@ -141,7 +141,7 @@ outputs:
 ```yaml
 model:
   provider: openrouter
-  model_name: anthropic/claude-2
+  model_name: anthropic/claude-3.7-sonnet
   temperature: 0.7
   max_tokens: 4000
 
