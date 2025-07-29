@@ -3,9 +3,9 @@ import sys
 import json
 import yaml
 from typing import List, Dict, Any, Optional, Union
-from system_inputs import SystemInput, InputType
-from system_outputs import SystemOutput
-from system_configuration import (
+from .system_inputs import SystemInput, InputType
+from .system_outputs import SystemOutput
+from .system_configuration import (
     SystemConfiguration,
     ModelConfiguration,
     SystemPurpose,
