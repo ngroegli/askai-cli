@@ -39,15 +39,115 @@ inputs:
     ignore_undefined: true
 ```
 
-## Output Format:
+## System Outputs:
 
-For each proposed solution, the system provides:
+```yaml
+outputs:
+  - name: queries
+    description: Generated SPL queries with explanations
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        solutions:
+          type: array
+          items:
+            type: object
+            properties:
+              spl_query: { type: string }
+              explanation: { type: string }
+              data_sources:
+                type: object
+                properties:
+                  indexes: 
+                    type: array
+                    items: { type: string }
+                  sourcetypes:
+                    type: array
+                    items: { type: string }
+                  key_fields:
+                    type: array
+                    items: { type: string }
 
-**SPL Query:** *(string)*
-The generated SPL query derived from the user's question.
+  - name: summary
+    description: A brief overview of the proposed solutions
+    type: text
+    required: true
+    example: |
+      Generated 2 SPL queries to analyze login failures:
+      1. Basic search with simple filtering
+      2. Advanced statistical analysis with time correlation
 
-**Explanation:** *(string)*
-A clear, plain-language explanation of what the SPL query accomplishes, if enabled.
+  - name: visualization
+    description: Visualization of the query structure
+    type: markdown
+    required: false
+    example: |
+      ## Query Flow
+      ```mermaid
+      graph TD
+        A[Base Search] --> B[Filter]
+        B --> C[Aggregation]
+        C --> D[Sort]
+      ```
+```
 
-**Relevant Data Sources:** *(string)*
-Lists applicable indexes, source types, or fields commonly required for this type of query.
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-2
+  temperature: 0.7
+  max_tokens: 2000
+  stop_sequences:
+    - "##"
+    - "```"
+
+format_instructions: |
+  When generating SPL queries:
+  1. First provide a brief summary of the solutions
+  2. Then provide detailed queries and explanations in JSON format
+  3. Optionally include a query flow visualization for complex queries
+
+example_conversation:
+  - role: user
+    content: |
+      Find all failed login attempts in the last 24 hours
+  - role: assistant
+    content: |
+      Summary:
+      Generated 2 SPL queries for analyzing failed login attempts - a basic search with status filtering and a more detailed analysis with user statistics.
+
+      Query Details:
+      {
+        "solutions": [
+          {
+            "spl_query": "index=* sourcetype=* login failed OR failure earliest=-24h | table _time user src_ip status",
+            "explanation": "Basic search showing all failed logins with key fields in the last 24 hours",
+            "data_sources": {
+              "indexes": ["security", "auth"],
+              "sourcetypes": ["auth*", "security*"],
+              "key_fields": ["user", "src_ip", "status"]
+            }
+          },
+          {
+            "spl_query": "index=* sourcetype=* login failed OR failure earliest=-24h | stats count by user, src_ip | sort -count",
+            "explanation": "Statistical analysis showing top users and source IPs with failed logins",
+            "data_sources": {
+              "indexes": ["security", "auth"],
+              "sourcetypes": ["auth*", "security*"],
+              "key_fields": ["user", "src_ip"]
+            }
+          }
+        ]
+      }
+
+      ## Query Flow - Statistical Analysis
+      ```mermaid
+      graph TD
+        A[Base Search] --> B[Time Filter]
+        B --> C[Group by user/IP]
+        C --> D[Sort by count]
+      ```

@@ -45,45 +45,124 @@ inputs:
     ignore_undefined: true
 ```
 
-## Output Format:
+## System Outputs:
 
-* A completed `.md` system context file with the following structure:
+```yaml
+outputs:
+  - name: system_md
+    description: The generated system markdown file content
+    type: markdown
+    required: true
+    example: |
+      # System: Example System
 
-  * Title reflecting the system's purpose.
-  * Clearly formulated Purpose section.
-  * Expanded Functionality section with practical details.
-  * Descriptions of expected input and output formats.
-* Example output for a log interpretation system:
+      ## Purpose:
+      The purpose of this system is...
 
-  ```
-  # System: Log Interpretation
+      ## Functionality:
+      * Feature 1
+      * Feature 2
 
-  ## Purpose:
+      ## System Inputs:
+      ```yaml
+      inputs:
+        - name: example_input
+          description: An example input
+          type: text
+          required: true
+      ```
 
-  The purpose of `log_interpretation` is to analyze raw log content to identify meaningful patterns, recurring structures, anomalies, and outliers. This assists in understanding system behavior, detecting unusual events, and supporting troubleshooting or threat detection efforts.
+      ## System Outputs:
+      ```yaml
+      outputs:
+        - name: example_output
+          description: An example output
+          type: text
+          required: true
+      ```
 
-  ## Functionality:
+      ## Model Configuration:
+      ```yaml
+      model:
+        provider: openrouter
+        model_name: anthropic/claude-2
+        temperature: 0.7
+      ```
 
-  * Parse and analyze arbitrary log files, even if the format is unknown or mixed.
-  * Detect repeating patterns such as recurring log message formats or timestamps.
-  * Highlight outliers, rare events, or messages deviating from the typical structure.
-  * Group similar log entries to visualize normal behavior clusters.
-  * Provide human-readable interpretations of discovered patterns and anomalies.
-  * Operate without requiring predefined log format specifications but can leverage known structures if provided.
+  - name: validation_results
+    description: Validation results for the generated system definition
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        is_valid: { type: boolean }
+        template_compatibility: { type: boolean }
+        warnings:
+          type: array
+          items: { type: string }
+        suggestions:
+          type: array
+          items: { type: string }
 
-  ## Input Format:
+  - name: system_metadata
+    description: Metadata about the generated system
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        name: { type: string }
+        file_name: { type: string }
+        input_count: { type: number }
+        output_count: { type: number }
+        has_model_config: { type: boolean }
+```
 
-  * Freeform raw log content as plain text.
-  * May include a mix of timestamps, message levels, source identifiers, and message bodies.
-  * Optionally, user can specify known fields (e.g., timestamp pattern) to improve detection accuracy.
+## Model Configuration:
 
-  ## Output Format:
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-2
+  temperature: 0.7
+  max_tokens: 4000
+  stop_sequences:
+    - "##"
+    - "```"
 
-  log_interpretation: (string)
-  * A structured summary containing:
+format_instructions: |
+  Generate system definitions in this order:
+  1. Create the full markdown content following the template structure
+  2. Validate the generated content against template requirements
+  3. Generate metadata about the created system
 
-    * Detected common patterns or message templates.
-    * List of anomalies or outlier log lines with explanations.
-    * Groupings of similar log events.
-    * Optional visual indicators (e.g., counts, rarity scores) for quick assessment.
-  ```
+example_conversation:
+  - role: user
+    content: |
+      Create a system for analyzing log files to find patterns and anomalies
+  - role: assistant
+    content: |
+      Generated Markdown:
+      # System: Log Analysis
+      [Full markdown content with inputs, outputs, and model configuration]
+
+      Validation Results:
+      {
+        "is_valid": true,
+        "template_compatibility": true,
+        "warnings": [],
+        "suggestions": [
+          "Consider adding time range parameter",
+          "Could add visualization output"
+        ]
+      }
+
+      System Metadata:
+      {
+        "name": "Log Analysis",
+        "file_name": "log_analysis.md",
+        "input_count": 3,
+        "output_count": 2,
+        "has_model_config": true
+      }

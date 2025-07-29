@@ -60,37 +60,127 @@ inputs:
 ```
   ```
 
-## Output Format:
+## System Outputs:
 
-Produces a markdown file structured as follows:
+```yaml
+outputs:
+  - name: market_analysis
+    description: Comprehensive market analysis report in markdown format
+    type: markdown
+    required: true
+    example: |
+      # Market Analysis Report: CloudStore Pro
 
+      ## Product Overview
+      - **Type**: Cloud Storage Solution
+      - **Key Features**: 
+        - End-to-end encryption
+        - Multi-region redundancy
+      - **Benefits**:
+        - Enhanced security
+        - High availability
+      - **Cons**: 
+        - Higher cost
+        - Complex setup
+
+  - name: competitor_comparison
+    description: Detailed comparison of competitors in structured format
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        analyzed_product:
+          type: object
+          properties:
+            name: { type: string }
+            type: { type: string }
+            features: 
+              type: array
+              items: { type: string }
+        competitors:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              features: 
+                type: array
+                items: { type: string }
+              pros: 
+                type: array
+                items: { type: string }
+              cons:
+                type: array
+                items: { type: string }
+              pricing: { type: string }
+              deployment: { type: string }
+              reference_url: { type: string }
+              last_verified: { type: string }
+
+  - name: market_trends
+    description: Analysis of current market trends and future predictions
+    type: text
+    required: false
+    example: |
+      Current market trends show increasing demand for hybrid cloud solutions.
+      Key growth drivers include:
+      1. Remote work adoption
+      2. Data security concerns
+      3. Cost optimization needs
 ```
-# Market Analysis Report: [Product Name]
 
-## Product Overview
+## Model Configuration:
 
-- **Type**: [Type]
-- **Key Features**: 
-  - Feature 1
-  - Feature 2
-- **Benefits**:
-  - Benefit 1
-  - Benefit 2
-- **Cons**: 
-  - [Optional Cons]
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-2
+  temperature: 0.7
+  max_tokens: 4000
+  stop_sequences:
+    - "##"
+    - "```"
 
-## Competitive Landscape
+format_instructions: |
+  Generate the market analysis in this order:
+  1. Create a detailed markdown report with product overview and analysis
+  2. Provide structured competitor comparison data in JSON format
+  3. Include market trends analysis if relevant information is available
 
-| Competitor Product | Features | Pros | Cons | Pricing | Deployment | References |
-|--------------------|----------|------|------|---------|------------|------------|
-| AlphaStorage       | Redundancy, Encryption | High reliability | Expensive subscription | Tiered model | Cloud     | [Alpha Review](https://example.com/alphastorage-review) |
-| BetaBackup         | Scalability, Security   | Cost-effective   | Limited support        | Per-use      | Hybrid    | [Beta Review](https://example.com/betabackup-review)    |
+example_conversation:
+  - role: user
+    content: |
+      Analyze the market for a new cloud storage solution called "CloudStore Pro"
+      with encryption and multi-region redundancy features.
+  - role: assistant
+    content: |
+      # Market Analysis Report: CloudStore Pro
+      
+      ## Product Overview
+      [Detailed markdown content...]
 
-## Online References Review
+      Competitor Analysis:
+      {
+        "analyzed_product": {
+          "name": "CloudStore Pro",
+          "type": "Cloud Storage",
+          "features": ["Encryption", "Multi-region redundancy"]
+        },
+        "competitors": [
+          {
+            "name": "StorageGiant",
+            "features": ["Local redundancy", "Basic encryption"],
+            "pros": ["Cost effective", "Easy setup"],
+            "cons": ["Limited features", "Single region"],
+            "pricing": "Pay-per-use",
+            "deployment": "Cloud-only",
+            "reference_url": "https://example.com/storagegiant",
+            "last_verified": "2025-07-29"
+          }
+        ]
+      }
 
-- **Alpha Storage**:
-  - Reference checked at [Last checked date].
-  - Accurate source of features and pricing.
-- **Beta Backup**:
-  - Reference verified and up-to-date as of [Last checked date].
-
+      Current Market Trends:
+      Cloud storage market shows 15% YoY growth with increasing
+      focus on security and compliance features...

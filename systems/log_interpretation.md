@@ -58,12 +58,117 @@ inputs:
     max: 100
 ```
 
-## Output Format:
+## System Outputs:
 
-log_interpretation: (string)
-* A structured summary containing:
+```yaml
+outputs:
+  - name: summary
+    description: A structured summary of log analysis
+    type: text
+    required: true
+    example: |
+      Analysis found 3 common message patterns and 2 anomalies.
+      Most frequent pattern: User login events (60% of logs)
+      Detected anomalies in timestamp sequence at lines 145-148
 
-  * Detected common patterns or message templates.
-  * List of anomalies or outlier log lines with explanations.
-  * Groupings of similar log events.
-  * Optional visual indicators (e.g., counts, rarity scores) for quick assessment.
+  - name: patterns
+    description: Detailed analysis of detected patterns
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        common_patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              pattern: { type: string }
+              frequency: { type: number }
+              example_lines: 
+                type: array
+                items: { type: string }
+        anomalies:
+          type: array
+          items:
+            type: object
+            properties:
+              line_number: { type: number }
+              content: { type: string }
+              reason: { type: string }
+
+  - name: visualization
+    description: Visual representation of log patterns
+    type: markdown
+    required: false
+    example: |
+      ## Log Pattern Distribution
+      ```mermaid
+      pie
+        title Log Event Types
+        "User Login" : 60
+        "System Status" : 30
+        "Error Events" : 10
+      ```
+```
+
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-2
+  temperature: 0.7
+  max_tokens: 2000
+  stop_sequences:
+    - "##"
+    - "```"
+
+format_instructions: |
+  Analyze the log content in this order:
+  1. First provide a high-level text summary
+  2. Then provide detailed pattern analysis in JSON format
+  3. If patterns are found, create a visualization
+
+example_conversation:
+  - role: user
+    content: |
+      Please analyze these logs:
+      2023-01-01 10:00:00 INFO User login successful: john
+      2023-01-01 10:00:01 ERROR Failed to connect to database
+      2023-01-01 10:00:02 INFO User login successful: mary
+  - role: assistant
+    content: |
+      Summary of log analysis:
+      Found 2 distinct patterns and 1 anomaly in the logs.
+      Main pattern is user login events (66% of logs).
+      One database connection error detected.
+
+      Pattern Analysis:
+      {
+        "common_patterns": [
+          {
+            "pattern": "INFO User login successful: *",
+            "frequency": 0.66,
+            "example_lines": [
+              "2023-01-01 10:00:00 INFO User login successful: john",
+              "2023-01-01 10:00:02 INFO User login successful: mary"
+            ]
+          }
+        ],
+        "anomalies": [
+          {
+            "line_number": 2,
+            "content": "2023-01-01 10:00:01 ERROR Failed to connect to database",
+            "reason": "Unique ERROR event in sequence"
+          }
+        ]
+      }
+
+      ## Pattern Visualization
+      ```mermaid
+      pie
+        title Log Event Types
+        "User Logins" : 66
+        "Database Errors" : 33
+      ```

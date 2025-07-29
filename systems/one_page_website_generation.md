@@ -57,14 +57,137 @@ inputs:
     ignore_undefined: true
 ```
 
-## Output Format:
+## System Outputs:
 
-`one_page_website_creator` outputs a complete, ready-to-deploy one-page website package:
+```yaml
+outputs:
+  - name: html_content
+    description: The main HTML content of the website
+    type: code
+    required: true
+    format_spec:
+      language: html
+    example: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <title>Brand Name</title>
+          <link rel="stylesheet" href="style.css">
+      </head>
+      <body>
+          <!-- Website content -->
+      </body>
+      </html>
 
-* **HTML:** Valid, semantic structure with sections for navigation, branding, content, and contact.
-* **CSS:** Minimal, responsive styling with clean layout and visual balance.
-* **JS (Optional):** Small script for image spinner animation or interactive elements.
-* **Assets:** Placeholder or user-provided logo and spinner images.
-* **Folder Structure:** Organized project files for immediate deployment or further editing.
+  - name: css_styles
+    description: CSS styles for the website
+    type: code
+    required: true
+    format_spec:
+      language: css
+    example: |
+      body {
+          margin: 0;
+          font-family: Arial, sans-serif;
+      }
+      .nav { /* Navigation styles */ }
+      .header { /* Header styles */ }
 
-The final website emphasizes simplicity, modern aesthetics, fast loading, and ease of use—ideal for showcasing essential information with minimal distractions.
+  - name: javascript_code
+    description: Optional JavaScript for animations and interactivity
+    type: code
+    required: false
+    format_spec:
+      language: javascript
+    example: |
+      document.addEventListener('DOMContentLoaded', () => {
+          // Animation code
+      });
+
+  - name: project_structure
+    description: Description of the project file structure
+    type: json
+    required: true
+    schema:
+      type: object
+      properties:
+        root_dir:
+          type: object
+          properties:
+            files:
+              type: array
+              items: { type: string }
+            directories:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
+
+  - name: preview_info
+    description: Information for previewing the website
+    type: text
+    required: true
+    example: |
+      Website files have been generated successfully!
+      To preview:
+      1. Open index.html in a web browser
+      2. All assets are in the assets/ directory
+      3. Styles are in style.css
+```
+
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-2
+  temperature: 0.7
+  max_tokens: 4000
+  stop_sequences:
+    - "##"
+    - "```"
+
+format_instructions: |
+  Generate website files in this order:
+  1. Create the main HTML structure
+  2. Generate CSS styles
+  3. Add JavaScript if needed
+  4. Organize file structure
+  5. Provide preview information
+
+example_conversation:
+  - role: user
+    content: |
+      Generate a one-page website for "TechCorp Solutions"
+  - role: assistant
+    content: |
+      HTML Content:
+      <!DOCTYPE html>
+      <html lang="en">
+      [Full HTML content...]
+
+      CSS Styles:
+      /* Modern, clean styling */
+      [Full CSS content...]
+
+      JavaScript (for image spinner):
+      document.addEventListener('DOMContentLoaded', () => {
+          [Animation code...]
+      });
+
+      Project Structure:
+      {
+        "root_dir": {
+          "files": ["index.html", "style.css", "script.js"],
+          "directories": {
+            "assets": ["logo.png", "spinner.jpg"]
+          }
+        }
+      }
+
+      Preview Info:
+      Website generated successfully!
+      Main file: index.html
+      Assets in assets/ directory
+      Open in browser to view

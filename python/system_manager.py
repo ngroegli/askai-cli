@@ -4,6 +4,8 @@ import json
 import yaml
 from typing import List, Dict, Any, Optional, Union
 from system_inputs import SystemInput, InputType
+from system_outputs import SystemOutput
+from system_configuration import SystemConfiguration, ModelConfiguration
 
 class SystemManager:
     def __init__(self, base_path: str):
@@ -68,6 +70,85 @@ class SystemManager:
             print(f"Error parsing system inputs: {str(e)}")
             return []
 
+    def _parse_system_outputs(self, content: str) -> List[SystemOutput]:
+        """Parse system outputs from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            List[SystemOutput]: List of parsed system outputs
+        """
+        if "## System Outputs" not in content:
+            return []
+            
+        try:
+            yaml_text = content.split("## System Outputs")[1]
+            yaml_block = yaml_text.split("```yaml")[1].split("```")[0]
+            outputs_data = yaml.safe_load(yaml_block)
+            return [SystemOutput.from_dict(output_data) for output_data in outputs_data.get('outputs', [])]
+        except Exception as e:
+            print(f"Error parsing system outputs: {str(e)}")
+            return []
+
+    def _parse_system_configuration(self, content: str) -> Optional[SystemConfiguration]:
+        """Parse system configuration from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            Optional[SystemConfiguration]: Parsed system configuration
+        """
+        if "## Model Configuration" not in content:
+            return None
+            
+        try:
+            yaml_text = content.split("## Model Configuration")[1]
+            yaml_block = yaml_text.split("```yaml")[1].split("```")[0]
+            config_data = yaml.safe_load(yaml_block)
+
+            # Extract name from the first line
+            name = content.split('\n')[0].replace('# System:', '').strip()
+            
+            # Extract description from the Purpose section
+            description = ""
+            if "## Purpose" in content:
+                purpose_text = content.split("## Purpose")[1].split("##")[0].strip()
+                description = purpose_text
+
+            # Create configuration
+            config_data['name'] = name
+            config_data['description'] = description
+            
+            return SystemConfiguration.from_dict(config_data)
+        except Exception as e:
+            print(f"Error parsing system configuration: {str(e)}")
+            return None
+
+    def _parse_system_prompt(self, content: str) -> str:
+        """Extract just the purpose and functionality sections for the prompt.
+        
+        Args:
+            content: The full markdown content
+            
+        Returns:
+            str: The purpose and functionality sections only
+        """
+        sections = []
+        
+        # Get purpose section
+        if "## Purpose" in content:
+            purpose = content.split("## Purpose")[1].split("##")[0].strip()
+            sections.append("## Purpose\n\n" + purpose)
+            
+        # Get functionality section
+        if "## Functionality" in content:
+            functionality = content.split("## Functionality")[1].split("##")[0].strip()
+            sections.append("## Functionality\n\n" + functionality)
+            
+        return "\n\n".join(sections)
+
     def get_system_content(self, system_id: str) -> Optional[Dict[str, Any]]:
         """Get the content and metadata of a specific system file.
         
@@ -85,8 +166,10 @@ class SystemManager:
             content = f.read()
             
         return {
-            'content': content,
-            'inputs': self._parse_system_inputs(content)
+            'prompt_content': self._parse_system_prompt(content),
+            'inputs': self._parse_system_inputs(content),
+            'outputs': self._parse_system_outputs(content),
+            'configuration': self._parse_system_configuration(content)
         }
 
     def _read_input_file(self, file_path: str) -> Optional[str]:
@@ -185,33 +268,23 @@ class SystemManager:
                         break
                     continue
                     
+                # Validate the input value
                 valid, error = input_def.validate_value(value)
-                if valid:
-                    result[input_def.name] = value
-                    i += 1
-                    break
-                print(f"Error: {error}")
-            
-            # Validate provided values
-            else:
-                value = result[input_def.name]
-                
-                # For FILE type inputs, read the file content
+                if not valid:
+                    print(f"Error: {error}")
+                    continue
+
+                # For FILE type inputs, read the file content after validation
                 if input_def.input_type == InputType.FILE:
-                    valid, error = input_def.validate_value(value)
-                    if not valid:
-                        print(f"Error in '{input_def.name}': {error}")
-                        return None
-                    # Read the file content
                     content = self._read_input_file(value)
                     if content is None:
-                        return None
+                        continue
                     result[input_def.name] = content
                 else:
-                    valid, error = input_def.validate_value(value)
-                    if not valid:
-                        print(f"Error in '{input_def.name}': {error}")
-                        return None
+                    result[input_def.name] = value
+                
+                i += 1
+                break
         
         # Validate alternative requirements
         validated_alternatives = set()  # Track which alternative pairs we've validated

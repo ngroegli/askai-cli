@@ -95,11 +95,16 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def build_messages(args, system_manager, logger):
+def build_messages(question=None, file_input=None, system_id=None, system_input=None, 
+                format="rawtext", system_manager=None, logger=None):
     """Builds the message list for OpenRouter.
     
     Args:
-        args: Parsed command line arguments
+        question: Optional user question
+        file_input: Optional path to input file
+        system_id: Optional system ID to use
+        system_input: Optional system inputs as dict
+        format: Response format (rawtext, json, or md)
         system_manager: SystemManager instance
         logger: Logger instance for recording operations
         
@@ -117,72 +122,86 @@ def build_messages(args, system_manager, logger):
         })
 
     # Handle input file content
-    if args.file_input and (file_content := get_file_input(args.file_input)):
+    if file_input and (file_content := get_file_input(file_input)):
         logger.info(json.dumps({
             "log_message": "Input file read successfully", 
-            "file_path": args.file_input
+            "file_path": file_input
         }))
         messages.append({
             "role": "system", 
-            "content": f"The file content of {args.file_input} to work with:\n{file_content}"
+            "content": f"The file content of {file_input} to work with:\n{file_content}"
         })
 
     # Add system-specific context if specified
-    if args.use_system is not None:  # -s was used
-        system_id = None
-        if args.use_system == 'new':  # No specific system ID was provided
+    if system_id is not None:
+        if system_id == 'new':  # No specific system ID was provided
             system_id = system_manager.select_system()
             if system_id is None:
                 print("System selection cancelled.")
                 sys.exit(0)
-        else:  # Specific system ID was provided
-            system_id = args.use_system
             
-        logger.info(json.dumps({
-            "log_message": "System used", 
-            "system": system_id
-        }))
-        
-        system_data = system_manager.get_system_content(system_id)
-        if system_data is None:
-            print(f"Error: System '{system_id}' does not exist")
-            sys.exit(1)
+            logger.info(json.dumps({
+                "log_message": "System used", 
+                "system": system_id
+            }))
             
-        # Process system inputs
-        system_inputs = system_manager.process_system_inputs(
-            system_id=system_id,
-            input_values=args.system_input
-        )
-        
-        if system_inputs is None:
-            sys.exit(1)
+            system_data = system_manager.get_system_content(system_id)
+            if system_data is None:
+                print(f"Error: System '{system_id}' does not exist")
+                sys.exit(1)
+                
+            # Get and validate system data
+            system_inputs = system_manager.process_system_inputs(
+                system_id=system_id,
+                input_values=system_input
+            )
             
-        # Combine system content with processed inputs
-        system_context = system_data['content']
-        if system_inputs:
-            system_context += "\n\nSystem Inputs:\n" + json.dumps(system_inputs, indent=2)
-            
-        messages.append({
-            "role": "system", 
-            "content": system_context
-        })
+            if system_inputs is None:
+                sys.exit(1)
+                
+            # Add system prompt content (purpose and functionality only)
+            system_prompt = system_data['prompt_content']
+            messages.append({
+                "role": "system", 
+                "content": system_prompt
+            })
+
+            # If there are inputs, provide them in a structured way
+            if system_inputs:
+                messages.append({
+                    "role": "system",
+                    "content": "Available inputs:\n" + json.dumps(system_inputs, indent=2)
+                })
+                
+            # If there are output definitions, provide them to help the AI structure its response
+            if system_outputs := system_data.get('outputs'):
+                output_spec = {
+                    output.name: {
+                        "description": output.description,
+                        "type": output.output_type.value,
+                        "required": output.required,
+                        "schema": output.schema if hasattr(output, 'schema') else None
+                    } for output in system_outputs
+                }
+                messages.append({
+                    "role": "system",
+                    "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
+                })
 
     # Add format instructions
     messages.append({
         "role": "system", 
-        "content": build_format_instruction(args.format)
+        "content": build_format_instruction(format)
     })
 
     # Add user question if provided
-    if args.question:
+    if question:
         messages.append({
             "role": "user", 
-            "content": args.question
+            "content": question
         })
 
     return messages
-
-
 def handle_system_commands(args, system_manager, logger):
     """Handle system-related commands."""
     if args.list_systems:
@@ -279,15 +298,80 @@ def validate_arguments(args, logger):
         )
 
 
-def get_ai_response(messages, args, logger):
-    """Get response from AI model with progress spinner."""
+def get_model_configuration(model_name, config, logger, system_data=None):
+    """Get model configuration based on priority: CLI > System config > Global config.
+    
+    Args:
+        model_name: Optional model name from CLI
+        config: Global configuration
+        logger: Logger instance
+        system_data: Optional system data containing system-specific configuration
+        
+    Returns:
+        ModelConfiguration: The model configuration to use
+    """
+    from system_configuration import ModelConfiguration, ModelProvider
+    
+    # Priority 1: Explicit model name
+    if model_name:
+        logger.info(json.dumps({
+            "log_message": "Using explicit model configuration",
+            "model": model_name
+        }))
+        return ModelConfiguration(
+            provider=ModelProvider.OPENROUTER,
+            model_name=model_name
+        )
+    
+    # Priority 2: System configuration
+    if system_data and (system_config := system_data.get('configuration')):
+        logger.info(json.dumps({
+            "log_message": "Using model configuration from system definition",
+            "model": system_config.model.model_name
+        }))
+        return system_config.model
+    
+    # Priority 3: Global configuration
+    logger.info(json.dumps({
+        "log_message": "Using global default model configuration",
+        "model": config["default_model"]
+    }))
+    return ModelConfiguration(
+        provider=ModelProvider.OPENROUTER,
+        model_name=config["default_model"]
+    )
+
+def get_ai_response(messages, model_name=None, system_id=None, debug=False, logger=None, system_manager=None):
+    """Get response from AI model with progress spinner.
+    
+    Args:
+        messages: List of message dictionaries
+        model_name: Optional model name to override default
+        system_id: Optional system ID to get system-specific configuration
+        debug: Whether to enable debug mode
+        logger: Logger instance
+        system_manager: SystemManager instance for accessing system data
+    """
     stop_spinner = threading.Event()
     spinner = threading.Thread(target=tqdm_spinner, args=(stop_spinner,))
     spinner.start()
 
     try:
         logger.info(json.dumps({"log_message": "Messages sending to ai"}))
-        response = ask_openrouter(messages=messages, model=args.model, debug=args.debug)
+        
+        # Get configuration from the proper source
+        config = load_config()
+        system_data = None
+        if system_id:
+            system_data = system_manager.get_system_content(system_id)
+        model_config = get_model_configuration(model_name, config, logger, system_data)
+            
+        response = ask_openrouter(
+            messages=messages, 
+            model_config=model_config,
+            debug=debug
+        )
+        
         logger.debug(json.dumps({
             "log_message": "Response from ai", 
             "response": str(response)
@@ -340,8 +424,16 @@ def main():
     # Validate arguments
     validate_arguments(args, logger)
 
-    # Build and send messages to AI
-    messages = build_messages(args, system_manager, logger)
+    # Build messages with explicit parameters
+    messages = build_messages(
+        question=args.question,
+        file_input=args.file_input,
+        system_id=args.use_system,
+        system_input=args.system_input,
+        format=args.format,
+        system_manager=system_manager,
+        logger=logger
+    )
 
     # Handle persistent chat
     chat_id = None
@@ -379,12 +471,66 @@ def main():
 
     logger.debug(json.dumps({"log_message": "Messages content", "messages": messages}))
     
-    # Get AI response
-    response = get_ai_response(messages, args, logger)
+    # Get AI response with explicit parameters
+    response = get_ai_response(
+        messages=messages,
+        model_name=args.model,
+        system_id=args.use_system,
+        debug=args.debug,
+        logger=logger,
+        system_manager=system_manager
+    )
 
     # Store chat history if using persistent chat
     if chat_id:
-        chat_manager.add_conversation(chat_id, messages, response)
+        # Parse outputs if we have output specifications
+        structured_outputs = None
+        system_outputs = None
+        system_config = None
+        
+        if args.use_system:
+            system_data = system_manager.get_system_content(args.use_system)
+            if system_data:
+                system_outputs = system_data.get('outputs', [])
+                system_config = system_data.get('configuration')
+                
+                if system_outputs:
+                    # Try to parse structured outputs from response
+                    try:
+                        import re
+                        outputs = []
+                        for output_def in system_outputs:
+                            # Try to find content matching the output type pattern
+                            if output_def.output_type.value == 'json':
+                                matches = re.findall(r'\{[\s\S]*?\}', response)
+                                if matches:
+                                    outputs.append({
+                                        'name': output_def.name,
+                                        'type': output_def.output_type.value,
+                                        'value': json.loads(matches[0])
+                                    })
+                            elif output_def.output_type.value == 'markdown':
+                                # Look for markdown sections
+                                matches = re.findall(r'##[\s\S]*?(?=##|\Z)', response)
+                                if matches:
+                                    outputs.append({
+                                        'name': output_def.name,
+                                        'type': output_def.output_type.value,
+                                        'value': matches[0].strip()
+                                    })
+                        if outputs:
+                            structured_outputs = outputs
+                    except Exception as e:
+                        logger.warning(f"Could not parse structured outputs: {str(e)}")
+        
+        chat_manager.add_conversation(
+            chat_id=chat_id,
+            messages=messages,
+            response=response,
+            outputs=structured_outputs,
+            system_outputs=system_outputs,
+            system_config=system_config
+        )
 
     # Handle output and exit if needed
     if handle_output(response, args, logger):

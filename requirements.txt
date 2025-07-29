@@ -3,3 +3,4 @@ PyYAML
 tqdm
 rich
 termcolor
+jsonschema

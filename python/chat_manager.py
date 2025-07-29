@@ -3,6 +3,8 @@ import json
 import uuid
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from system_outputs import SystemOutput
+from system_configuration import SystemConfiguration
 
 class ChatManager:
     def __init__(self, config: Dict[str, Any]):
@@ -54,17 +56,34 @@ class ChatManager:
         return chat_id
 
     def add_conversation(self, chat_id: str, messages: List[Dict[str, str]], 
-                        response: str) -> None:
+                        response: str, outputs: Optional[List[Dict[str, Any]]] = None,
+                        system_outputs: Optional[List[SystemOutput]] = None,
+                        system_config: Optional[SystemConfiguration] = None) -> None:
         """Add a new conversation to the chat history.
         
         Args:
             chat_id: The chat identifier
             messages: List of message dictionaries sent to the AI
             response: The AI's response
+            outputs: Optional structured outputs from the AI
+            system_outputs: Optional system output definitions for validation
+            system_config: Optional system configuration used
         """
         chat_file = self._get_chat_file_path(chat_id)
         if not os.path.exists(chat_file):
             raise ValueError(f"Chat {chat_id} does not exist")
+
+        # Validate outputs if provided
+        if outputs and system_outputs:
+            valid, error = self.validate_outputs(outputs, system_outputs)
+            if not valid:
+                raise ValueError(f"Invalid outputs: {error}")
+
+        # Validate configuration if provided
+        if system_config:
+            valid, error = self.validate_configuration(system_config)
+            if not valid:
+                raise ValueError(f"Invalid configuration: {error}")
 
         with open(chat_file, 'r') as f:
             chat_data = json.load(f)
@@ -82,11 +101,24 @@ class ChatManager:
         if user_messages:
             current_messages.append(user_messages[-1])  # Only keep the latest user message
 
-        chat_data['conversations'].append({
+        conversation = {
             "timestamp": datetime.now().isoformat(),
             "messages": current_messages,
-            "response": response
-        })
+            "response": response,
+        }
+        
+        # Add structured outputs if provided
+        if outputs:
+            conversation["outputs"] = outputs
+            
+        # Add system configuration if provided
+        if system_config:
+            conversation["system_config"] = {
+                "model": system_config.model.__dict__,
+                "format_instructions": system_config.format_instructions
+            }
+
+        chat_data['conversations'].append(conversation)
 
         with open(chat_file, 'w') as f:
             json.dump(chat_data, f, indent=2)
@@ -185,6 +217,56 @@ class ChatManager:
                     print(f"Please enter a number between {min_choice} and {max_choice}")
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
+
+    def validate_outputs(self, outputs: List[Dict[str, Any]], 
+                        system_outputs: List[SystemOutput]) -> tuple[bool, Optional[str]]:
+        """Validate AI outputs against the system's output definitions.
+        
+        Args:
+            outputs: The outputs to validate
+            system_outputs: The system's output definitions
+            
+        Returns:
+            tuple[bool, Optional[str]]: Success flag and error message if validation fails
+        """
+        required_outputs = {output.name: output for output in system_outputs if output.required}
+        
+        # Check all required outputs are present
+        for name, output_def in required_outputs.items():
+            if not any(o['name'] == name for o in outputs):
+                return False, f"Missing required output '{name}'"
+                
+        # Validate each provided output
+        for output in outputs:
+            output_def = next((o for o in system_outputs if o.name == output['name']), None)
+            if not output_def:
+                return False, f"Unknown output '{output['name']}'"
+                
+            valid, error = output_def.validate_value(output['value'])
+            if not valid:
+                return False, f"Invalid output '{output['name']}': {error}"
+                
+        return True, None
+
+    def validate_configuration(self, config: SystemConfiguration) -> tuple[bool, Optional[str]]:
+        """Validate a system's model configuration.
+        
+        Args:
+            config: The system configuration to validate
+            
+        Returns:
+            tuple[bool, Optional[str]]: Success flag and error message if validation fails
+        """
+        if not config.model:
+            return False, "Missing model configuration"
+            
+        if not config.model.model_name:
+            return False, "Missing model name in configuration"
+            
+        if not config.model.provider:
+            return False, "Missing model provider in configuration"
+            
+        return True, None
 
     def build_context_messages(self, chat_id: str) -> List[Dict[str, str]]:
         """Build context messages from chat history.
