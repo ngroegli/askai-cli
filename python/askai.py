@@ -109,9 +109,10 @@ def build_messages(question=None, file_input=None, system_id=None, system_input=
         logger: Logger instance for recording operations
         
     Returns:
-        list: List of message dictionaries for the AI model
+        tuple: (messages, resolved_system_id)
     """
     messages = []
+    resolved_system_id = system_id
 
     # Handle piped input from terminal
     if context := get_piped_input():
@@ -134,59 +135,55 @@ def build_messages(question=None, file_input=None, system_id=None, system_input=
 
     # Add system-specific context if specified
     if system_id is not None:
-        if system_id == 'new':  # No specific system ID was provided
-            system_id = system_manager.select_system()
-            if system_id is None:
+        # Handle system selection if no specific ID was provided
+        if system_id == 'new':
+            resolved_system_id = system_manager.select_system()
+            if resolved_system_id is None:
                 print("System selection cancelled.")
                 sys.exit(0)
-            
-            logger.info(json.dumps({
-                "log_message": "System used", 
-                "system": system_id
-            }))
-            
-            system_data = system_manager.get_system_content(system_id)
-            if system_data is None:
-                print(f"Error: System '{system_id}' does not exist")
-                sys.exit(1)
-                
-            # Get and validate system data
-            system_inputs = system_manager.process_system_inputs(
-                system_id=system_id,
-                input_values=system_input
-            )
-            
-            if system_inputs is None:
-                sys.exit(1)
-                
-            # Add system prompt content (purpose and functionality only)
-            system_prompt = system_data['prompt_content']
+        else:
+            resolved_system_id = system_id
+        logger.info(json.dumps({
+            "log_message": "System used", 
+            "system": resolved_system_id
+        }))
+        system_data = system_manager.get_system_content(resolved_system_id)
+        if system_data is None:
+            print(f"Error: System '{resolved_system_id}' does not exist")
+            sys.exit(1)
+        # Get and validate system data
+        system_inputs = system_manager.process_system_inputs(
+            system_id=resolved_system_id,
+            input_values=system_input
+        )
+        if system_inputs is None:
+            sys.exit(1)
+        # Add system prompt content (purpose and functionality only)
+        system_prompt = system_data['prompt_content']
+        messages.append({
+            "role": "system", 
+            "content": system_prompt
+        })
+        # If there are inputs, provide them in a structured way
+        if system_inputs:
             messages.append({
-                "role": "system", 
-                "content": system_prompt
+                "role": "system",
+                "content": "Available inputs:\n" + json.dumps(system_inputs, indent=2)
             })
-
-            # If there are inputs, provide them in a structured way
-            if system_inputs:
-                messages.append({
-                    "role": "system",
-                    "content": "Available inputs:\n" + json.dumps(system_inputs, indent=2)
-                })
-                
-            # If there are output definitions, provide them to help the AI structure its response
-            if system_outputs := system_data.get('outputs'):
-                output_spec = {
-                    output.name: {
-                        "description": output.description,
-                        "type": output.output_type.value,
-                        "required": output.required,
-                        "schema": output.schema if hasattr(output, 'schema') else None
-                    } for output in system_outputs
-                }
-                messages.append({
-                    "role": "system",
-                    "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
-                })
+        # If there are output definitions, provide them to help the AI structure its response
+        if system_outputs := system_data.get('outputs'):
+            output_spec = {
+                output.name: {
+                    "description": output.description,
+                    "type": output.output_type.value,
+                    "required": output.required,
+                    "schema": output.schema if hasattr(output, 'schema') else None
+                } for output in system_outputs
+            }
+            messages.append({
+                "role": "system",
+                "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
+            })
 
     # Add format instructions
     messages.append({
@@ -201,7 +198,8 @@ def build_messages(question=None, file_input=None, system_id=None, system_input=
             "content": question
         })
 
-    return messages
+    return messages, resolved_system_id
+
 def handle_system_commands(args, system_manager, logger):
     """Handle system-related commands."""
     if args.list_systems:
@@ -324,12 +322,35 @@ def get_model_configuration(model_name, config, logger, system_data=None):
         )
     
     # Priority 2: System configuration
-    if system_data and (system_config := system_data.get('configuration')):
-        logger.info(json.dumps({
-            "log_message": "Using model configuration from system definition",
-            "model": system_config.model.model_name
-        }))
-        return system_config.model
+    if system_data and isinstance(system_data, dict):
+        # Configuration is nested under the 'configuration' key
+        system_config = system_data.get('configuration')
+        
+        if system_config:          
+            if hasattr(system_config, 'model') and system_config.model:
+                # Direct access to ModelConfiguration object from SystemConfiguration
+                model_config = system_config.model
+                logger.info(json.dumps({
+                    "log_message": "Using model configuration from system",
+                    "model_name": model_config.model_name,
+                    "provider": model_config.provider.value if model_config.provider else 'openrouter'
+                }))
+                return model_config
+            elif isinstance(system_config, dict) and 'model' in system_config:
+                # Handle dictionary format
+                logger.info(f"Creating model configuration from dict: {system_config}")
+                try:
+                    model_data = system_config['model']
+                    return ModelConfiguration(
+                        provider=model_data.get('provider', 'openrouter'),
+                        model_name=model_data.get('model_name'),
+                        temperature=model_data.get('temperature', 0.7),
+                        max_tokens=model_data.get('max_tokens'),
+                        stop_sequences=model_data.get('stop_sequences'),
+                        custom_parameters=model_data.get('custom_parameters')
+                    )
+                except Exception as e:
+                    logger.error(f"Error creating model configuration from dict: {e}")
     
     # Priority 3: Global configuration
     logger.info(json.dumps({
@@ -364,6 +385,7 @@ def get_ai_response(messages, model_name=None, system_id=None, debug=False, logg
         system_data = None
         if system_id:
             system_data = system_manager.get_system_content(system_id)
+
         model_config = get_model_configuration(model_name, config, logger, system_data)
             
         response = ask_openrouter(
@@ -424,8 +446,8 @@ def main():
     # Validate arguments
     validate_arguments(args, logger)
 
-    # Build messages with explicit parameters
-    messages = build_messages(
+    # Build messages and get the resolved system_id (after selection)
+    messages, resolved_system_id = build_messages(
         question=args.question,
         file_input=args.file_input,
         system_id=args.use_system,
@@ -454,7 +476,6 @@ def main():
                 chat_id = selected_chat
         else:  # Specific chat ID provided
             chat_id = args.persistent_chat
-            
         # If we have a chat_id, load its context
         if chat_id:
             try:
@@ -471,11 +492,11 @@ def main():
 
     logger.debug(json.dumps({"log_message": "Messages content", "messages": messages}))
     
-    # Get AI response with explicit parameters
+    # Get AI response with explicit parameters, using the resolved system_id
     response = get_ai_response(
         messages=messages,
         model_name=args.model,
-        system_id=args.use_system,
+        system_id=resolved_system_id,
         debug=args.debug,
         logger=logger,
         system_manager=system_manager
@@ -488,8 +509,8 @@ def main():
         system_outputs = None
         system_config = None
         
-        if args.use_system:
-            system_data = system_manager.get_system_content(args.use_system)
+        if resolved_system_id:
+            system_data = system_manager.get_system_content(resolved_system_id)
             if system_data:
                 system_outputs = system_data.get('outputs', [])
                 system_config = system_data.get('configuration')

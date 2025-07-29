@@ -144,9 +144,6 @@ model:
   model_name: anthropic/claude-2
   temperature: 0.7
   max_tokens: 4000
-  stop_sequences:
-    - "##"
-    - "```"
 
 format_instructions: |
   Generate website files in this order:

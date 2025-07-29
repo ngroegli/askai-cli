@@ -101,9 +101,6 @@ model:
   model_name: anthropic/claude-2
   temperature: 0.7
   max_tokens: 2000
-  stop_sequences:
-    - "##"
-    - "```"
 
 format_instructions: |
   When generating SPL queries:

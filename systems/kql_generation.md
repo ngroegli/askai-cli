@@ -89,12 +89,9 @@ outputs:
 ```yaml
 model:
   provider: openrouter
-  model_name: anthropic/claude-2
+  model_name: anthropic/claude-3.7
   temperature: 0.7
   max_tokens: 2000
-  stop_sequences:
-    - "##"
-    - "```"
 
 format_instructions: |
   When generating KQL queries:

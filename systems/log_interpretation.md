@@ -117,58 +117,6 @@ outputs:
 ```yaml
 model:
   provider: openrouter
-  model_name: anthropic/claude-2
+  model_name: anthropic/claude-3.7-sonnet
   temperature: 0.7
   max_tokens: 2000
-  stop_sequences:
-    - "##"
-    - "```"
-
-format_instructions: |
-  Analyze the log content in this order:
-  1. First provide a high-level text summary
-  2. Then provide detailed pattern analysis in JSON format
-  3. If patterns are found, create a visualization
-
-example_conversation:
-  - role: user
-    content: |
-      Please analyze these logs:
-      2023-01-01 10:00:00 INFO User login successful: john
-      2023-01-01 10:00:01 ERROR Failed to connect to database
-      2023-01-01 10:00:02 INFO User login successful: mary
-  - role: assistant
-    content: |
-      Summary of log analysis:
-      Found 2 distinct patterns and 1 anomaly in the logs.
-      Main pattern is user login events (66% of logs).
-      One database connection error detected.
-
-      Pattern Analysis:
-      {
-        "common_patterns": [
-          {
-            "pattern": "INFO User login successful: *",
-            "frequency": 0.66,
-            "example_lines": [
-              "2023-01-01 10:00:00 INFO User login successful: john",
-              "2023-01-01 10:00:02 INFO User login successful: mary"
-            ]
-          }
-        ],
-        "anomalies": [
-          {
-            "line_number": 2,
-            "content": "2023-01-01 10:00:01 ERROR Failed to connect to database",
-            "reason": "Unique ERROR event in sequence"
-          }
-        ]
-      }
-
-      ## Pattern Visualization
-      ```mermaid
-      pie
-        title Log Event Types
-        "User Logins" : 66
-        "Database Errors" : 33
-      ```

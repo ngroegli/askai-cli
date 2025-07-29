@@ -33,8 +33,6 @@ def ask_openrouter(messages, model_config=None, debug=False):
             payload["max_tokens"] = model_config.max_tokens
         if model_config.stop_sequences:
             payload["stop"] = model_config.stop_sequences
-        if model_config.custom_parameters:
-            payload.update(model_config.custom_parameters)
     else:
         payload["model"] = config["default_model"]
 
@@ -45,7 +43,7 @@ def ask_openrouter(messages, model_config=None, debug=False):
 
     # Payload structure for OpenRouter API withoud model_config
     payload["messages"] = messages
-    
+
     response = requests.post(config["base_url"], headers=headers, json=payload)
     if response.ok:
         return response.json()["choices"][0]["message"]["content"]

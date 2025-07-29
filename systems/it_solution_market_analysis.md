@@ -135,12 +135,9 @@ outputs:
 ```yaml
 model:
   provider: openrouter
-  model_name: anthropic/claude-2
+  model_name: anthropic/claude-3.7
   temperature: 0.7
   max_tokens: 4000
-  stop_sequences:
-    - "##"
-    - "```"
 
 format_instructions: |
   Generate the market analysis in this order:

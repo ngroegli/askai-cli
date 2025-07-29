@@ -5,7 +5,12 @@ import yaml
 from typing import List, Dict, Any, Optional, Union
 from system_inputs import SystemInput, InputType
 from system_outputs import SystemOutput
-from system_configuration import SystemConfiguration, ModelConfiguration
+from system_configuration import (
+    SystemConfiguration,
+    ModelConfiguration,
+    SystemPurpose,
+    SystemFunctionality
+)
 
 class SystemManager:
     def __init__(self, base_path: str):
@@ -91,23 +96,16 @@ class SystemManager:
             print(f"Error parsing system outputs: {str(e)}")
             return []
 
-    def _parse_system_configuration(self, content: str) -> Optional[SystemConfiguration]:
-        """Parse system configuration from markdown content.
+    def _parse_system_purpose(self, content: str) -> Optional[SystemPurpose]:
+        """Parse system purpose from markdown content.
         
         Args:
             content: The markdown content to parse
             
         Returns:
-            Optional[SystemConfiguration]: Parsed system configuration
+            Optional[SystemPurpose]: Parsed system purpose
         """
-        if "## Model Configuration" not in content:
-            return None
-            
         try:
-            yaml_text = content.split("## Model Configuration")[1]
-            yaml_block = yaml_text.split("```yaml")[1].split("```")[0]
-            config_data = yaml.safe_load(yaml_block)
-
             # Extract name from the first line
             name = content.split('\n')[0].replace('# System:', '').strip()
             
@@ -117,13 +115,125 @@ class SystemManager:
                 purpose_text = content.split("## Purpose")[1].split("##")[0].strip()
                 description = purpose_text
 
-            # Create configuration
-            config_data['name'] = name
-            config_data['description'] = description
-            
-            return SystemConfiguration.from_dict(config_data)
+            return SystemPurpose.from_text(name, description)
         except Exception as e:
-            print(f"Error parsing system configuration: {str(e)}")
+            print(f"Error parsing system purpose: {str(e)}")
+            return None
+
+    def _parse_system_functionality(self, content: str) -> Optional[SystemFunctionality]:
+        """Parse system functionality from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            Optional[SystemFunctionality]: Parsed system functionality
+        """
+        try:
+            if "## Functionality" in content:
+                functionality_text = content.split("## Functionality")[1].split("##")[0].strip()
+                return SystemFunctionality.from_text(functionality_text)
+            return None
+        except Exception as e:
+            print(f"Error parsing system functionality: {str(e)}")
+            return None
+
+    def _parse_model_configuration(self, content: str) -> Optional[Dict[str, Any]]:
+        """Parse model configuration from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            Optional[Dict[str, Any]]: Parsed model configuration data
+        """
+        if "## Model Configuration" not in content and "## Model Configuration:" not in content:
+            return None
+            
+        try:
+            # Find the model configuration section
+            parts = content.split("## Model Configuration")
+            if len(parts) < 2:
+                parts = content.split("## Model Configuration:")
+            if len(parts) < 2:
+                return None
+                
+            config_section = parts[1]
+            
+            # Split into lines and look for the YAML block
+            lines = config_section.split('\n')
+            yaml_lines = []
+            in_yaml_block = False
+            
+            for line in lines:
+                stripped = line.strip()
+                if stripped == '```yaml':
+                    in_yaml_block = True
+                    continue
+                elif stripped == '```':
+                    if in_yaml_block:  # Only break if we were in a YAML block
+                        break
+                elif in_yaml_block:
+                    yaml_lines.append(line)
+            
+            if not yaml_lines:
+                return None
+            
+            # Join the YAML lines and parse
+            yaml_content = '\n'.join(yaml_lines)
+            
+            # Parse the YAML content
+            config_data = yaml.safe_load(yaml_content)
+            
+            # Get just the model configuration part
+            if isinstance(config_data, dict) and 'model' in config_data:
+                return {'model': config_data['model']}
+                
+            return None
+        except Exception as e:
+            print(f"Error parsing model configuration: {str(e)}")
+            return None
+
+    def _parse_system_configuration(self, content: str) -> Optional[SystemConfiguration]:
+        """Parse complete system configuration from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            Optional[SystemConfiguration]: Parsed system configuration
+        """
+        try:
+            # Parse individual components
+            purpose = self._parse_system_purpose(content)
+            if not purpose:
+                print("[DEBUG] Failed to parse system purpose.")
+            functionality = self._parse_system_functionality(content)
+            if not functionality:
+                print("[DEBUG] Failed to parse system functionality.")
+            model_config = self._parse_model_configuration(content)
+            if not model_config:
+                print("[DEBUG] No model configuration found or failed to parse (this is OK if model is optional).")
+            # Extract format instructions if present
+            format_instructions = None
+            if "format_instructions:" in content:
+                format_section = content.split("format_instructions: |")[1].split("\n")
+                format_instructions = "\n".join(line for line in format_section 
+                                             if not line.strip().startswith("##") 
+                                             and not line.strip().startswith("```"))
+
+            # Create complete configuration
+            if purpose and functionality:
+                return SystemConfiguration.from_components(
+                    purpose=purpose,
+                    functionality=functionality,
+                    model_config=model_config,
+                    format_instructions=format_instructions
+                )
+            print("[DEBUG] System configuration missing required sections (purpose or functionality). Returning None.")
+            return None
+        except Exception as e:
+            print(f"Error creating system configuration: {str(e)}")
             return None
 
     def _parse_system_prompt(self, content: str) -> str:
@@ -161,10 +271,8 @@ class SystemManager:
         file_path = os.path.join(self.systems_dir, f"{system_id}.md")
         if not os.path.exists(file_path):
             return None
-            
         with open(file_path, 'r') as f:
             content = f.read()
-            
         return {
             'prompt_content': self._parse_system_prompt(content),
             'inputs': self._parse_system_inputs(content),
