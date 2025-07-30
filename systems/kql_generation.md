@@ -90,7 +90,7 @@ outputs:
 model:
   provider: openrouter
   model_name: anthropic/claude-3.7-sonnet
-  temperature: 0.7
+  temperature: 0.3
   max_tokens: 2000
 
 format_instructions: |
