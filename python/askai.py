@@ -80,8 +80,15 @@ def main():
         chat_id, messages, response, resolved_system_id, system_manager
     )
 
+    # Get system outputs for auto-execution handling
+    system_outputs = None
+    if resolved_system_id:
+        system_data = system_manager.get_system_content(resolved_system_id)
+        if system_data:
+            system_outputs = system_data.get('outputs', [])
+
     # Handle output
-    output_handler.handle_output(response, args)
+    output_handler.handle_output(response, args, system_outputs)
 
 
 if __name__ == "__main__":

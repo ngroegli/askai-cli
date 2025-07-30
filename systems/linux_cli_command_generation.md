@@ -54,6 +54,7 @@ outputs:
     description: The generated Linux CLI one-liner command
     type: code
     required: true
+    auto_run: true
     example: |
       pkill -f firefox
 

@@ -21,6 +21,7 @@ class SystemOutput:
     example: Optional[str] = None  # Example of the expected output
     format_spec: Optional[Dict[str, Any]] = None  # Additional formatting specifications
     required: bool = True  # Whether this output must be present in the response
+    auto_run: bool = False  # Whether CODE outputs should prompt for execution
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SystemOutput':
@@ -32,7 +33,8 @@ class SystemOutput:
             schema=data.get('schema'),
             example=data.get('example'),
             format_spec=data.get('format_spec'),
-            required=data.get('required', True)
+            required=data.get('required', True),
+            auto_run=data.get('auto_run', False)
         )
 
     def validate_value(self, value: Any) -> tuple[bool, Optional[str]]:
@@ -67,3 +69,75 @@ class SystemOutput:
                 return False, f"{self.output_type.value} output must be a string"
 
         return True, None
+
+    def should_prompt_for_execution(self) -> bool:
+        """Check if this CODE output should prompt for execution."""
+        return self.output_type == OutputType.CODE and self.auto_run
+
+    @staticmethod
+    def display_execution_warning(command: str, output_name: str) -> None:
+        """Display a yellow warning banner before prompting for execution."""
+        # ANSI color codes for yellow background with black text
+        yellow_bg = '\033[43m'
+        black_text = '\033[30m'
+        bold = '\033[1m'
+        reset = '\033[0m'
+        
+        warning_text = f"⚠️  SECURITY WARNING: About to execute code from '{output_name}'"
+        
+        # Calculate the width for the border - use at least 80 characters or the length of the longest line
+        max_width = max(len(warning_text), len(f" Command: {command}"), 80)
+        border = "=" * max_width
+        
+        print(f"\n{yellow_bg}{black_text}{bold}")
+        print(f" {border} ")
+        print(f" {warning_text.ljust(max_width-1)} ")
+        
+        # Handle long commands by wrapping them properly
+        if len(command) > max_width - 10:  # Leave some margin for " Command: "
+            print(f" Command: {' ' * (max_width - 10)} ")
+            # Split command into chunks that fit within the warning box
+            command_prefix = "   "
+            available_width = max_width - len(command_prefix) - 1
+            
+            words = command.split()
+            current_line = ""
+            
+            for word in words:
+                # If adding this word would exceed the width, start a new line
+                if len(current_line) + len(word) + 1 > available_width:
+                    if current_line:  # Only print if we have content
+                        print(f"{command_prefix}{current_line.ljust(available_width)} ")
+                        current_line = word
+                    else:
+                        # Single word is too long, print it anyway
+                        print(f"{command_prefix}{word.ljust(available_width)} ")
+                        current_line = ""
+                else:
+                    if current_line:
+                        current_line += " " + word
+                    else:
+                        current_line = word
+            
+            # Print any remaining content
+            if current_line:
+                print(f"{command_prefix}{current_line.ljust(available_width)} ")
+        else:
+            print(f" Command: {command.ljust(max_width-10)} ")
+        
+        print(f" {border} ")
+        print(f"{reset}")
+
+    @staticmethod
+    def prompt_for_execution(command: str, output_name: str) -> bool:
+        """Prompt user if they want to execute the code and return their choice."""
+        SystemOutput.display_execution_warning(command, output_name)
+        
+        while True:
+            response = input(f"Execute this command? (y/n): ").strip().lower()
+            if response in ['y', 'yes']:
+                return True
+            elif response in ['n', 'no']:
+                return False
+            else:
+                print("Please enter 'y' or 'n'")
