@@ -278,6 +278,11 @@ class ChatManager:
         if not chat_id:
             return
             
+        # Extract content from response (handle both string and dict formats)
+        response_content = response
+        if isinstance(response, dict):
+            response_content = response.get("content", str(response))
+            
         # Parse outputs if we have output specifications
         structured_outputs = None
         system_outputs = None
@@ -290,12 +295,12 @@ class ChatManager:
                 system_config = system_data.get('configuration')
                 
                 if system_outputs:
-                    structured_outputs = self._parse_structured_outputs(response, system_outputs)
+                    structured_outputs = self._parse_structured_outputs(response_content, system_outputs)
         
         self.add_conversation(
             chat_id=chat_id,
             messages=messages,
-            response=response,
+            response=response_content,  # Store only the content part
             outputs=structured_outputs,
             system_outputs=system_outputs,
             system_config=system_config

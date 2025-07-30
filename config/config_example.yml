@@ -7,6 +7,14 @@ log_path: "~/.askai/askai.log"
 log_level: "INFO"
 log_rotation: 5  # keep 5 backups
 
+# Web search configuration (global defaults)
+web_search:
+  enabled: false  # Enable web search by default for all queries
+  method: "plugin"  # "plugin" or "context" (for non-plugin search)
+  max_results: 5  # Maximum number of search results
+  context_size: "medium"  # "low", "medium", "high" (for non-plugin search)
+  search_prompt: null  # Custom search prompt (optional)
+
 chat:
   storage_path: "~/.askai/chats"  # Where to store chat history files
   max_history: 10  # Number of past conversations to include as context

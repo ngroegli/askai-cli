@@ -82,7 +82,7 @@ class AIService:
         )
 
     def get_ai_response(self, messages, model_name=None, system_id=None, 
-                       debug=False, system_manager=None):
+                       debug=False, system_manager=None, enable_url_search=False):
         """Get response from AI model with progress spinner.
         
         Args:
@@ -91,6 +91,7 @@ class AIService:
             system_id: Optional system ID to get system-specific configuration
             debug: Whether to enable debug mode
             system_manager: SystemManager instance for accessing system data
+            enable_url_search: Whether to enable web search for URL analysis
         """
         stop_spinner = threading.Event()
         spinner = threading.Thread(target=tqdm_spinner, args=(stop_spinner,))
@@ -106,13 +107,44 @@ class AIService:
                 system_data = system_manager.get_system_content(system_id)
 
             model_config = self.get_model_configuration(model_name, config, system_data)
+            
+            # Determine web search configuration
+            web_search_options = None
+            web_plugin_config = None
+            
+            # Priority 1: System-specific web search configuration
+            if hasattr(model_config, 'get_web_search_options'):
+                web_search_options = model_config.get_web_search_options()
+                
+            if hasattr(model_config, 'get_web_plugin_config'):
+                web_plugin_config = model_config.get_web_plugin_config()
+            
+            # Priority 2: Global configuration or URL search override
+            if web_search_options is None and web_plugin_config is None:
+                web_config = config.get('web_search', {})
+                
+                # Enable web search if explicitly requested for URL or globally enabled
+                if enable_url_search or web_config.get('enabled', False):
+                    if web_config.get('method', 'plugin') == 'plugin':
+                        web_plugin_config = {
+                            "max_results": web_config.get('max_results', 5)
+                        }
+                        if web_config.get('search_prompt'):
+                            web_plugin_config["search_prompt"] = web_config['search_prompt']
+                    else:
+                        web_search_options = {
+                            "search_context_size": web_config.get('context_size', 'medium')
+                        }
                 
             # Create OpenRouter client and get response
+            openrouter_client = OpenRouterClient(config=config, logger=self.logger)
             openrouter_client = OpenRouterClient(config=config, logger=self.logger)
             response = openrouter_client.request_completion(
                 messages=messages, 
                 model_config=model_config,
-                debug=debug
+                debug=debug,
+                web_search_options=web_search_options,
+                web_plugin_config=web_plugin_config
             )
             
             self.logger.debug(json.dumps({

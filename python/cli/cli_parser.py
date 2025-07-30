@@ -23,6 +23,7 @@ class CLIParser:
         # Input options
         parser.add_argument('-q', '--question', help='Your question for the AI')
         parser.add_argument('-fi', '--file-input', help='Input file to include as context')
+        parser.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
         
         # Output options
         parser.add_argument('-o', '--output', help='Output file to save result')
@@ -106,12 +107,15 @@ class CLIParser:
                       args.list_chats or args.view_chat is not None or 
                       args.openrouter is not None)
         
-        if not args.question and not args.use_system and not has_command:
+        # Allow URL without question (for simple URL summarization)
+        has_url = args.url is not None
+        
+        if not args.question and not args.use_system and not has_command and not has_url:
             logger.error(json.dumps({
-                "log_message": "User did not provide a question with -q or a dedicated system with -s"
+                "log_message": "User did not provide a question with -q, URL with -url, or a dedicated system with -us"
             }))
             print_error_or_warnings(
-                text="ERROR: Provide a question with -q or a dedicated system with -s"
+                text="ERROR: Provide a question with -q, URL with -url, or a dedicated system with -us"
             )
             sys.exit(1)
 

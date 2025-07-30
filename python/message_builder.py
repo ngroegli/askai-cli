@@ -16,7 +16,7 @@ class MessageBuilder:
         self.logger = logger
 
     def build_messages(self, question=None, file_input=None, system_id=None, 
-                      system_input=None, format="rawtext"):
+                      system_input=None, format="rawtext", url=None):
         """Builds the message list for OpenRouter.
         
         Args:
@@ -25,6 +25,7 @@ class MessageBuilder:
             system_id: Optional system ID to use
             system_input: Optional system inputs as dict
             format: Response format (rawtext, json, or md)
+            url: Optional URL to analyze/summarize
             
         Returns:
             tuple: (messages, resolved_system_id)
@@ -50,6 +51,19 @@ class MessageBuilder:
                 "role": "system", 
                 "content": f"The file content of {file_input} to work with:\n{file_content}"
             })
+
+        # Handle URL input - add as context for web search
+        if url:
+            self.logger.info(json.dumps({
+                "log_message": "URL provided for analysis", 
+                "url": url
+            }))
+            # If no question provided, default to summarization
+            if not question:
+                question = f"Please analyze and summarize the content from this URL: {url}"
+            else:
+                # Add URL context to the question
+                question = f"Please analyze the content from this URL: {url}\n\nQuestion: {question}"
 
         # Add system-specific context if specified
         if system_id is not None:

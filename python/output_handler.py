@@ -35,13 +35,25 @@ class OutputHandler:
         """Handle the output of the AI response based on arguments.
         
         Args:
-            response: The AI response text
+            response: The AI response (can be string or dict with content/annotations)
             args: Command line arguments
             system_outputs: Optional list of SystemOutput objects for auto-execution
         
         Returns:
             bool: True if output was handled and program should exit, False otherwise
         """
+        # Handle new response format with web search annotations
+        content = response
+        annotations = []
+        
+        if isinstance(response, dict):
+            content = response.get("content", str(response))
+            annotations = response.get("annotations", [])
+        
+        # Display web search sources if present
+        if annotations:
+            self._display_web_sources(annotations)
+        
         # First, handle normal output display
         should_exit = False
         
@@ -50,25 +62,59 @@ class OutputHandler:
                 "log_message": "Writing response to output file", 
                 "output_file": args.output
             }))
-            self.write_to_file(args.output, response)
+            self.write_to_file(args.output, content)
             print(f"Response written to {args.output}")
             should_exit = True
         elif args.format == "md" and not args.plain_md:
             self.logger.info(json.dumps({"log_message": "Rendering response as markdown"}))
-            self.render_markdown(response)
+            self.render_markdown(content)
         else:
             self.logger.info(json.dumps({"log_message": "Printing response as raw text"}))
-            print(response)
+            print(content)
         
         # Handle file writing based on system outputs
         if system_outputs:
-            self._handle_file_outputs(response, system_outputs)
+            self._handle_file_outputs(content, system_outputs)
         
         # After displaying output, handle auto-execution of code outputs if system outputs are provided
         if system_outputs and not should_exit:
-            self._handle_auto_execution(response, system_outputs)
+            self._handle_auto_execution(content, system_outputs)
         
         return should_exit
+
+    def _display_web_sources(self, annotations):
+        """Display web search sources with proper formatting.
+        
+        Args:
+            annotations: List of annotation dictionaries from OpenRouter API
+        """
+        if not annotations:
+            return
+            
+        print("\n🔍 Web Search Sources:")
+        print("=" * 50)
+        
+        for i, annotation in enumerate(annotations, 1):
+            if annotation.get("type") == "url_citation":
+                citation = annotation.get("url_citation", {})
+                url = citation.get("url", "Unknown URL")
+                title = citation.get("title", "Unknown Title")
+                content = citation.get("content", "")
+                
+                print(f"{i}. {title}")
+                print(f"   🔗 {url}")
+                
+                # Show a brief content preview if available
+                if content:
+                    preview = content[:150].replace('\n', ' ').strip()
+                    if len(content) > 150:
+                        preview += "..."
+                    print(f"   📄 {preview}")
+                
+                print()
+        
+        print("=" * 50)
+        print()
 
     def _handle_file_outputs(self, response: str, system_outputs: List[SystemOutput]) -> None:
         """Handle writing outputs to files based on system output configurations.

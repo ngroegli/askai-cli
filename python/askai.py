@@ -55,7 +55,8 @@ def main():
         file_input=args.file_input,
         system_id=args.use_system,
         system_input=args.system_input,
-        format=args.format
+        format=args.format,
+        url=args.url
     )
     
     # Check if message building was cancelled
@@ -68,13 +69,17 @@ def main():
     # Debug log the final messages
     logger.debug(json.dumps({"log_message": "Messages content", "messages": messages}))
     
+    # Determine if web search should be enabled for URL analysis
+    enable_url_search = args.url is not None
+    
     # Get AI response
     response = ai_service.get_ai_response(
         messages=messages,
         model_name=args.model,
         system_id=resolved_system_id,
         debug=args.debug,
-        system_manager=system_manager
+        system_manager=system_manager,
+        enable_url_search=enable_url_search
     )
 
     # Store chat history if using persistent chat

@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 import yaml
+import re
 
 class InputType(Enum):
     TEXT = "text"
     NUMBER = "number"
     SELECT = "select"
     FILE = "file"  # For file path or content
+    URL = "url"    # For URL validation
 
 @dataclass
 class SystemInput:
@@ -66,5 +68,18 @@ class SystemInput:
                     f.read(1)  # Try to read one byte to verify access
             except Exception as e:
                 return False, f"File error: {str(e)}"
+
+        elif self.input_type == InputType.URL:
+            # Basic URL validation using regex
+            url_pattern = re.compile(
+                r'^https?://'  # http:// or https://
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+                r'localhost|'  # localhost...
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+                r'(?::\d+)?'  # optional port
+                r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+            
+            if not url_pattern.match(value):
+                return False, "Value must be a valid URL (http:// or https://)"
 
         return True, None

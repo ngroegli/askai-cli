@@ -16,6 +16,11 @@ class ModelConfiguration:
     max_tokens: Optional[int] = None
     stop_sequences: Optional[List[str]] = None
     custom_parameters: Optional[Dict[str, Any]] = None
+    web_search: bool = False
+    web_search_context: str = "medium"  # low, medium, high
+    web_plugin: bool = False
+    web_max_results: int = 5
+    web_search_prompt: Optional[str] = None
 
     def __post_init__(self):
         """Convert provider to ModelProvider enum if it's a string."""
@@ -39,8 +44,28 @@ class ModelConfiguration:
             temperature=data.get('temperature', 0.7),
             max_tokens=data.get('max_tokens'),
             stop_sequences=data.get('stop_sequences'),
-            custom_parameters=data.get('custom_parameters')
+            custom_parameters=data.get('custom_parameters'),
+            web_search=data.get('web_search', False),
+            web_search_context=data.get('web_search_context', 'medium'),
+            web_plugin=data.get('web_plugin', False),
+            web_max_results=data.get('web_max_results', 5),
+            web_search_prompt=data.get('web_search_prompt')
         )
+
+    def get_web_search_options(self):
+        """Get web search options for non-plugin search."""
+        if self.web_search:
+            return {"search_context_size": self.web_search_context}
+        return None
+
+    def get_web_plugin_config(self):
+        """Get web plugin configuration."""
+        if self.web_plugin:
+            config = {"max_results": self.web_max_results}
+            if self.web_search_prompt:
+                config["search_prompt"] = self.web_search_prompt
+            return config
+        return None
 
 @dataclass
 class SystemPurpose:

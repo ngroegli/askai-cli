@@ -31,16 +31,18 @@ class OpenRouterClient:
             self.logger = setup_logger(self.config, debug)
         return self.logger
     
-    def request_completion(self, messages, model_config=None, debug=False):
+    def request_completion(self, messages, model_config=None, debug=False, web_search_options=None, web_plugin_config=None):
         """Send a request to the OpenRouter API for chat completion.
         
         Args:
             messages: List of message dictionaries to send
             model_config: Optional ModelConfiguration instance to override defaults
             debug: Whether to enable debug logging
+            web_search_options: Optional dict with web search configuration for non-plugin search
+            web_plugin_config: Optional dict with web plugin configuration
         
         Returns:
-            str: The model's response text
+            dict: The full API response including message content and annotations
         """
         logger = self._setup_logger(debug)
         headers = self._get_headers()
@@ -59,17 +61,50 @@ class OpenRouterClient:
         else:
             payload["model"] = self.config["default_model"]
 
+        # Add web search options for non-plugin web search
+        if web_search_options:
+            payload["web_search_options"] = web_search_options
+            logger.debug(json.dumps({
+                "log_message": "Added web search options to payload",
+                "web_search_options": web_search_options
+            }))
+
+        # Add web plugin configuration
+        if web_plugin_config:
+            payload["plugins"] = [{"id": "web", **web_plugin_config}]
+            logger.debug(json.dumps({
+                "log_message": "Added web plugin to payload",
+                "web_plugin_config": web_plugin_config
+            }))
+
         logger.debug(json.dumps({
             "log_message": "OpenRouter API payload without messages.",
             "payload": payload
         }))
 
-        # Payload structure for OpenRouter API without model_config
+        # Payload structure for OpenRouter API
         payload["messages"] = messages
 
         response = requests.post(f"{self.base_url}chat/completions", headers=headers, json=payload)
         if response.ok:
-            return response.json()["choices"][0]["message"]["content"]
+            response_data = response.json()
+            
+            # Extract message and annotations
+            choice = response_data["choices"][0]
+            message = choice["message"]
+            
+            # Log web search annotations if present
+            if "annotations" in message:
+                logger.debug(json.dumps({
+                    "log_message": "Received web search annotations",
+                    "annotation_count": len(message["annotations"])
+                }))
+            
+            return {
+                "content": message["content"],
+                "annotations": message.get("annotations", []),
+                "full_response": response_data
+            }
         else:
             logger.critical(json.dumps({"log_message": f"API Error {response.status_code}: {response.text}"}))
             raise Exception(f"API Error: {response.text}")
