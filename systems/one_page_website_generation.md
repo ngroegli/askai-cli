@@ -63,10 +63,9 @@ inputs:
 outputs:
   - name: html_content
     description: The main HTML content of the website
-    type: code
+    type: html
     required: true
-    format_spec:
-      language: html
+    write_to_file: index.html
     example: |
       <!DOCTYPE html>
       <html lang="en">
@@ -74,6 +73,7 @@ outputs:
           <meta charset="UTF-8">
           <title>Brand Name</title>
           <link rel="stylesheet" href="style.css">
+          <script src="script.js" defer></script>
       </head>
       <body>
           <!-- Website content -->
@@ -82,10 +82,9 @@ outputs:
 
   - name: css_styles
     description: CSS styles for the website
-    type: code
+    type: css
     required: true
-    format_spec:
-      language: css
+    write_to_file: style.css
     example: |
       body {
           margin: 0;
@@ -95,14 +94,15 @@ outputs:
       .header { /* Header styles */ }
 
   - name: javascript_code
-    description: Optional JavaScript for animations and interactivity
-    type: code
-    required: false
-    format_spec:
-      language: javascript
+    description: JavaScript for animations and interactivity
+    type: js
+    required: true
+    write_to_file: script.js
     example: |
       document.addEventListener('DOMContentLoaded', () => {
-          // Animation code
+          // Animation code for image spinner
+          // Navigation smooth scrolling
+          // Interactive elements
       });
 
   - name: project_structure
@@ -130,10 +130,15 @@ outputs:
     required: true
     example: |
       Website files have been generated successfully!
+      Files created:
+      - index.html (main website)
+      - style.css (styling)
+      - script.js (JavaScript functionality)
+      
       To preview:
       1. Open index.html in a web browser
-      2. All assets are in the assets/ directory
-      3. Styles are in style.css
+      2. All three files work together automatically
+      3. Place any images in an assets/ directory if needed
 ```
 
 ## Model Configuration:
@@ -146,12 +151,49 @@ model:
   max_tokens: 4000
 
 format_instructions: |
-  Generate website files in this order:
-  1. Create the main HTML structure
-  2. Generate CSS styles
-  3. Add JavaScript if needed
-  4. Organize file structure
-  5. Provide preview information
+  **IMPORTANT**: Generate structured output for automatic file creation.
+  
+  **For JSON format responses**, provide output in this structure:
+  ```json
+  {
+    "html_content": "<!DOCTYPE html>...",
+    "css_styles": "/* CSS styles */...",
+    "javascript_code": "// JavaScript code...",
+    "project_structure": {...},
+    "preview_info": "Website files..."
+  }
+  ```
+  
+  **For text/markdown responses**, use clear headers:
+  
+  ## HTML Content
+  ```html
+  <!DOCTYPE html>
+  <html lang="en">
+  ...
+  ```
+  
+  ## CSS Styles  
+  ```css
+  /* CSS styles */
+  ...
+  ```
+  
+  ## JavaScript Code
+  ```js
+  // JavaScript code
+  ...
+  ```
+  
+  **Requirements:**
+  - Generate complete, working files
+  - HTML MUST reference exactly "style.css" and "script.js" (matching output filenames)
+  - Use: `<link rel="stylesheet" href="style.css">` in HTML head
+  - Use: `<script src="script.js" defer></script>` in HTML head
+  - CSS should be comprehensive and responsive
+  - JavaScript should include smooth scrolling and animations
+  - All code should be production-ready
+  - Ensure all three files work together as a cohesive website
 
 example_conversation:
   - role: user
@@ -159,18 +201,33 @@ example_conversation:
       Generate a one-page website for "TechCorp Solutions"
   - role: assistant
     content: |
-      HTML Content:
+      HTML Content (index.html):
       <!DOCTYPE html>
       <html lang="en">
-      [Full HTML content...]
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>TechCorp Solutions</title>
+          <link rel="stylesheet" href="style.css">
+          <script src="script.js" defer></script>
+      </head>
+      <body>
+          [Full HTML content with navigation, header, sections...]
+      </body>
+      </html>
 
-      CSS Styles:
-      /* Modern, clean styling */
-      [Full CSS content...]
+      CSS Styles (style.css):
+      /* Modern, responsive styling */
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Arial', sans-serif; }
+      [Full CSS content with responsive design...]
 
-      JavaScript (for image spinner):
+      JavaScript (script.js):
       document.addEventListener('DOMContentLoaded', () => {
-          [Animation code...]
+          // Smooth scrolling navigation
+          // Image spinner animations
+          // Interactive elements
+          [Complete JavaScript functionality...]
       });
 
       Project Structure:
@@ -184,7 +241,9 @@ example_conversation:
       }
 
       Preview Info:
-      Website generated successfully!
-      Main file: index.html
-      Assets in assets/ directory
-      Open in browser to view
+      Website files automatically created:
+      ✓ index.html - Main website structure
+      ✓ style.css - Complete styling and responsive design
+      ✓ script.js - Interactive functionality and animations
+      
+      Ready to use! Open index.html in any web browser.

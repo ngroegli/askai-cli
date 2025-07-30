@@ -11,6 +11,9 @@ class OutputType(Enum):
     LIST = "list"
     CODE = "code"
     MARKDOWN = "markdown"
+    HTML = "html"
+    CSS = "css"
+    JS = "js"
 
 @dataclass
 class SystemOutput:
@@ -22,6 +25,7 @@ class SystemOutput:
     format_spec: Optional[Dict[str, Any]] = None  # Additional formatting specifications
     required: bool = True  # Whether this output must be present in the response
     auto_run: bool = False  # Whether CODE outputs should prompt for execution
+    write_to_file: Optional[str] = None  # Filename to write this output to (None = don't write to file)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'SystemOutput':
@@ -34,7 +38,8 @@ class SystemOutput:
             example=data.get('example'),
             format_spec=data.get('format_spec'),
             required=data.get('required', True),
-            auto_run=data.get('auto_run', False)
+            auto_run=data.get('auto_run', False),
+            write_to_file=data.get('write_to_file')
         )
 
     def validate_value(self, value: Any) -> tuple[bool, Optional[str]]:
@@ -63,8 +68,9 @@ class SystemOutput:
             if not isinstance(value, (list, tuple)):
                 return False, "List output must be a list or tuple"
 
-        # TEXT, CODE, and MARKDOWN types accept any string value
-        elif self.output_type in (OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN):
+        # TEXT, CODE, MARKDOWN, HTML, CSS, and JS types accept any string value
+        elif self.output_type in (OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN, 
+                                 OutputType.HTML, OutputType.CSS, OutputType.JS):
             if not isinstance(value, str):
                 return False, f"{self.output_type.value} output must be a string"
 
@@ -73,6 +79,25 @@ class SystemOutput:
     def should_prompt_for_execution(self) -> bool:
         """Check if this CODE output should prompt for execution."""
         return self.output_type == OutputType.CODE and self.auto_run
+
+    def should_write_to_file(self) -> bool:
+        """Check if this output should be written to a file."""
+        return self.write_to_file is not None and self.write_to_file.strip() != ""
+    
+    def get_file_extension(self) -> Optional[str]:
+        """Get the expected file extension based on output type."""
+        extension_map = {
+            OutputType.HTML: ".html",
+            OutputType.CSS: ".css", 
+            OutputType.JS: ".js",
+            OutputType.JSON: ".json",
+            OutputType.MARKDOWN: ".md",
+            OutputType.CODE: ".txt",  # Default for code, could be language-specific
+            OutputType.TEXT: ".txt",
+            OutputType.TABLE: ".csv",  # Tables could be CSV
+            OutputType.LIST: ".txt"
+        }
+        return extension_map.get(self.output_type)
 
     @staticmethod
     def display_execution_warning(command: str, output_name: str) -> None:

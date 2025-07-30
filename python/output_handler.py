@@ -6,6 +6,8 @@ Manages different output formats and file writing.
 import json
 import re
 import subprocess
+import os
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from rich.console import Console
 from rich.markdown import Markdown
@@ -58,11 +60,354 @@ class OutputHandler:
             self.logger.info(json.dumps({"log_message": "Printing response as raw text"}))
             print(response)
         
+        # Handle file writing based on system outputs
+        if system_outputs:
+            self._handle_file_outputs(response, system_outputs)
+        
         # After displaying output, handle auto-execution of code outputs if system outputs are provided
         if system_outputs and not should_exit:
             self._handle_auto_execution(response, system_outputs)
         
         return should_exit
+
+    def _handle_file_outputs(self, response: str, system_outputs: List[SystemOutput]) -> None:
+        """Handle writing outputs to files based on system output configurations.
+        
+        Args:
+            response: The AI response text
+            system_outputs: List of SystemOutput objects to check for file writing
+        """
+        # Find outputs that should be written to files
+        file_outputs = [output for output in system_outputs if output.should_write_to_file()]
+        
+        if not file_outputs:
+            return
+        
+        # Show what files will be created
+        print(f"\n🎯 Found {len(file_outputs)} files to create:")
+        for output in file_outputs:
+            print(f"  • {output.write_to_file} ({output.output_type.value})")
+        
+        # Ask for base directory once for all file outputs
+        base_dir = self._get_output_directory()
+        if base_dir is None:
+            return  # User cancelled
+        
+        # Process each file output
+        for output in file_outputs:
+            try:
+                # Extract content for this output
+                content = self._extract_output_content(response, output)
+                if content:
+                    # Validate HTML file references for web projects
+                    if output.output_type == OutputType.HTML:
+                        content = self._validate_html_references(content, file_outputs)
+                    
+                    # Create full file path
+                    file_path = Path(base_dir) / output.write_to_file
+                    
+                    # Write the file
+                    self._write_output_file(file_path, content, output)
+                    print(f"✅ Created: {file_path}")
+                else:
+                    print(f"⚠️  No content found for {output.name}")
+                    
+            except Exception as e:
+                print(f"❌ Error writing {output.write_to_file}: {str(e)}")
+                self.logger.error(json.dumps({
+                    "log_message": "File writing error",
+                    "output_name": output.name,
+                    "filename": output.write_to_file,
+                    "error": str(e)
+                }))
+
+    def _get_output_directory(self) -> Optional[str]:
+        """Get the directory where files should be written, with user interaction.
+        
+        Returns:
+            str: Directory path, or None if user cancelled
+        """
+        print("\n📁 File Output Location")
+        print("=" * 50)
+        print("The system will create files automatically.")
+        print("Hint: Use '.' for current directory or specify a path like './my-website'")
+        print("Press Enter for current directory (.) or specify a path:")
+        
+        try:
+            directory = input("Enter directory path (or 'cancel' to skip file creation): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            return None
+        
+        if directory.lower() == 'cancel':
+            return None
+        
+        # Default to current directory if empty
+        if not directory:
+            directory = "."
+        
+        # Expand relative paths
+        directory = os.path.expanduser(directory)
+        directory_path = Path(directory)
+        
+        # Check if directory exists
+        if directory_path.exists():
+            if directory_path.is_dir():
+                return str(directory_path.resolve())
+            else:
+                print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
+                return str(Path(".").resolve())
+        else:
+            # Directory doesn't exist, ask to create
+            print(f"📂 Directory '{directory}' does not exist.")
+            try:
+                create = input("Create this directory? (y/n): ").strip().lower()
+            except (KeyboardInterrupt, EOFError):
+                return str(Path(".").resolve())
+            
+            if create in ['y', 'yes', '']:  # Default to yes if empty
+                try:
+                    directory_path.mkdir(parents=True, exist_ok=True)
+                    print(f"✅ Created directory: {directory_path.resolve()}")
+                    return str(directory_path.resolve())
+                except Exception as e:
+                    print(f"❌ Error creating directory: {str(e)}")
+                    print("Using current directory instead.")
+                    return str(Path(".").resolve())
+            else:
+                print("Using current directory instead.")
+                return str(Path(".").resolve())
+
+    def _extract_output_content(self, response: str, output: SystemOutput) -> Optional[str]:
+        """Extract content for a specific output from the AI response.
+        
+        This method handles different response formats:
+        1. JSON format (for programmatic parsing)
+        2. Markdown format (for human-readable output)
+        3. Mixed text format (fallback)
+        
+        Args:
+            response: The AI response text
+            output: SystemOutput configuration
+        
+        Returns:
+            str: Extracted content, or None if not found
+        """
+        print(f"\n🔍 Extracting '{output.name}' content...")
+        
+        # Strategy 1: Try JSON extraction first (most reliable for file outputs)
+        content = self._extract_from_json(response, output)
+        if content:
+            return content
+        
+        # Strategy 2: Try structured markdown patterns
+        content = self._extract_from_markdown(response, output)
+        if content:
+            return content
+        
+        # Strategy 3: Try code block patterns
+        content = self._extract_from_code_blocks(response, output)
+        if content:
+            return content
+        
+        # Strategy 4: Try simpler patterns as last resort
+        content = self._extract_simple_patterns(response, output)
+        if content:
+            return content
+        
+        print(f"❌ No content found for '{output.name}'")
+        return None
+
+    def _extract_from_json(self, response: str, output: SystemOutput) -> Optional[str]:
+        """Extract content from JSON format responses."""
+        json_patterns = [
+            r'HERE THE RESULT:\s*```json\s*\n(.*?)\n```',
+            r'HERE THE RESULT:\s*\n(\{.*?\})',
+            r'```json\s*\n(.*?)\n```',
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
+            for match in matches:
+                try:
+                    json_data = json.loads(match.strip())
+                    if isinstance(json_data, dict) and output.name in json_data:
+                        content = json_data[output.name]
+                        if isinstance(content, str):
+                            print(f"✅ Found content via JSON: {len(content)} chars")
+                            return content
+                except json.JSONDecodeError:
+                    continue
+        return None
+
+    def _extract_from_markdown(self, response: str, output: SystemOutput) -> Optional[str]:
+        """Extract content from markdown-structured responses."""
+        # Look for markdown sections with the output name
+        patterns = [
+            # ## HTML Content or ### HTML Content
+            rf'^#{2,3}\s*{re.escape(output.name)}.*?\n(.*?)(?=\n#{1,3}\s|\Z)',
+            # HTML Content: or **HTML Content:**
+            rf'(?:\*\*)?{re.escape(output.name)}(?:\*\*)?[:\s]*\n(.*?)(?=\n(?:\*\*)?[A-Z][a-z]+(?:\*\*)?\s*[:\s]|\Z)',
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE | re.MULTILINE)
+            for match in matches:
+                content = match.strip()
+                # Remove markdown formatting and code block markers
+                content = re.sub(r'^```[a-z]*\s*\n', '', content)
+                content = re.sub(r'\n```\s*$', '', content)
+                if len(content) > 20:
+                    print(f"✅ Found content via markdown: {len(content)} chars")
+                    return content
+        return None
+
+    def _extract_from_code_blocks(self, response: str, output: SystemOutput) -> Optional[str]:
+        """Extract content from code blocks."""
+        output_type = output.output_type.value.lower()
+        
+        patterns = [
+            # Code block with specific language
+            rf'```{output_type}\s*\n(.*?)\n```',
+            # Code block with output name nearby
+            rf'{re.escape(output.name)}.*?```(?:{output_type})?\s*\n(.*?)\n```',
+            # Any code block if output type matches common web languages
+            rf'```(?:html|css|javascript|js)?\s*\n(.*?)\n```' if output_type in ['html', 'css', 'js'] else None,
+        ]
+        
+        # Remove None patterns
+        patterns = [p for p in patterns if p is not None]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE)
+            for match in matches:
+                content = match.strip()
+                if len(content) > 20 and self._is_valid_content(content, output_type):
+                    print(f"✅ Found content via code block: {len(content)} chars")
+                    return content
+        return None
+
+    def _is_valid_content(self, content: str, output_type: str) -> bool:
+        """Validate that content matches the expected output type."""
+        content_lower = content.lower()
+        
+        if output_type == 'html':
+            return any(tag in content_lower for tag in ['<html', '<div', '<body', '<head', '<!doctype'])
+        elif output_type == 'css':
+            return '{' in content and '}' in content and (':' in content)
+        elif output_type == 'js':
+            return any(keyword in content_lower for keyword in ['function', 'var ', 'let ', 'const ', '=>'])
+        
+        return True  # For other types, assume valid
+
+    def _extract_simple_patterns(self, response: str, output: SystemOutput) -> Optional[str]:
+        """Extract content using simple, broad patterns as last resort."""
+        output_type = output.output_type.value.lower()
+        
+        # Very broad patterns to catch any code blocks
+        simple_patterns = [
+            # Any HTML content
+            r'<!DOCTYPE html.*?</html>' if output_type == 'html' else None,
+            # Any CSS content (look for selectors and rules)
+            r'(?:^|\n)([^{}]*\{[^{}]*\}[^{}]*(?:\{[^{}]*\}[^{}]*)*?)(?=\n\n|\n[A-Z]|\Z)' if output_type == 'css' else None,
+            # Any JavaScript content
+            r'(?:document\.|function|const|let|var|=>).*?(?=\n\n|\n[A-Z]|\Z)' if output_type == 'js' else None,
+        ]
+        
+        # Remove None patterns
+        simple_patterns = [p for p in simple_patterns if p is not None]
+        
+        for pattern in simple_patterns:
+            matches = re.findall(pattern, response, re.DOTALL | re.IGNORECASE | re.MULTILINE)
+            for match in matches:
+                content = match.strip()
+                if len(content) > 50:  # Ensure it's substantial
+                    print(f"✅ Found content via simple pattern: {len(content)} chars")
+                    return content
+        
+        return None
+
+    def _validate_html_references(self, html_content: str, file_outputs: List[SystemOutput]) -> str:
+        """Validate and fix HTML file references to match output filenames.
+        
+        Args:
+            html_content: The HTML content to validate
+            file_outputs: List of file outputs to check against
+            
+        Returns:
+            str: Validated HTML content with correct file references
+        """
+        # Get CSS and JS filenames from outputs
+        css_filename = None
+        js_filename = None
+        
+        for output in file_outputs:
+            if output.output_type == OutputType.CSS:
+                css_filename = output.write_to_file
+            elif output.output_type == OutputType.JS:
+                js_filename = output.write_to_file
+        
+        # Fix CSS reference if found
+        if css_filename:
+            # Replace any CSS reference with the correct filename
+            import re
+            html_content = re.sub(
+                r'<link[^>]*rel=["\']stylesheet["\'][^>]*href=["\'][^"\']*["\'][^>]*>',
+                f'<link rel="stylesheet" href="{css_filename}">',
+                html_content,
+                flags=re.IGNORECASE
+            )
+            
+            # If no CSS link found, add it to head
+            if 'rel="stylesheet"' not in html_content.lower():
+                head_end = html_content.find('</head>')
+                if head_end != -1:
+                    css_link = f'    <link rel="stylesheet" href="{css_filename}">\n'
+                    html_content = html_content[:head_end] + css_link + html_content[head_end:]
+                    print(f"🔧 Added CSS reference: {css_filename}")
+        
+        # Fix JS reference if found
+        if js_filename:
+            # Replace any script reference with the correct filename
+            html_content = re.sub(
+                r'<script[^>]*src=["\'][^"\']*["\'][^>]*></script>',
+                f'<script src="{js_filename}" defer></script>',
+                html_content,
+                flags=re.IGNORECASE
+            )
+            
+            # If no script tag found, add it to head
+            if f'src="{js_filename}"' not in html_content:
+                head_end = html_content.find('</head>')
+                if head_end != -1:
+                    script_tag = f'    <script src="{js_filename}" defer></script>\n'
+                    html_content = html_content[:head_end] + script_tag + html_content[head_end:]
+                    print(f"🔧 Added JS reference: {js_filename}")
+        
+        return html_content
+
+    def _write_output_file(self, file_path: Path, content: str, output: SystemOutput) -> None:
+        """Write content to a file.
+        
+        Args:
+            file_path: Path where to write the file
+            content: Content to write
+            output: SystemOutput configuration
+        """
+        # Ensure parent directory exists
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write the file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        # Log the file creation
+        self.logger.info(json.dumps({
+            "log_message": "File written from system output",
+            "output_name": output.name,
+            "output_type": output.output_type.value,
+            "filename": str(file_path),
+            "content_length": len(content)
+        }))
 
     def _handle_auto_execution(self, response: str, system_outputs: List[SystemOutput]) -> None:
         """Handle auto-execution of code outputs with user prompts.
