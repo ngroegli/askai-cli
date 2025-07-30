@@ -43,6 +43,8 @@ def main():
         sys.exit(0)
     if command_handler.handle_system_commands(args):
         sys.exit(0)
+    if command_handler.handle_openrouter_commands(args):
+        sys.exit(0)
 
     # Validate arguments
     cli_parser.validate_arguments(args, logger)

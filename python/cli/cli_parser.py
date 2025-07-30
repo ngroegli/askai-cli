@@ -77,6 +77,18 @@ class CLIParser:
                             metavar='CHAT_ID',
                             help='View chat history. Use without ID to select from available chats')
         
+        # Provider-specific options
+        provider_group = parser.add_argument_group('Provider internals')
+        provider_group.add_argument('-or', '--openrouter',
+                            nargs='+',
+                            metavar='COMMAND',
+                            help='OpenRouter API commands: check-credits, list-models [FILTER...]')
+        # Future provider example:
+        # provider_group.add_argument('-az', '--azure',
+        #                     nargs='+',
+        #                     metavar='COMMAND',
+        #                     help='Azure OpenAI API commands: check-quota, list-deployments [FILTER...]')
+        
         return parser
 
     def parse_arguments(self):
@@ -89,7 +101,12 @@ class CLIParser:
 
     def validate_arguments(self, args, logger):
         """Validate command line arguments and log warnings/errors."""
-        if not args.question and not args.use_system:
+        # Check if user is using any command that doesn't require a question
+        has_command = (args.list_systems or args.view_system is not None or 
+                      args.list_chats or args.view_chat is not None or 
+                      args.openrouter is not None)
+        
+        if not args.question and not args.use_system and not has_command:
             logger.error(json.dumps({
                 "log_message": "User did not provide a question with -q or a dedicated system with -s"
             }))
@@ -97,6 +114,28 @@ class CLIParser:
                 text="ERROR: Provide a question with -q or a dedicated system with -s"
             )
             sys.exit(1)
+
+        # Validate OpenRouter commands
+        if args.openrouter is not None:
+            if len(args.openrouter) == 0:
+                logger.error(json.dumps({
+                    "log_message": "User provided --openrouter without any command"
+                }))
+                print_error_or_warnings(
+                    text="ERROR: --openrouter requires a command (check-credits, list-models)"
+                )
+                sys.exit(1)
+            
+            valid_commands = ['check-credits', 'list-models']
+            command = args.openrouter[0]
+            if command not in valid_commands:
+                logger.error(json.dumps({
+                    "log_message": f"User provided invalid OpenRouter command: {command}"
+                }))
+                print_error_or_warnings(
+                    text=f"ERROR: Invalid OpenRouter command '{command}'. Valid commands: {', '.join(valid_commands)}"
+                )
+                sys.exit(1)
 
         if args.plain_md and args.format != "md":
             logger.warning(json.dumps({

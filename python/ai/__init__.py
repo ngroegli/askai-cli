@@ -1,5 +1,5 @@
 # AI package
 from .ai_service import AIService
-from .openrouter_api import ask_openrouter
+from .openrouter_client import OpenRouterClient
 
-__all__ = ['AIService', 'ask_openrouter']
+__all__ = ['AIService', 'OpenRouterClient']

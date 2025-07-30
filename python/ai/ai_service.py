@@ -5,7 +5,7 @@ Manages AI response generation and model configuration logic.
 
 import json
 import threading
-from .openrouter_api import ask_openrouter
+from .openrouter_client import OpenRouterClient
 from config import load_config
 from utils import tqdm_spinner
 
@@ -107,7 +107,9 @@ class AIService:
 
             model_config = self.get_model_configuration(model_name, config, system_data)
                 
-            response = ask_openrouter(
+            # Create OpenRouter client and get response
+            openrouter_client = OpenRouterClient(config=config, logger=self.logger)
+            response = openrouter_client.request_completion(
                 messages=messages, 
                 model_config=model_config,
                 debug=debug
