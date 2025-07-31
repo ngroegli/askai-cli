@@ -77,6 +77,9 @@ class CLIParser:
                             const='',  # When -vc is used without value
                             metavar='CHAT_ID',
                             help='View chat history. Use without ID to select from available chats')
+        chat_group.add_argument('--manage-chats',
+                            action='store_true',
+                            help='Manage chat files (repair or delete corrupted files)')
         
         # Provider-specific options
         provider_group = parser.add_argument_group('Provider internals')

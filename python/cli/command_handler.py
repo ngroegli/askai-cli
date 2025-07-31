@@ -57,16 +57,27 @@ class CommandHandler:
         if args.list_chats:
             self.logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
             chats = self.chat_manager.list_chats()
-            if not chats:
+            
+            # Also check for corrupted files
+            corrupted_files = self.chat_manager.scan_corrupted_chat_files()
+            
+            if not chats and not corrupted_files:
                 print("No chat history found.")
             else:
-                print("\nAvailable chats:")
-                print("-" * 60)
-                for chat in chats:
-                    print(f"ID: {chat['chat_id']}")
-                    print(f"Created: {chat['created_at']}")
-                    print(f"Messages: {chat['conversation_count']}")
+                if chats:
+                    print("\nAvailable chats:")
                     print("-" * 60)
+                    for chat in chats:
+                        print(f"ID: {chat['chat_id']}")
+                        print(f"Created: {chat['created_at']}")
+                        print(f"Messages: {chat['conversation_count']}")
+                        print("-" * 60)
+                
+                if corrupted_files:
+                    print(f"\nWARNING: Found {len(corrupted_files)} corrupted chat files:")
+                    for chat_id in corrupted_files:
+                        print(f"- {chat_id}")
+                    print("\nUse --manage-chats to repair or delete these files")
             return True
 
         if args.view_chat is not None:  # -vc was used
@@ -86,8 +97,125 @@ class CommandHandler:
             except ValueError as e:
                 print(f"Error: {str(e)}")
             return True
+            
+        if hasattr(args, 'manage_chats') and args.manage_chats:
+            self.logger.info(json.dumps({"log_message": "User requested to manage chat files"}))
+            self._handle_chat_management()
+            return True
 
         return False
+        
+    def _handle_chat_management(self):
+        """Handle chat file management, including repair and deletion of corrupted files."""
+        # Scan for corrupted files
+        corrupted_files = self.chat_manager.scan_corrupted_chat_files()
+        
+        if not corrupted_files:
+            print("No corrupted chat files found.")
+            return
+            
+        print(f"\nFound {len(corrupted_files)} corrupted chat files:")
+        for i, chat_id in enumerate(corrupted_files, 1):
+            print(f"{i}. {chat_id}")
+            
+        print("\nOptions:")
+        print("1. Try to repair all files")
+        print("2. Delete all corrupted files")
+        print("3. Select individual files to manage")
+        print("q. Quit")
+        
+        choice = input("\nEnter your choice (1-3 or q): ").lower()
+        
+        if choice == 'q':
+            return
+            
+        if choice == '1':
+            # Try to repair all files
+            success_count = 0
+            for chat_id in corrupted_files:
+                if self.chat_manager.repair_chat_file(chat_id):
+                    success_count += 1
+                    print(f"Repaired: {chat_id}")
+                else:
+                    print(f"Failed to repair: {chat_id}")
+            
+            print(f"\nRepaired {success_count} out of {len(corrupted_files)} files.")
+            
+        elif choice == '2':
+            # Confirm deletion
+            confirm = input(f"Are you sure you want to delete all {len(corrupted_files)} corrupted chat files? (y/n): ").lower()
+            if confirm != 'y':
+                print("Deletion cancelled.")
+                return
+                
+            # Delete all files
+            success_count = 0
+            for chat_id in corrupted_files:
+                if self.chat_manager.delete_chat(chat_id):
+                    success_count += 1
+                    print(f"Deleted: {chat_id}")
+                else:
+                    print(f"Failed to delete: {chat_id}")
+            
+            print(f"\nDeleted {success_count} out of {len(corrupted_files)} files.")
+            
+        elif choice == '3':
+            # Handle individual files
+            while True:
+                print("\nSelect a file to manage:")
+                for i, chat_id in enumerate(corrupted_files, 1):
+                    print(f"{i}. {chat_id}")
+                print("b. Back to main menu")
+                
+                file_choice = input(f"\nEnter file number (1-{len(corrupted_files)} or b): ").lower()
+                
+                if file_choice == 'b':
+                    break
+                    
+                try:
+                    file_idx = int(file_choice) - 1
+                    if 0 <= file_idx < len(corrupted_files):
+                        selected_chat_id = corrupted_files[file_idx]
+                        
+                        print(f"\nManaging file: {selected_chat_id}")
+                        print("1. Try to repair")
+                        print("2. Delete file")
+                        print("b. Back to file selection")
+                        
+                        action = input("Enter choice (1-2 or b): ").lower()
+                        
+                        if action == 'b':
+                            continue
+                            
+                        if action == '1':
+                            if self.chat_manager.repair_chat_file(selected_chat_id):
+                                print(f"Successfully repaired: {selected_chat_id}")
+                                # Remove from the list
+                                corrupted_files.pop(file_idx)
+                                if not corrupted_files:
+                                    print("No more corrupted files to manage.")
+                                    break
+                            else:
+                                print(f"Failed to repair: {selected_chat_id}")
+                                
+                        elif action == '2':
+                            confirm = input(f"Are you sure you want to delete {selected_chat_id}? (y/n): ").lower()
+                            if confirm == 'y':
+                                if self.chat_manager.delete_chat(selected_chat_id):
+                                    print(f"Successfully deleted: {selected_chat_id}")
+                                    # Remove from the list
+                                    corrupted_files.pop(file_idx)
+                                    if not corrupted_files:
+                                        print("No more corrupted files to manage.")
+                                        break
+                                else:
+                                    print(f"Failed to delete: {selected_chat_id}")
+                    else:
+                        print("Invalid file number.")
+                except ValueError:
+                    print("Please enter a valid number.")
+        else:
+            print("Invalid choice.")
 
     def handle_openrouter_commands(self, args):
         """Handle OpenRouter-related commands."""
