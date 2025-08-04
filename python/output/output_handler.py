@@ -625,7 +625,7 @@ class OutputHandler:
         try:
             directory = input("Enter directory path (or 'cancel' to skip file creation): ").strip()
         except (KeyboardInterrupt, EOFError) as e:
-            print(f"Input error: {str(e)}")  # Debug
+            print_error_or_warnings(f"Input error: {str(e)}")
             return None
         
         if directory.lower() == 'cancel':

@@ -122,7 +122,7 @@ class CLIParser:
                 "log_message": "User did not provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
             }))
             print_error_or_warnings(
-                text="ERROR: Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
+                text="Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
             )
             sys.exit(1)
 
@@ -133,7 +133,7 @@ class CLIParser:
                     "log_message": "User provided --openrouter without any command"
                 }))
                 print_error_or_warnings(
-                    text="ERROR: --openrouter requires a command (check-credits, list-models)"
+                    text="--openrouter requires a command (check-credits, list-models)"
                 )
                 sys.exit(1)
             
@@ -144,7 +144,7 @@ class CLIParser:
                     "log_message": f"User provided invalid OpenRouter command: {command}"
                 }))
                 print_error_or_warnings(
-                    text=f"ERROR: Invalid OpenRouter command '{command}'. Valid commands: {', '.join(valid_commands)}"
+                    text=f"Invalid OpenRouter command '{command}'. Valid commands: {', '.join(valid_commands)}"
                 )
                 sys.exit(1)
 
@@ -153,6 +153,6 @@ class CLIParser:
                 "log_message": "User used --plain-md without -f md"
             }))
             print_error_or_warnings(
-                text="WARN: --plain-md can only be used with -f md. The parameter --plain-md will be ignored.",
+                text="--plain-md can only be used with -f md. The parameter --plain-md will be ignored.",
                 warning_only=True
             )

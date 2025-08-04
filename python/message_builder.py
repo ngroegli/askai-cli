@@ -284,7 +284,7 @@ class MessageBuilder:
         
         system_data = self.system_manager.get_system_content(resolved_system_id)
         if system_data is None:
-            print(f"Error: System '{resolved_system_id}' does not exist")
+            print(f"System '{resolved_system_id}' does not exist")
             return None
             
         # Get and validate system data
