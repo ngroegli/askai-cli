@@ -28,6 +28,8 @@ A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openro
 
 * Ask general AI questions via CLI
 * Feed previous terminal output via stdin
+* Analyze images with vision-capable AI models
+* Extract and analyze text from PDF documents
 * Load predefined system instructions from `systems/` folder
 * Output responses to Markdown, JSON, or plain text
 * Supports default model via config file
@@ -67,6 +69,7 @@ Example content:
 ```yaml
 api_key: "your_openrouter_api_key"
 default_model: "openai/gpt-4o"
+default_vision_model: "anthropic/claude-3-opus-20240229"
 base_url: "https://openrouter.ai/api/v1/chat/completions"
 ```
 
@@ -152,6 +155,22 @@ askai -s log_interpretation -i /var/log/auth.log
 ```
 
 System files live inside the `systems/` folder and contain reusable instructions for the AI.
+
+### Analyze an Image
+
+```bash
+askai -img /path/to/image.jpg -q "What can you see in this image?"
+```
+
+The tool automatically uses a vision-capable model when images are provided. Supported image formats include JPG, PNG, GIF, and WebP.
+
+### Analyze a PDF Document
+
+```bash
+askai -pdf /path/to/document.pdf -q "Summarize this document."
+```
+
+Sends the PDF content directly to the AI for analysis using the format specified in the OpenRouter documentation. The file must have a `.pdf` extension to be processed as a PDF document. If a non-PDF file is provided, it will be treated as a regular text file.
 
 ### List Available System Files
 

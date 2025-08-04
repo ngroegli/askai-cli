@@ -24,6 +24,8 @@ class CLIParser:
         parser.add_argument('-q', '--question', help='Your question for the AI')
         parser.add_argument('-fi', '--file-input', help='Input file to include as context')
         parser.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
+        parser.add_argument('-img', '--image', help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
+        parser.add_argument('-pdf', '--pdf', help='PDF file to analyze along with your question (must have .pdf extension)')
         
         # Output options
         parser.add_argument('-o', '--output', help='Output file to save result')
@@ -110,15 +112,17 @@ class CLIParser:
                       args.list_chats or args.view_chat is not None or 
                       args.openrouter is not None)
         
-        # Allow URL without question (for simple URL summarization)
+        # Allow URL, image, or PDF without question (for simple analysis)
         has_url = args.url is not None
+        has_image = args.image is not None
+        has_pdf = args.pdf is not None
         
-        if not args.question and not args.use_system and not has_command and not has_url:
+        if not args.question and not args.use_system and not has_command and not has_url and not has_image and not has_pdf:
             logger.error(json.dumps({
-                "log_message": "User did not provide a question with -q, URL with -url, or a dedicated system with -us"
+                "log_message": "User did not provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
             }))
             print_error_or_warnings(
-                text="ERROR: Provide a question with -q, URL with -url, or a dedicated system with -us"
+                text="ERROR: Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
             )
             sys.exit(1)
 

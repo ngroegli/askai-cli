@@ -8,6 +8,7 @@ import sys
 import itertools
 import time
 import subprocess
+import base64
 from tqdm import tqdm
 from termcolor import colored, cprint
 
@@ -39,6 +40,78 @@ def get_file_input(file_path):
         with open(file_path, "r") as f:
             return f.read()
     print(f"File {file_path} does not exist.")
+    return None
+
+
+def encode_file_to_base64(file_path):
+    """
+    Reads any file and encodes it to base64.
+    
+    Args:
+        file_path: Path to the file
+        
+    Returns:
+        str: Base64 encoded string or None if file doesn't exist
+    """
+    # Check if file exists at the provided path
+    if os.path.exists(file_path):
+        try:
+            # Check if the file is readable
+            if not os.access(file_path, os.R_OK):
+                print(f"Error: No read permissions for file: {file_path}")
+                return None
+                
+            # Get file size to verify it's not empty
+            file_size = os.path.getsize(file_path)
+            if file_size == 0:
+                print(f"Warning: File is empty: {file_path}")
+                return None
+                
+            # Open and read the file in binary mode
+            with open(file_path, "rb") as file:
+                file_content = file.read()
+                
+                # Ensure it's actually binary data
+                if not isinstance(file_content, bytes):
+                    file_content = file_content.encode('utf-8')
+                
+                # Encode the file content to base64
+                encoded_string = base64.b64encode(file_content).decode('utf-8')
+                
+                # Ensure there are no whitespace, newlines or invalid chars
+                encoded_string = ''.join(c for c in encoded_string if c.isalnum() or c in '+/=')
+                
+                # Verify we actually got an encoded string and it's valid
+                if encoded_string:
+                    # Validate that it's a proper base64 string
+                    try:
+                        # Try to decode to verify it's valid base64
+                        test_decode = base64.b64decode(encoded_string)
+                        # Make sure we can encode it back to the same string
+                        test_reencode = base64.b64encode(test_decode).decode('utf-8')
+                        if test_reencode != encoded_string:
+                            print(f"Warning: Base64 re-encode test failed, may be an encoding issue")
+                        return encoded_string
+                    except Exception as e:
+                        print(f"Error: Generated invalid base64 string: {str(e)}")
+                        return None
+                else:
+                    print(f"Error: Failed to encode file to base64: {file_path}")
+                    return None
+        except PermissionError as e:
+            print(f"Error: Permission denied when reading file: {file_path}")
+            return None
+        except Exception as e:
+            print(f"Error encoding file: {file_path} - {str(e)}")
+            return None
+    else:
+        print(f"File does not exist at path: {file_path}")
+        # Try to resolve relative paths
+        cwd = os.getcwd()
+        potential_path = os.path.join(cwd, file_path)
+        if os.path.exists(potential_path):
+            print(f"Found file at absolute path, trying again: {potential_path}")
+            return encode_file_to_base64(potential_path)
     return None
 
 

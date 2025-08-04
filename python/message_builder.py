@@ -5,7 +5,8 @@ Handles construction of messages for AI interaction based on various inputs.
 
 import json
 import sys
-from utils import get_piped_input, get_file_input, build_format_instruction
+import os
+from utils import get_piped_input, get_file_input, build_format_instruction, encode_file_to_base64
 
 
 class MessageBuilder:
@@ -16,7 +17,7 @@ class MessageBuilder:
         self.logger = logger
 
     def build_messages(self, question=None, file_input=None, system_id=None, 
-                      system_input=None, format="rawtext", url=None):
+                      system_input=None, format="rawtext", url=None, image=None, pdf=None):
         """Builds the message list for OpenRouter.
         
         Args:
@@ -26,6 +27,8 @@ class MessageBuilder:
             system_input: Optional system inputs as dict
             format: Response format (rawtext, json, or md)
             url: Optional URL to analyze/summarize
+            image: Optional path to image file
+            pdf: Optional path to PDF file
             
         Returns:
             tuple: (messages, resolved_system_id)
@@ -64,6 +67,227 @@ class MessageBuilder:
             else:
                 # Add URL context to the question
                 question = f"Please analyze the content from this URL: {url}\n\nQuestion: {question}"
+        
+        # Handle image input - convert to base64 for multimodal message
+        if image:
+            self.logger.info(json.dumps({
+                "log_message": "Image file provided for analysis", 
+                "image_path": image
+            }))
+            
+            # Encode the image to base64
+            image_filename = os.path.basename(image)
+            image_ext = os.path.splitext(image_filename)[1].lower().replace(".", "")
+            if not image_ext:
+                image_ext = "jpeg"  # Default extension if none detected
+                
+            image_base64 = encode_file_to_base64(image)
+            if image_base64:
+                # For image inputs, we need to use the content list format for multimodal
+                # Create a default question if none provided
+                if not question:
+                    user_question = "Please analyze and describe this image in detail."
+                else:
+                    user_question = question
+                    
+                # Create multimodal message with image content
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_question},
+                        {
+                            "type": "image_url", 
+                            "image_url": {
+                                "url": f"data:image/{image_ext};base64,{image_base64}"
+                            }
+                        }
+                    ]
+                })
+                # Mark question as handled so we don't add it again at the end
+                question = None
+                
+                # Log the message structure for debugging
+                self.logger.debug(json.dumps({
+                    "log_message": "Created multimodal message for image",
+                    "message_structure": messages[-1]
+                }))
+                
+        # Handle PDF input - encode as base64
+        if pdf:
+            self.logger.info(json.dumps({
+                "log_message": "PDF file provided for analysis", 
+                "pdf_path": pdf
+            }))
+            
+                            # Check if the file is actually a PDF
+            pdf_filename = os.path.basename(pdf)
+            file_ext = os.path.splitext(pdf_filename)[1].lower()
+            
+            self.logger.debug(json.dumps({
+                "log_message": "Processing PDF file",
+                "pdf_path": pdf,
+                "filename": pdf_filename,
+                "extension": file_ext
+            }))
+            
+            if file_ext != '.pdf':
+                self.logger.warning(json.dumps({
+                    "log_message": "File does not have .pdf extension, treating as text file", 
+                    "file_path": pdf,
+                    "file_ext": file_ext
+                }))
+                # If not a PDF, treat as a text file
+                file_content = get_file_input(pdf)
+                if file_content:
+                    messages.append({
+                        "role": "system", 
+                        "content": f"The file content of {pdf_filename} to work with:\n{file_content}"
+                    })
+                    # If no question provided, default to summarization
+                    if not question:
+                        question = f"Please analyze and summarize the content of this file."
+                self.logger.debug(json.dumps({"log_message": "Treating file as text, not PDF"}))
+            else:
+                # This is an actual PDF file, encode it to base64
+                # Encode the PDF to base64
+                self.logger.debug(json.dumps({
+                    "log_message": "Attempting to encode PDF file",
+                    "pdf_path": pdf
+                }))
+                
+                pdf_base64 = encode_file_to_base64(pdf)
+                
+                if pdf_base64:
+                    self.logger.debug(json.dumps({
+                        "log_message": "PDF encoding successful",
+                        "base64_length": len(pdf_base64)
+                    }))
+                    
+                    # Create default question if none provided
+                    if not question:
+                        user_question = "Please analyze and summarize the content of this PDF."
+                    else:
+                        user_question = question
+                    
+                    # Create multimodal message with PDF content
+                    # PDFs should be sent as 'file' type according to OpenRouter docs for Google models
+                    # Format for Google Gemma models which have better PDF support
+                    pdf_data_url = f"data:application/pdf;base64,{pdf_base64}"
+                    
+                    # Print the first few characters of base64 data to verify format
+                    self.logger.debug(json.dumps({
+                        "log_message": "PDF base64 data sample",
+                        "prefix": pdf_base64[:50]
+                    }))
+                    
+                    # Create a message structure that works with most OpenRouter models
+                    try:
+                        # Standard message format for PDF handling
+                        messages.append({
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_question},
+                                {
+                                    "type": "file",
+                                    "file": {
+                                        "filename": pdf_filename,
+                                        "file_data": pdf_data_url
+                                    }
+                                }
+                            ]
+                        })
+                        
+                        # Add a note for the AI about PDF handling
+                        messages.append({
+                            "role": "system",
+                            "content": "Note: If you're unable to access the PDF content directly, please inform the user that the PDF could not be processed, and ask them to try extracting the text manually."
+                        })
+                        
+                        # Attempt to extract text as a fallback, if PDF tools are available
+                        # This will require either PyPDF2 or pdfminer.six to be installed
+                        try:
+                            import importlib.util
+                            
+                            # Check if PyPDF2 is available
+                            if importlib.util.find_spec("PyPDF2") is not None:
+                                import PyPDF2
+                                
+                                # Extract text using PyPDF2
+                                with open(pdf, 'rb') as file:
+                                    reader = PyPDF2.PdfReader(file)
+                                    num_pages = len(reader.pages)
+                                    
+                                    # Extract text from each page (limit to first 10 pages)
+                                    pages_to_read = min(num_pages, 10)
+                                    text_chunks = []
+                                    
+                                    for i in range(pages_to_read):
+                                        page = reader.pages[i]
+                                        text = page.extract_text()
+                                        if text:
+                                            text_chunks.append(f"--- Page {i+1} ---")
+                                            text_chunks.append(text)
+                                    
+                                    if text_chunks:
+                                        extracted_text = "\n".join(text_chunks)
+                                        if len(extracted_text) > 20000:  # Limit size
+                                            extracted_text = extracted_text[:20000] + "... (truncated)"
+                                            
+                                        self.logger.info(json.dumps({
+                                            "log_message": "Successfully extracted text from PDF using PyPDF2",
+                                            "text_length": len(extracted_text)
+                                        }))
+                                        
+                                        # Add the extracted text as a system message
+                                        messages.append({
+                                            "role": "system",
+                                            "content": f"Extracted text from PDF '{pdf_filename}':\n\n{extracted_text}"
+                                        })
+                            else:
+                                self.logger.info(json.dumps({
+                                    "log_message": "PDF text extraction libraries not available"
+                                }))
+                        except Exception as e:
+                            self.logger.warning(json.dumps({
+                                "log_message": "Failed to extract text from PDF",
+                                "error": str(e)
+                            }))
+                    except Exception as e:
+                        # If there's an error with the PDF formatting, fall back to text-only
+                        self.logger.error(json.dumps({
+                            "log_message": "Error creating PDF message format",
+                            "error": str(e)
+                        }))
+                        
+                        # Add a simple text message instead and explain the issue
+                        messages.append({
+                            "role": "user",
+                            "content": user_question
+                        })
+                        messages.append({
+                            "role": "system",
+                            "content": f"The user attempted to upload a PDF file named '{pdf_filename}', but it couldn't be processed. Please inform them that PDF processing may require PyPDF2 to be installed (`pip install PyPDF2`) or that the specific PDF may not be compatible with this service."
+                        })
+                    # Mark question as handled so we don't add it again at the end
+                    question = None
+
+                    # Log details for debugging
+                    self.logger.debug(json.dumps({
+                        "log_message": "PDF message details",
+                        "base64_prefix": pdf_base64[:20] + "...",
+                        "content_type": "file",
+                        "mime_type": "application/pdf",
+                        "filename": pdf_filename,
+                        "data_url_prefix": pdf_data_url.split(",")[0]
+                    }))
+                    
+                    # Log the message structure for debugging
+                    self.logger.debug(json.dumps({
+                        "log_message": "Created multimodal message for PDF",
+                        "message_structure": messages[-1]
+                    }))
+                else:
+                    print("DEBUG: Failed to encode PDF file, pdf_base64 is None")
 
         # Add system-specific context if specified
         if system_id is not None:
@@ -85,6 +309,9 @@ class MessageBuilder:
                 "role": "user", 
                 "content": question
             })
+
+        #DEBUG
+
 
         return messages, resolved_system_id
 

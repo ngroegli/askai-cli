@@ -58,7 +58,9 @@ def main():
         system_id=args.use_system,
         system_input=args.system_input,
         format=args.format,
-        url=args.url
+        url=args.url,
+        image=args.image if hasattr(args, 'image') else None,
+        pdf=args.pdf if hasattr(args, 'pdf') else None
     )
     
     # Check if message building was cancelled
