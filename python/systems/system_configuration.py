@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+from utils import print_error_or_warnings
 
 class ModelProvider(Enum):
     OPENAI = "openai"
@@ -113,7 +114,7 @@ class SystemConfiguration:
             try:
                 model = ModelConfiguration.from_dict(model_config['model'])
             except Exception as e:
-                print(f"Error creating model configuration: {str(e)}")
+                print_error_or_warnings(f"Error creating model configuration: {str(e)}")
                 
         return cls(
             purpose=purpose,

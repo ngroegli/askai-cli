@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any
 from systems.system_outputs import SystemOutput, OutputType
+from utils import print_error_or_warnings
 from .extractors.html_extractor import HtmlExtractor
 from .extractors.css_extractor import CssExtractor
 from .extractors.js_extractor import JsExtractor
@@ -577,9 +578,9 @@ class OutputHandler:
                         print(f"✅ Successfully created file: {file_path} ({file_size} bytes)")
                         created_files.append(file_path)
                     else:
-                        print(f"❌ Failed to create file: {file_path}")
+                        print_error_or_warnings(f"Failed to create file: {file_path}")
                 except Exception as e:
-                    print(f"❌ Error writing file: {str(e)}")
+                    print_error_or_warnings(f"Error writing file: {str(e)}")
                     try:
                         # Try alternative temp location
                         alt_path = f"/tmp/{filename}"

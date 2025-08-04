@@ -39,7 +39,7 @@ def get_file_input(file_path):
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
             return f.read()
-    print(f"File {file_path} does not exist.")
+    print_error_or_warnings(f"File {file_path} does not exist.", warning_only=True)
     return None
 
 
@@ -58,13 +58,13 @@ def encode_file_to_base64(file_path):
         try:
             # Check if the file is readable
             if not os.access(file_path, os.R_OK):
-                print(f"Error: No read permissions for file: {file_path}")
+                print_error_or_warnings(f"No read permissions for file: {file_path}")
                 return None
                 
             # Get file size to verify it's not empty
             file_size = os.path.getsize(file_path)
             if file_size == 0:
-                print(f"Warning: File is empty: {file_path}")
+                print_error_or_warnings(f"File is empty: {file_path}", warning_only=True)
                 return None
                 
             # Open and read the file in binary mode
@@ -90,22 +90,22 @@ def encode_file_to_base64(file_path):
                         # Make sure we can encode it back to the same string
                         test_reencode = base64.b64encode(test_decode).decode('utf-8')
                         if test_reencode != encoded_string:
-                            print(f"Warning: Base64 re-encode test failed, may be an encoding issue")
+                            print_error_or_warnings(f"Base64 re-encode test failed, may be an encoding issue", warning_only=True)
                         return encoded_string
                     except Exception as e:
-                        print(f"Error: Generated invalid base64 string: {str(e)}")
+                        print_error_or_warnings(f"Generated invalid base64 string: {str(e)}")
                         return None
                 else:
-                    print(f"Error: Failed to encode file to base64: {file_path}")
+                    print_error_or_warnings(f"Failed to encode file to base64: {file_path}")
                     return None
         except PermissionError as e:
-            print(f"Error: Permission denied when reading file: {file_path}")
+            print_error_or_warnings(f"Permission denied when reading file: {file_path}")
             return None
         except Exception as e:
-            print(f"Error encoding file: {file_path} - {str(e)}")
+            print_error_or_warnings(f"Error encoding file: {file_path} - {str(e)}")
             return None
     else:
-        print(f"File does not exist at path: {file_path}")
+        print_error_or_warnings(f"File does not exist at path: {file_path}", warning_only=True)
         # Try to resolve relative paths
         cwd = os.getcwd()
         potential_path = os.path.join(cwd, file_path)
@@ -133,9 +133,17 @@ def capture_command_output(command):
 
 
 def print_error_or_warnings(text, warning_only=False):
-    """Print error or warning messages with appropriate colors."""
-    color = "red"
+    """
+    Print error or warning messages with appropriate background colors.
+    
+    Args:
+        text: The message to print
+        warning_only: If True, print a warning (yellow background), otherwise print an error (red background)
+    """
     if warning_only:
-        color = "light_yellow"
-    cprint(text, color)
+        # Yellow background for warnings
+        cprint(f"WARNING: {text}", "black", "on_yellow")
+    else:
+        # Red background for errors
+        cprint(f"ERROR: {text}", "white", "on_red")
     

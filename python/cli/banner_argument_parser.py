@@ -23,7 +23,7 @@ def print_ascii_banner():
 
 class BannerArgumentParser(argparse.ArgumentParser):
     def error(self, message):
-        print(colored(f"Error: {message}", "red"))
+        print(colored(f"ERROR: {message}", "red"))
         sys.exit(2)
 
     def print_help(self, *args, **kwargs):

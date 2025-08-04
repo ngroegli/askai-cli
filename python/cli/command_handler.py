@@ -6,6 +6,7 @@ Handles all CLI commands like listing, viewing systems and chats.
 import json
 import sys
 from ai import OpenRouterClient
+from utils import print_error_or_warnings
 
 
 class CommandHandler:
@@ -47,7 +48,7 @@ class CommandHandler:
             try:
                 self.system_manager.display_system(system_id)
             except ValueError as e:
-                print(f"Error: {str(e)}")
+                print_error_or_warnings(str(e))
             return True
 
         return False
@@ -74,7 +75,7 @@ class CommandHandler:
                         print("-" * 60)
                 
                 if corrupted_files:
-                    print(f"\nWARNING: Found {len(corrupted_files)} corrupted chat files:")
+                    print_error_or_warnings(f"Found {len(corrupted_files)} corrupted chat files:", warning_only=True)
                     for chat_id in corrupted_files:
                         print(f"- {chat_id}")
                     print("\nUse --manage-chats to repair or delete these files")
@@ -95,7 +96,7 @@ class CommandHandler:
             try:
                 self.chat_manager.display_chat(chat_id)
             except ValueError as e:
-                print(f"Error: {str(e)}")
+                print_error_or_warnings(str(e))
             return True
             
         if hasattr(args, 'manage_chats') and args.manage_chats:
@@ -137,7 +138,7 @@ class CommandHandler:
                     success_count += 1
                     print(f"Repaired: {chat_id}")
                 else:
-                    print(f"Failed to repair: {chat_id}")
+                    print_error_or_warnings(f"Failed to repair: {chat_id}", warning_only=True)
             
             print(f"\nRepaired {success_count} out of {len(corrupted_files)} files.")
             
@@ -155,7 +156,7 @@ class CommandHandler:
                     success_count += 1
                     print(f"Deleted: {chat_id}")
                 else:
-                    print(f"Failed to delete: {chat_id}")
+                    print_error_or_warnings(f"Failed to delete: {chat_id}", warning_only=True)
             
             print(f"\nDeleted {success_count} out of {len(corrupted_files)} files.")
             
@@ -196,7 +197,7 @@ class CommandHandler:
                                     print("No more corrupted files to manage.")
                                     break
                             else:
-                                print(f"Failed to repair: {selected_chat_id}")
+                                print_error_or_warnings(f"Failed to repair: {selected_chat_id}", warning_only=True)
                                 
                         elif action == '2':
                             confirm = input(f"Are you sure you want to delete {selected_chat_id}? (y/n): ").lower()
@@ -209,13 +210,13 @@ class CommandHandler:
                                         print("No more corrupted files to manage.")
                                         break
                                 else:
-                                    print(f"Failed to delete: {selected_chat_id}")
+                                    print_error_or_warnings(f"Failed to delete: {selected_chat_id}", warning_only=True)
                     else:
-                        print("Invalid file number.")
+                        print_error_or_warnings("Invalid file number.", warning_only=True)
                 except ValueError:
-                    print("Please enter a valid number.")
+                    print_error_or_warnings("Please enter a valid number.", warning_only=True)
         else:
-            print("Invalid choice.")
+            print_error_or_warnings("Invalid choice.", warning_only=True)
 
     def handle_openrouter_commands(self, args):
         """Handle OpenRouter-related commands."""
@@ -243,7 +244,7 @@ class CommandHandler:
                 print("-" * 40)
                 
             except Exception as e:
-                print(f"Error retrieving credit balance: {str(e)}")
+                print_error_or_warnings(f"Error retrieving credit balance: {str(e)}")
             return True
 
         elif command == 'list-models':
@@ -335,7 +336,7 @@ class CommandHandler:
                         print("-" * 100)
                 
             except Exception as e:
-                print(f"Error retrieving available models: {str(e)}")
+                print_error_or_warnings(f"Error retrieving available models: {str(e)}")
             return True
 
         return False

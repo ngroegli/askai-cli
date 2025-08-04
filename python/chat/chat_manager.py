@@ -11,6 +11,7 @@ import re
 import sys
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from utils import print_error_or_warnings
 
 
 class ChatManager:
@@ -385,7 +386,7 @@ class ChatManager:
                     messages = system_messages + context_messages + user_messages
                     print(f"\nContinuing chat: {chat_id}")
                 except ValueError as e:
-                    print(f"Error: {str(e)}")
+                    print_error_or_warnings(str(e))
                     sys.exit(1)
         
         return chat_id, messages

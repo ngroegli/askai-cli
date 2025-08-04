@@ -203,55 +203,6 @@ class MessageBuilder:
                             "content": "Note: If you're unable to access the PDF content directly, please inform the user that the PDF could not be processed, and ask them to try extracting the text manually."
                         })
                         
-                        # Attempt to extract text as a fallback, if PDF tools are available
-                        # This will require either PyPDF2 or pdfminer.six to be installed
-                        try:
-                            import importlib.util
-                            
-                            # Check if PyPDF2 is available
-                            if importlib.util.find_spec("PyPDF2") is not None:
-                                import PyPDF2
-                                
-                                # Extract text using PyPDF2
-                                with open(pdf, 'rb') as file:
-                                    reader = PyPDF2.PdfReader(file)
-                                    num_pages = len(reader.pages)
-                                    
-                                    # Extract text from each page (limit to first 10 pages)
-                                    pages_to_read = min(num_pages, 10)
-                                    text_chunks = []
-                                    
-                                    for i in range(pages_to_read):
-                                        page = reader.pages[i]
-                                        text = page.extract_text()
-                                        if text:
-                                            text_chunks.append(f"--- Page {i+1} ---")
-                                            text_chunks.append(text)
-                                    
-                                    if text_chunks:
-                                        extracted_text = "\n".join(text_chunks)
-                                        if len(extracted_text) > 20000:  # Limit size
-                                            extracted_text = extracted_text[:20000] + "... (truncated)"
-                                            
-                                        self.logger.info(json.dumps({
-                                            "log_message": "Successfully extracted text from PDF using PyPDF2",
-                                            "text_length": len(extracted_text)
-                                        }))
-                                        
-                                        # Add the extracted text as a system message
-                                        messages.append({
-                                            "role": "system",
-                                            "content": f"Extracted text from PDF '{pdf_filename}':\n\n{extracted_text}"
-                                        })
-                            else:
-                                self.logger.info(json.dumps({
-                                    "log_message": "PDF text extraction libraries not available"
-                                }))
-                        except Exception as e:
-                            self.logger.warning(json.dumps({
-                                "log_message": "Failed to extract text from PDF",
-                                "error": str(e)
-                            }))
                     except Exception as e:
                         # If there's an error with the PDF formatting, fall back to text-only
                         self.logger.error(json.dumps({

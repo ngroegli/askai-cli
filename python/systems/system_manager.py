@@ -11,6 +11,7 @@ from .system_configuration import (
     SystemPurpose,
     SystemFunctionality
 )
+from utils import print_error_or_warnings
 
 class SystemManager:
     def __init__(self, base_path: str):
@@ -72,7 +73,7 @@ class SystemManager:
             # Convert to SystemInput objects
             return [SystemInput.from_dict(input_data) for input_data in inputs_data.get('inputs', [])]
         except Exception as e:
-            print(f"Error parsing system inputs: {str(e)}")
+            print_error_or_warnings(f"Error parsing system inputs: {str(e)}")
             return []
 
     def _parse_system_outputs(self, content: str) -> List[SystemOutput]:
@@ -93,7 +94,7 @@ class SystemManager:
             outputs_data = yaml.safe_load(yaml_block)
             return [SystemOutput.from_dict(output_data) for output_data in outputs_data.get('outputs', [])]
         except Exception as e:
-            print(f"Error parsing system outputs: {str(e)}")
+            print_error_or_warnings(f"Error parsing system outputs: {str(e)}")
             return []
 
     def _parse_system_purpose(self, content: str) -> Optional[SystemPurpose]:
@@ -117,7 +118,7 @@ class SystemManager:
 
             return SystemPurpose.from_text(name, description)
         except Exception as e:
-            print(f"Error parsing system purpose: {str(e)}")
+            print_error_or_warnings(f"Error parsing system purpose: {str(e)}")
             return None
 
     def _parse_system_functionality(self, content: str) -> Optional[SystemFunctionality]:
@@ -135,7 +136,7 @@ class SystemManager:
                 return SystemFunctionality.from_text(functionality_text)
             return None
         except Exception as e:
-            print(f"Error parsing system functionality: {str(e)}")
+            print_error_or_warnings(f"Error parsing system functionality: {str(e)}")
             return None
 
     def _parse_model_configuration(self, content: str) -> Optional[Dict[str, Any]]:
@@ -191,7 +192,7 @@ class SystemManager:
                 
             return None
         except Exception as e:
-            print(f"Error parsing model configuration: {str(e)}")
+            print_error_or_warnings(f"Error parsing model configuration: {str(e)}")
             return None
 
     def _parse_system_configuration(self, content: str) -> Optional[SystemConfiguration]:
@@ -233,7 +234,7 @@ class SystemManager:
             print("[DEBUG] System configuration missing required sections (purpose or functionality). Returning None.")
             return None
         except Exception as e:
-            print(f"Error creating system configuration: {str(e)}")
+            print_error_or_warnings(f"Error creating system configuration: {str(e)}")
             return None
 
     def _parse_system_prompt(self, content: str) -> str:
@@ -293,7 +294,7 @@ class SystemManager:
             with open(file_path, 'r') as f:
                 return f.read().strip()
         except Exception as e:
-            print(f"Error reading input file '{file_path}': {str(e)}")
+            print_error_or_warnings(f"Error reading input file '{file_path}': {str(e)}")
             return None
 
     def process_system_inputs(self, system_id: str, 
@@ -311,7 +312,7 @@ class SystemManager:
         """
         system_data = self.get_system_content(system_id)
         if system_data is None:
-            print(f"Error: System '{system_id}' does not exist")
+            print_error_or_warnings(f"System '{system_id}' does not exist")
             return None
             
         inputs = system_data['inputs']
@@ -338,7 +339,7 @@ class SystemManager:
             # Handle non-interactive mode and ignored undefined inputs
             if not interactive or (not input_def.required and input_def.ignore_undefined):
                 if input_def.required and not input_def.ignore_undefined:
-                    print(f"Error: Required input '{input_def.name}' is missing")
+                    print_error_or_warnings(f"Required input '{input_def.name}' is missing")
                     return None
                 # Set default value for non-required inputs that can be ignored
                 if not input_def.required and input_def.ignore_undefined:
@@ -379,7 +380,7 @@ class SystemManager:
                 # Validate the input value
                 valid, error = input_def.validate_value(value)
                 if not valid:
-                    print(f"Error: {error}")
+                    print_error_or_warnings(f"{error}")
                     continue
 
                 # For FILE type inputs, read the file content after validation
@@ -410,18 +411,18 @@ class SystemManager:
             # Get the alternative input definition
             alt_input = input_dict.get(alt_name)
             if not alt_input:
-                print(f"Warning: Alternative input '{alt_name}' not found")
+                print_error_or_warnings(f"Alternative input '{alt_name}' not found", warning_only=True)
                 continue
                 
             # Verify bidirectional alternative relationship
             if alt_input.alternative_to != input_def.name:
-                print(f"Warning: Alternative relationship between '{input_def.name}' and '{alt_name}' is not bidirectional")
+                print_error_or_warnings(f"Alternative relationship between '{input_def.name}' and '{alt_name}' is not bidirectional", warning_only=True)
                 continue
                 
             # Check if at least one of the alternatives is provided
             if input_def.required and alt_input.required:
                 if input_def.name not in result and alt_name not in result:
-                    print(f"Error: Either '{input_def.name}' or '{alt_name}' must be provided")
+                    print_error_or_warnings(f"Either '{input_def.name}' or '{alt_name}' must be provided")
                     return None
                     
             # Mark both inputs as validated
