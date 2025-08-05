@@ -4,6 +4,7 @@ import os
 from typing import List, Dict, Any, Optional, Union
 from config import load_config
 from logger import setup_logger
+from utils import print_error_or_warnings
 
 
 class OpenRouterClient:
@@ -89,15 +90,41 @@ class OpenRouterClient:
                         # Check for PDF files (this is the primary format used by OpenRouter)
                         elif item.get("type") == "file":
                             file_data = item.get("file", {}).get("file_data", "")
-                            if "application/pdf" in file_data:
+                            
+                            # Check if it's a PDF (either base64 data or a URL to a PDF)
+                            is_pdf = False
+                            
+                            # Check if file_data is a URL to a PDF
+                            if file_data and isinstance(file_data, str):
+                                is_pdf_url = (
+                                    file_data.startswith("http") and 
+                                    file_data.lower().endswith(".pdf")
+                                )
+                                
+                                # Base64 encoded PDFs
+                                is_pdf_base64 = "application/pdf" in file_data
+                                
+                                is_pdf = is_pdf_url or is_pdf_base64
+                            
+                            if is_pdf:
                                 has_multimodal = True
                                 has_pdf = True
                                 filename = item.get("file", {}).get("filename", "document.pdf")
-                                logger.debug(json.dumps({
-                                    "log_message": "Detected PDF content in file format",
-                                    "content_type": "application/pdf",
-                                    "filename": filename
-                                }))
+                                
+                                # Log the appropriate source
+                                if file_data and file_data.startswith("http"):
+                                    logger.debug(json.dumps({
+                                        "log_message": "Detected PDF URL in file_data",
+                                        "content_type": "application/pdf",
+                                        "filename": filename,
+                                        "url": file_data
+                                    }))
+                                else:
+                                    logger.debug(json.dumps({
+                                        "log_message": "Detected PDF content in file format",
+                                        "content_type": "application/pdf",
+                                        "filename": filename
+                                    }))
                 if has_multimodal:
                     break
         
@@ -108,35 +135,56 @@ class OpenRouterClient:
                 if "default_pdf_model" in self.config:
                     payload["model"] = self.config["default_pdf_model"]
                 else:
-                    # Default to Google Gemma model which is known to work well with PDFs
-                    payload["model"] = "google/gemma-3-27b-it"
+                    # Default to Claude Sonnet which is known to work well with PDFs
+                    payload["model"] = "anthropic/claude-sonnet-4"
                 
                 # Add the PDF processing plugin as recommended by OpenRouter
                 if "plugins" not in payload:
                     payload["plugins"] = []
                     
-                # Add the file-parser plugin with pdf-text engine
+                # Add the file-parser plugin with proper engine
                 payload["plugins"].append({
                     "id": "file-parser",
                     "pdf": {
-                        "engine": "pdf-text"  # Better than the default "mistral-ocr" for many PDFs
+                        "engine": "mistral-ocr"  # Using the engine mentioned in the documentation
                     }
                 })
                 
+                # Check if we have any PDF URLs in the messages
+                has_pdf_url = False
+                for msg in messages:
+                    if isinstance(msg.get("content"), list):
+                        for item in msg.get("content", []):
+                            if isinstance(item, dict) and item.get("type") == "file":
+                                file_data = item.get("file", {}).get("file_data", "")
+                                if file_data and isinstance(file_data, str) and file_data.startswith("http"):
+                                    has_pdf_url = True
+                                    break
+                
                 # Add detailed logging to help with troubleshooting
-                logger.debug(json.dumps({
+                log_message = {
                     "log_message": "Detected PDF content, using PDF-capable model with file-parser plugin",
                     "selected_model": payload["model"],
                     "content_type": "PDF document",
-                    "pdf_engine": "pdf-text",
-                    "file_format": "Using 'file' type with 'file_data' field in proper data URL format"
-                }))
+                    "pdf_engine": "mistral-ocr"
+                }
+                
+                if has_pdf_url:
+                    log_message["file_format"] = "Using 'file' type with 'file_data' containing an external PDF URL"
+                else:
+                    log_message["file_format"] = "Using 'file' type with 'file_data' field containing a base64-encoded PDF"
+                    
+                logger.debug(json.dumps(log_message))
             else:
                 # For other multimodal content, use the configured vision model
                 if "default_vision_model" in self.config:
                     payload["model"] = self.config["default_vision_model"]
                 else:
                     # Fallback to a commonly available multimodal model
+                    logger.warning(json.dumps({
+                        "log_message": "Using default visual model as no specific model configured"
+                    }))
+                    print_error_or_warnings(text="Using default visual model as no specific model configured", warning_only=True)
                     payload["model"] = "anthropic/claude-3-opus:latest"
                 
                 logger.debug(json.dumps({
@@ -168,8 +216,62 @@ class OpenRouterClient:
 
         # Payload structure for OpenRouter API
         payload["messages"] = messages
+        
+        # Add plugins if PDF URL is detected - this is crucial for PDF URL processing
+        has_pdf_url = False
+        for msg in messages:
+            if isinstance(msg.get("content"), list):
+                for item in msg.get("content", []):
+                    if isinstance(item, dict) and item.get("type") == "file":
+                        file_data = item.get("file", {}).get("file_data", "")
+                        if file_data and isinstance(file_data, str) and file_data.startswith("http") and file_data.lower().endswith(".pdf"):
+                            has_pdf_url = True
+                            break
+        
+        # Ensure PDF file parser plugin is added for PDF URLs - explicitly matching documentation
+        if has_pdf_url:
+            # For PDF URLs, always ensure we have the plugins set exactly as in the documentation
+            payload["plugins"] = [
+                {
+                    "id": "file-parser",
+                    "pdf": {
+                        "engine": "mistral-ocr"
+                    }
+                }
+            ]
             
+            # Also ensure we're using a model that works well with PDFs
+            if "default_pdf_model" in self.config:
+                payload["model"] = self.config["default_pdf_model"]
+            else:
+                # Default to Claude model as specified in the documentation example
+                logger.warning(json.dumps({
+                    "log_message": "Using default PDF model as no specific model configured"
+                }))
+                print_error_or_warnings(text="Using default PDF model as no specific model configured", warning_only=True)
+                payload["model"] = "anthropic/claude-sonnet-4"
+                
+            logger.debug(json.dumps({
+                "log_message": "Configured for PDF URL processing",
+                "model": payload["model"],
+                "plugins": payload["plugins"]
+            }))
+            
+        logger.debug(json.dumps({
+            "log_message": "Final OpenRouter API payload",
+            "plugins": payload.get("plugins", []),
+            "model": payload.get("model", "unknown"),
+            "has_pdf_elements": has_pdf
+        }))
+        
         try:
+            logger.debug(json.dumps({
+                "log_message": "Final OpenRouter API payload",
+                "plugins": payload.get("plugins", []),
+                "model": payload.get("model", "unknown"),
+                "has_pdf_elements": has_pdf
+            }))
+            
             # Send the request to OpenRouter API
             response = requests.post(f"{self.base_url}chat/completions", headers=headers, json=payload)
             

@@ -162,6 +162,12 @@ Pattern files live inside the `patterns/` folder and contain reusable instructio
 askai -img /path/to/image.jpg -q "What can you see in this image?"
 ```
 
+You can also analyze images directly from URLs:
+
+```bash
+askai -img-url https://example.com/image.jpg -q "What can you see in this image?"
+```
+
 The tool automatically uses a vision-capable model when images are provided. Supported image formats include JPG, PNG, GIF, and WebP.
 
 ### Analyze a PDF Document
@@ -169,6 +175,14 @@ The tool automatically uses a vision-capable model when images are provided. Sup
 ```bash
 askai -pdf /path/to/document.pdf -q "Summarize this document."
 ```
+
+You can also analyze PDFs directly from URLs:
+
+```bash
+askai -pdf-url https://bitcoin.org/bitcoin.pdf -q "Summarize this document."
+```
+
+Note: The PDF URL must point directly to a valid PDF file that's publicly accessible. This feature requires a model that supports PDF processing (such as Claude models) and will automatically configure the necessary plugins.
 
 Sends the PDF content directly to the AI for analysis using the format specified in the OpenRouter documentation. The file must have a `.pdf` extension to be processed as a PDF document. If a non-PDF file is provided, it will be treated as a regular text file.
 

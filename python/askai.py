@@ -60,7 +60,9 @@ def main():
         format=args.format,
         url=args.url,
         image=args.image if hasattr(args, 'image') else None,
-        pdf=args.pdf if hasattr(args, 'pdf') else None
+        pdf=args.pdf if hasattr(args, 'pdf') else None,
+        image_url=args.image_url if hasattr(args, 'image_url') else None,
+        pdf_url=args.pdf_url if hasattr(args, 'pdf_url') else None
     )
     
     # Check if message building was cancelled

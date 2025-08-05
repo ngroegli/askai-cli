@@ -10,14 +10,36 @@ from utils import get_piped_input, get_file_input, build_format_instruction, enc
 
 
 class MessageBuilder:
-    """Builds messages for AI interaction from various input sources."""
+    """Builds mess                # Create multimodal message with PDF URL - using proper structure as per documentation
+                # The URL should be directly in the file_data field
+                user_message = {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_question},
+                        {
+                            "type": "file",
+                            "file": {
+                                "filename": pdf_filename,
+                                "file_data": pdf_url
+                            }
+                        }
+                    ]
+                }
+                
+                # Add metadata to indicate this needs plugin processing
+                user_message["metadata"] = {
+                    "requires_pdf_processing": True
+                }
+                
+                messages.append(user_message)eraction from various input sources."""
     
     def __init__(self, pattern_manager, logger):
         self.pattern_manager = pattern_manager
         self.logger = logger
 
     def build_messages(self, question=None, file_input=None, pattern_id=None, 
-                      pattern_input=None, format="rawtext", url=None, image=None, pdf=None):
+                      pattern_input=None, format="rawtext", url=None, image=None, 
+                      pdf=None, image_url=None, pdf_url=None):
         """Builds the message list for OpenRouter.
         
         Args:
@@ -29,6 +51,8 @@ class MessageBuilder:
             url: Optional URL to analyze/summarize
             image: Optional path to image file
             pdf: Optional path to PDF file
+            image_url: Optional URL to an image
+            pdf_url: Optional URL to a PDF file
             
         Returns:
             tuple: (messages, resolved_pattern_id)
@@ -111,6 +135,41 @@ class MessageBuilder:
                     "log_message": "Created multimodal message for image",
                     "message_structure": messages[-1]
                 }))
+                
+        # Handle image URL input
+        if image_url:
+            self.logger.info(json.dumps({
+                "log_message": "Image URL provided for analysis", 
+                "image_url": image_url
+            }))
+            
+            # Create a default question if none provided
+            if not question:
+                user_question = "Please analyze and describe this image in detail."
+            else:
+                user_question = question
+                
+            # Create multimodal message with image URL
+            messages.append({
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_question},
+                    {
+                        "type": "image_url", 
+                        "image_url": {
+                            "url": image_url
+                        }
+                    }
+                ]
+            })
+            # Mark question as handled so we don't add it again at the end
+            question = None
+            
+            # Log the message structure for debugging
+            self.logger.debug(json.dumps({
+                "log_message": "Created multimodal message for image URL",
+                "message_structure": messages[-1]
+            }))
                 
         # Handle PDF input - encode as base64
         if pdf:
@@ -239,6 +298,77 @@ class MessageBuilder:
                     }))
                 else:
                     print("DEBUG: Failed to encode PDF file, pdf_base64 is None")
+                    
+        # Handle PDF URL input
+        if pdf_url:
+            self.logger.info(json.dumps({
+                "log_message": "PDF URL provided for analysis", 
+                "pdf_url": pdf_url
+            }))
+            
+            # Create a default question if none provided
+            if not question:
+                user_question = "Please analyze and summarize the content of this PDF."
+            else:
+                user_question = question
+                
+            # Extract filename from URL
+            pdf_filename = pdf_url.split('/')[-1]
+            if not pdf_filename or not pdf_filename.lower().endswith('.pdf'):
+                pdf_filename = "document.pdf"
+            
+            try:
+                # Create multimodal message with PDF URL - using proper structure as per documentation
+                # The URL should be directly in the file_data field
+                user_message = {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_question},
+                        {
+                            "type": "file",
+                            "file": {
+                                "filename": pdf_filename,
+                                "file_data": pdf_url
+                            }
+                        }
+                    ]
+                }
+                
+                # Add the message to the list
+                messages.append(user_message)
+                
+                # Add a note for the AI about PDF handling
+                messages.append({
+                    "role": "system",
+                    "content": "Note: If you're unable to access the PDF content directly, please inform the user that the PDF could not be processed, and ask them to try using a different PDF URL or downloading the PDF first."
+                })
+                
+                # Mark question as handled so we don't add it again at the end
+                question = None
+                
+                # Log the message structure for debugging
+                self.logger.debug(json.dumps({
+                    "log_message": "Created multimodal message for PDF URL",
+                    "message_structure": messages[-1]
+                }))
+            except Exception as e:
+                # If there's an error with the PDF URL formatting, fall back to text-only
+                self.logger.error(json.dumps({
+                    "log_message": "Error creating PDF URL message format",
+                    "error": str(e)
+                }))
+                
+                # Add a simple text message instead and explain the issue
+                messages.append({
+                    "role": "user",
+                    "content": user_question
+                })
+                messages.append({
+                    "role": "system",
+                    "content": f"The user attempted to provide a PDF URL '{pdf_url}', but it couldn't be processed. Please inform them that the PDF URL may not be valid or directly accessible."
+                })
+                # Mark question as handled so we don't add it again at the end
+                question = None
 
         # Add pattern-specific context if specified
         if pattern_id is not None:

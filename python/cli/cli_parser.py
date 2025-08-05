@@ -25,7 +25,9 @@ class CLIParser:
         parser.add_argument('-fi', '--file-input', help='Input file to include as context')
         parser.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
         parser.add_argument('-img', '--image', help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
+        parser.add_argument('-img-url', '--image-url', help='Image URL to analyze along with your question')
         parser.add_argument('-pdf', '--pdf', help='PDF file to analyze along with your question (must have .pdf extension)')
+        parser.add_argument('-pdf-url', '--pdf-url', help='PDF URL to analyze along with your question')
         
         # Output options
         parser.add_argument('-o', '--output', help='Output file to save result')
@@ -115,14 +117,16 @@ class CLIParser:
         # Allow URL, image, or PDF without question (for simple analysis)
         has_url = args.url is not None
         has_image = args.image is not None
+        has_image_url = args.image_url is not None
         has_pdf = args.pdf is not None
+        has_pdf_url = args.pdf_url is not None
         
-        if not args.question and not args.use_pattern and not has_command and not has_url and not has_image and not has_pdf:
+        if not args.question and not args.use_pattern and not has_command and not has_url and not has_image and not has_pdf and not has_image_url and not has_pdf_url:
             logger.error(json.dumps({
-                "log_message": "User did not provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated pattern with -up"
+                "log_message": "User did not provide a question with -q, URL with -url, image with -img/--image-url, PDF with -pdf/--pdf-url, or a dedicated pattern with -up"
             }))
             print_error_or_warnings(
-                text="Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated pattern with -up"
+                text="Provide a question with -q, URL with -url, image with -img/--image-url, PDF with -pdf/--pdf-url, or a dedicated pattern with -up"
             )
             sys.exit(1)
 
