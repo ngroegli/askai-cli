@@ -1,4 +1,4 @@
-# System: KQL Query Generation
+# Pattern: KQL Query Generation
 
 ## Purpose:
 
@@ -14,7 +14,7 @@ Outputs a valid, best-matching KQL query based on that input. If there exists va
 
 Optional support for contextual hints like table names or time filters.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -36,7 +36,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:

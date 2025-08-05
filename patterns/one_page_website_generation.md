@@ -1,4 +1,4 @@
-# System: One Page Website Generation
+# Pattern: One Page Website Generation
 
 ## Purpose:
 
@@ -17,7 +17,7 @@ The purpose of `one_page_website_generation` is to rapidly generate lightweight,
 * Ensure accessible, fast-loading, and mobile-friendly design.
 * Generate clean, well-structured, and maintainable code for easy customization.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -57,7 +57,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:

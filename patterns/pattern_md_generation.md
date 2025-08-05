@@ -1,28 +1,28 @@
-# System: System MD Generation
+# Pattern: Pattern MD Generation
 
 ## Purpose:
 
-The purpose of `system_md_generator` is to automatically create structured system context files in markdown format based on a provided template and a goal description. This allows rapid and consistent documentation of AI system contexts, aligned with a standardized structure.
+The purpose of `pattern_md_generator` is to automatically create structured pattern context files in markdown format based on a provided template and a goal description. This allows rapid and consistent documentation of AI pattern contexts, aligned with a standardized structure.
 
 ## Functionality:
 
-* Accept a predefined system markdown template with placeholders as input.
-* Accept a concise goal description for the target system.
-* Automatically generate a complete `.md` system context file by filling in:
+* Accept a predefined pattern markdown template with placeholders as input.
+* Accept a concise goal description for the target pattern.
+* Automatically generate a complete `.md` pattern context file by filling in:
 
-  * The system title derived from the goal or a user-defined name.
+  * The pattern title derived from the goal or a user-defined name.
   * Purpose based on the provided goal.
   * Functionality section extrapolated from the goal with reasonable, AI-generated assumptions.
-  * Clear input and output format descriptions suited to the system's purpose.
+  * Clear input and output format descriptions suited to the pattern's purpose.
 * Ensure consistency and adherence to documentation standards.
 * Produce human-readable, ready-to-use markdown files.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
   - name: goal_description
-    description: A concise description of the desired AI system's goal or functionality
+    description: A concise description of the desired AI pattern's goal or functionality
     type: text
     required: true
 
@@ -32,38 +32,38 @@ inputs:
     required: false
     ignore_undefined: true
 
-  - name: system_name
-    description: Optional custom name for the system (derived from goal if not provided)
+  - name: pattern_name
+    description: Optional custom name for the pattern (derived from goal if not provided)
     type: text
     required: false
     ignore_undefined: true
 
   - name: output_path
-    description: Path where the generated system file should be saved
+    description: Path where the generated pattern file should be saved
     type: text
     required: false
     ignore_undefined: true
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:
-  - name: system_md
-    description: The generated system markdown file content
+  - name: pattern_md
+    description: The generated pattern markdown file content
     type: markdown
     required: true
     example: |
-      # System: Example System
+      # Pattern: Example Pattern
 
       ## Purpose:
-      The purpose of this system is...
+      The purpose of this pattern is...
 
       ## Functionality:
       * Feature 1
       * Feature 2
 
-      ## System Inputs:
+      ## Pattern Inputs:
       ```yaml
       inputs:
         - name: example_input
@@ -72,7 +72,7 @@ outputs:
           required: true
       ```
 
-      ## System Outputs:
+      ## Pattern Outputs:
       ```yaml
       outputs:
         - name: example_output
@@ -90,7 +90,7 @@ outputs:
       ```
 
   - name: validation_results
-    description: Validation results for the generated system definition
+    description: Validation results for the generated pattern definition
     type: json
     required: true
     schema:
@@ -105,8 +105,8 @@ outputs:
           type: array
           items: { type: string }
 
-  - name: system_metadata
-    description: Metadata about the generated system
+  - name: pattern_metadata
+    description: Metadata about the generated pattern
     type: json
     required: true
     schema:
@@ -129,19 +129,19 @@ model:
   max_tokens: 4000
 
 format_instructions: |
-  Generate system definitions in this order:
+  Generate pattern definitions in this order:
   1. Create the full markdown content following the template structure
   2. Validate the generated content against template requirements
-  3. Generate metadata about the created system
+  3. Generate metadata about the created pattern
 
 example_conversation:
   - role: user
     content: |
-      Create a system for analyzing log files to find patterns and anomalies
+      Create a pattern for analyzing log files to find patterns and anomalies
   - role: assistant
     content: |
       Generated Markdown:
-      # System: Log Analysis
+      # Pattern: Log Analysis
       [Full markdown content with inputs, outputs, and model configuration]
 
       Validation Results:
@@ -155,7 +155,7 @@ example_conversation:
         ]
       }
 
-      System Metadata:
+      Pattern Metadata:
       {
         "name": "Log Analysis",
         "file_name": "log_analysis.md",

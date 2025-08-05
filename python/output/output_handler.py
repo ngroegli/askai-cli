@@ -4,7 +4,7 @@ import re
 import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any
-from systems.system_outputs import SystemOutput, OutputType
+from patterns.pattern_outputs import PatternOutput, OutputType
 from utils import print_error_or_warnings
 from .extractors.html_extractor import HtmlExtractor
 from .extractors.css_extractor import CssExtractor
@@ -49,7 +49,7 @@ class OutputHandler:
                       output_config: Optional[Dict[str, Any]] = None,
                       console_output: bool = True,
                       file_output: bool = False,
-                      system_outputs: Optional[List[SystemOutput]] = None) -> Tuple[str, List[str]]:
+                      pattern_outputs: Optional[List[PatternOutput]] = None) -> Tuple[str, List[str]]:
         """
         Process the AI output based on configuration.
         
@@ -97,9 +97,9 @@ class OutputHandler:
             # Handle other non-string types
             output_str = str(output)
             
-        # Handle system-defined outputs first if provided
-        if system_outputs and file_output:
-            created_files = self._handle_system_outputs(output, system_outputs)
+        # Handle pattern-defined outputs first if provided
+        if pattern_outputs and file_output:
+            created_files = self._handle_pattern_outputs(output, pattern_outputs)
             if created_files:
                 # Format output for console
                 formatted_output = output
@@ -199,12 +199,12 @@ class OutputHandler:
         
         return formatted_output, created_files
         
-    def _handle_system_outputs(self, response, system_outputs):
-        """Handle system-defined outputs as specified in the system markdown file.
+    def _handle_pattern_outputs(self, response, pattern_outputs):
+        """Handle pattern-defined outputs as specified in the pattern markdown file.
         
         Args:
             response: The AI response (either text or dictionary)
-            system_outputs: List of SystemOutput objects to process
+            pattern_outputs: List of PatternOutput objects to process
             
         Returns:
             list: A list of created files
@@ -214,13 +214,13 @@ class OutputHandler:
         
         created_files = []
         
-        if not system_outputs:
-            print("No outputs defined in system")
+        if not pattern_outputs:
+            print("No outputs defined in pattern")
             return created_files
         
         # Filter outputs that should be written to files
         file_outputs = [
-            output for output in system_outputs
+            output for output in pattern_outputs
             if output.should_write_to_file()
         ]
         
@@ -667,12 +667,12 @@ class OutputHandler:
                 print("Using current directory instead.")
                 return str(Path(".").resolve())
     
-    def _extract_output_content(self, response, output: SystemOutput) -> Optional[str]:
+    def _extract_output_content(self, response, output: PatternOutput) -> Optional[str]:
         """Extract content for a specific output from the AI response.
         
         Args:
             response: The AI response text
-            output: SystemOutput configuration
+            output: PatternOutput configuration
         
         Returns:
             str: Extracted content, or None if not found
@@ -732,7 +732,7 @@ class OutputHandler:
             print(f"❌ Could not extract content for {output_name}")
             return None
             
-    def _validate_html_references(self, html_content: str, file_outputs: List[SystemOutput]) -> str:
+    def _validate_html_references(self, html_content: str, file_outputs: List[PatternOutput]) -> str:
         """Validate and fix HTML file references to match output filenames.
         
         Args:

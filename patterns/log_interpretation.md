@@ -1,4 +1,4 @@
-# System: Log Interpretation
+# Pattern: Log Interpretation
 
 ## Purpose:
 
@@ -13,7 +13,7 @@ The purpose of `log_interpretation` is to analyze raw log content to identify me
 * Provide human-readable interpretations of discovered patterns and anomalies.
 * Operate without requiring predefined log format specifications but can leverage known structures if provided.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -58,7 +58,7 @@ inputs:
     max: 100
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:
@@ -120,3 +120,4 @@ model:
   model_name: anthropic/claude-3.7-sonnet
   temperature: 0.7
   max_tokens: 2000
+```

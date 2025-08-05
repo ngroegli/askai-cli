@@ -16,18 +16,18 @@ class AIService:
     def __init__(self, logger):
         self.logger = logger
 
-    def get_model_configuration(self, model_name, config, system_data=None):
-        """Get model configuration based on priority: CLI > System config > Global config.
+    def get_model_configuration(self, model_name, config, pattern_data=None):
+        """Get model configuration based on priority: CLI > Pattern config > Global config.
         
         Args:
             model_name: Optional model name from CLI
             config: Global configuration
-            system_data: Optional system data containing system-specific configuration
+            pattern_data: Optional pattern data containing pattern-specific configuration
             
         Returns:
             ModelConfiguration: The model configuration to use
         """
-        from systems.system_configuration import ModelConfiguration, ModelProvider
+        from patterns.pattern_configuration import ModelConfiguration, ModelProvider
         
         # Priority 1: Explicit model name
         if model_name:
@@ -40,26 +40,26 @@ class AIService:
                 model_name=model_name
             )
         
-        # Priority 2: System configuration
-        if system_data and isinstance(system_data, dict):
+        # Priority 2: Pattern configuration
+        if pattern_data and isinstance(pattern_data, dict):
             # Configuration is nested under the 'configuration' key
-            system_config = system_data.get('configuration')
+            pattern_config = pattern_data.get('configuration')
             
-            if system_config:          
-                if hasattr(system_config, 'model') and system_config.model:
-                    # Direct access to ModelConfiguration object from SystemConfiguration
-                    model_config = system_config.model
+            if pattern_config:          
+                if hasattr(pattern_config, 'model') and pattern_config.model:
+                    # Direct access to ModelConfiguration object from PatternConfiguration
+                    model_config = pattern_config.model
                     self.logger.info(json.dumps({
-                        "log_message": "Using model configuration from system",
+                        "log_message": "Using model configuration from pattern",
                         "model_name": model_config.model_name,
                         "provider": model_config.provider.value if model_config.provider else 'openrouter'
                     }))
                     return model_config
-                elif isinstance(system_config, dict) and 'model' in system_config:
+                elif isinstance(pattern_config, dict) and 'model' in pattern_config:
                     # Handle dictionary format
-                    self.logger.info(f"Creating model configuration from dict: {system_config}")
+                    self.logger.info(f"Creating model configuration from dict: {pattern_config}")
                     try:
-                        model_data = system_config['model']
+                        model_data = pattern_config['model']
                         return ModelConfiguration(
                             provider=model_data.get('provider', 'openrouter'),
                             model_name=model_data.get('model_name'),
@@ -81,16 +81,16 @@ class AIService:
             model_name=config["default_model"]
         )
 
-    def get_ai_response(self, messages, model_name=None, system_id=None, 
-                       debug=False, system_manager=None, enable_url_search=False):
+    def get_ai_response(self, messages, model_name=None, pattern_id=None, 
+                       debug=False, pattern_manager=None, enable_url_search=False):
         """Get response from AI model with progress spinner.
         
         Args:
             messages: List of message dictionaries
             model_name: Optional model name to override default
-            system_id: Optional system ID to get system-specific configuration
+            pattern_id: Optional pattern ID to get pattern-specific configuration
             debug: Whether to enable debug mode
-            system_manager: SystemManager instance for accessing system data
+            pattern_manager: PatternManager instance for accessing pattern data
             enable_url_search: Whether to enable web search for URL analysis
         """
         stop_spinner = threading.Event()
@@ -102,11 +102,11 @@ class AIService:
             
             # Get configuration from the proper source
             config = load_config()
-            system_data = None
-            if system_id:
-                system_data = system_manager.get_system_content(system_id)
+            pattern_data = None
+            if pattern_id:
+                pattern_data = pattern_manager.get_pattern_content(pattern_id)
 
-            model_config = self.get_model_configuration(model_name, config, system_data)
+            model_config = self.get_model_configuration(model_name, config, pattern_data)
             
             # Determine web search configuration
             web_search_options = None

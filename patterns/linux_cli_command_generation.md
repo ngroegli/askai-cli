@@ -1,4 +1,4 @@
-# System: Linux CLI Command Generation
+# Pattern: Linux CLI Command Generation
 
 ## Purpose:
 
@@ -13,7 +13,7 @@ The purpose of `linux_cli_command_generation` is to generate efficient Linux com
 * Optimize commands for efficiency and best practices
 * Handle complex scenarios involving command chaining, pipes, and advanced shell features
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -46,7 +46,7 @@ inputs:
     default: efficient
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:

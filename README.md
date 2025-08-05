@@ -30,7 +30,7 @@ A simple, modular Linux CLI tool to interact with [OpenRouter.ai](https://openro
 * Feed previous terminal output via stdin
 * Analyze images with vision-capable AI models
 * Extract and analyze text from PDF documents
-* Load predefined system instructions from `systems/` folder
+* Load predefined pattern instructions from `patterns/` folder
 * Output responses to Markdown, JSON, or plain text
 * Supports default model via config file
 * Override model easily via CLI
@@ -148,13 +148,13 @@ askai -q "What is the capital of Japan?"
 ls -la | askai -q "Explain this output."
 ```
 
-### Use System Files as Additional Context
+### Use Pattern Files as Additional Context
 
 ```bash
-askai -s log_interpretation -i /var/log/auth.log
+askai -up log_interpretation -i /var/log/auth.log
 ```
 
-System files live inside the `systems/` folder and contain reusable instructions for the AI.
+Pattern files live inside the `patterns/` folder and contain reusable instructions for the AI.
 
 ### Analyze an Image
 
@@ -172,13 +172,13 @@ askai -pdf /path/to/document.pdf -q "Summarize this document."
 
 Sends the PDF content directly to the AI for analysis using the format specified in the OpenRouter documentation. The file must have a `.pdf` extension to be processed as a PDF document. If a non-PDF file is provided, it will be treated as a regular text file.
 
-### List Available System Files
+### List Available Pattern Files
 
 ```bash
-askai --list-system
+askai --list-patterns
 ```
 
-Displays all files available under `systems/`.
+Displays all files available under `patterns/`.
 
 ### Error Analysis with Previous Output
 

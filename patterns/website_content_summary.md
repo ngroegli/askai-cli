@@ -1,4 +1,4 @@
-# System: Website Content Summarization
+# Pattern: Website Content Summarization
 
 # ========================================
 # PROMPT CONTENT - PROVIDED TO AI DIRECTLY

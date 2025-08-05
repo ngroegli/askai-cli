@@ -1,4 +1,4 @@
-# System: SPL Query Generation
+# Pattern: SPL Query Generation
 
 ## Purpose:
 
@@ -11,7 +11,7 @@ This system takes natural language input and generates corresponding Splunk Sear
 * Outputs a valid, best-matching SPL query based on that input. If multiple valid approaches exist, up to three solutions are provided.
 * Optionally incorporates contextual hints, such as known index names, source types, or time filters.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -39,7 +39,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:

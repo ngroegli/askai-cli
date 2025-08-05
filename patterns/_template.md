@@ -1,4 +1,4 @@
-# System: <TITLE>
+# Pattern: <TITLE>
 
 # ========================================
 # PROMPT CONTENT - PROVIDED TO AI DIRECTLY
@@ -17,10 +17,10 @@ List the key capabilities and features that will be provided to the AI:
 * Feature 3 - Specific functionality explanation
 
 # =======================================
-# SYSTEM CONFIGURATION - NOT IN PROMPT
+# PATTERN CONFIGURATION - NOT IN PROMPT
 # =======================================
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -63,7 +63,7 @@ inputs:
     max: 100
 ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:

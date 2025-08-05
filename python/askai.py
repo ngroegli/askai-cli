@@ -8,7 +8,7 @@ import sys
 import json
 from config import load_config
 from logger import setup_logger
-from systems import SystemManager
+from patterns import PatternManager
 from chat import ChatManager
 from cli import CLIParser, CommandHandler
 from message_builder import MessageBuilder
@@ -32,18 +32,18 @@ def main():
     
     # Initialize managers and services
     chat_manager = ChatManager(config, logger)
-    system_manager = SystemManager(base_path)
-    command_handler = CommandHandler(system_manager, chat_manager, logger)
-    message_builder = MessageBuilder(system_manager, logger)
+    pattern_manager = PatternManager(base_path)
+    command_handler = CommandHandler(pattern_manager, chat_manager, logger)
+    message_builder = MessageBuilder(pattern_manager, logger)
     ai_service = AIService(logger)
 
     # Initialize output handler
     output_handler = OutputHandler()
 
-    # Handle chat and system commands (these exit if executed)
+    # Handle chat and pattern commands (these exit if executed)
     if command_handler.handle_chat_commands(args):
         sys.exit(0)
-    if command_handler.handle_system_commands(args):
+    if command_handler.handle_pattern_commands(args):
         sys.exit(0)
     if command_handler.handle_openrouter_commands(args):
         sys.exit(0)
@@ -51,12 +51,12 @@ def main():
     # Validate arguments
     cli_parser.validate_arguments(args, logger)
 
-    # Build messages and get the resolved system_id (after selection)
-    messages, resolved_system_id = message_builder.build_messages(
+    # Build messages and get the resolved pattern_id (after selection)
+    messages, resolved_pattern_id = message_builder.build_messages(
         question=args.question,
         file_input=args.file_input,
-        system_id=args.use_system,
-        system_input=args.system_input,
+        pattern_id=args.use_pattern,
+        pattern_input=args.pattern_input,
         format=args.format,
         url=args.url,
         image=args.image if hasattr(args, 'image') else None,
@@ -80,35 +80,35 @@ def main():
     response = ai_service.get_ai_response(
         messages=messages,
         model_name=args.model,
-        system_id=resolved_system_id,
+        pattern_id=resolved_pattern_id,
         debug=args.debug,
-        system_manager=system_manager,
+        pattern_manager=pattern_manager,
         enable_url_search=enable_url_search
     )
 
     # Store chat history if using persistent chat
     chat_manager.store_chat_conversation(
-        chat_id, messages, response, resolved_system_id, system_manager
+        chat_id, messages, response, resolved_pattern_id, pattern_manager
     )
 
-    # Get system outputs for auto-execution handling
-    system_outputs = None
-    if resolved_system_id:
-        system_data = system_manager.get_system_content(resolved_system_id)
-        if system_data:
-            system_outputs = system_data.get('outputs', [])
+    # Get pattern outputs for auto-execution handling
+    pattern_outputs = None
+    if resolved_pattern_id:
+        pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
+        if pattern_data:
+            pattern_outputs = pattern_data.get('outputs', [])
 
     # Handle output
     console_output = True  # Default to showing console output
     file_output = args.save if hasattr(args, 'save') else False
     
-    # Enable file output if we have system outputs with write_to_file
-    system_has_file_output = False
-    if system_outputs:
-        for output in system_outputs:
+    # Enable file output if we have pattern outputs with write_to_file
+    pattern_has_file_output = False
+    if pattern_outputs:
+        for output in pattern_outputs:
             if output.should_write_to_file():
                 file_output = True
-                system_has_file_output = True
+                pattern_has_file_output = True
                 break
     
     # Process output
@@ -121,8 +121,8 @@ def main():
     # Add format to output_config so the handler knows what format to use
     output_config['format'] = args.format
     
-    # Don't override file_output if it was already set by system outputs
-    if has_output_arg and not system_has_file_output:
+    # Don't override file_output if it was already set by pattern outputs
+    if has_output_arg and not pattern_has_file_output:
         file_output = True
         
         # Use the format specified with -f to determine the output file type
@@ -141,14 +141,14 @@ def main():
         output_dir = os.path.dirname(os.path.abspath(output_path))
         output_handler.output_dir = output_dir
         
-    # For system output files, if no directory specified, use interactive prompt
+    # For pattern output files, if no directory specified, use interactive prompt
     
     formatted_output, created_files = output_handler.process_output(
         output=response,
         output_config=output_config,
         console_output=console_output,
         file_output=file_output,
-        system_outputs=system_outputs
+        pattern_outputs=pattern_outputs
     )
     
     # Print the formatted output

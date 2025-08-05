@@ -12,29 +12,29 @@ from utils import get_piped_input, get_file_input, build_format_instruction, enc
 class MessageBuilder:
     """Builds messages for AI interaction from various input sources."""
     
-    def __init__(self, system_manager, logger):
-        self.system_manager = system_manager
+    def __init__(self, pattern_manager, logger):
+        self.pattern_manager = pattern_manager
         self.logger = logger
 
-    def build_messages(self, question=None, file_input=None, system_id=None, 
-                      system_input=None, format="rawtext", url=None, image=None, pdf=None):
+    def build_messages(self, question=None, file_input=None, pattern_id=None, 
+                      pattern_input=None, format="rawtext", url=None, image=None, pdf=None):
         """Builds the message list for OpenRouter.
         
         Args:
             question: Optional user question
             file_input: Optional path to input file
-            system_id: Optional system ID to use
-            system_input: Optional system inputs as dict
+            pattern_id: Optional pattern ID to use
+            pattern_input: Optional pattern inputs as dict
             format: Response format (rawtext, json, or md)
             url: Optional URL to analyze/summarize
             image: Optional path to image file
             pdf: Optional path to PDF file
             
         Returns:
-            tuple: (messages, resolved_system_id)
+            tuple: (messages, resolved_pattern_id)
         """
         messages = []
-        resolved_system_id = system_id
+        resolved_pattern_id = pattern_id
 
         # Handle piped input from terminal
         if context := get_piped_input():
@@ -240,12 +240,12 @@ class MessageBuilder:
                 else:
                     print("DEBUG: Failed to encode PDF file, pdf_base64 is None")
 
-        # Add system-specific context if specified
-        if system_id is not None:
-            resolved_system_id = self._handle_system_context(
-                system_id, system_input, messages
+        # Add pattern-specific context if specified
+        if pattern_id is not None:
+            resolved_pattern_id = self._handle_pattern_context(
+                pattern_id, pattern_input, messages
             )
-            if resolved_system_id is None:
+            if resolved_pattern_id is None:
                 return None, None
 
         # Add format instructions
@@ -264,64 +264,64 @@ class MessageBuilder:
         #DEBUG
 
 
-        return messages, resolved_system_id
+        return messages, resolved_pattern_id
 
-    def _handle_system_context(self, system_id, system_input, messages):
-        """Handle system-specific context and add to messages."""
-        # Handle system selection if no specific ID was provided
-        if system_id == 'new':
-            resolved_system_id = self.system_manager.select_system()
-            if resolved_system_id is None:
-                print("System selection cancelled.")
+    def _handle_pattern_context(self, pattern_id, pattern_input, messages):
+        """Handle pattern-specific context and add to messages."""
+        # Handle pattern selection if no specific ID was provided
+        if pattern_id == 'new':
+            resolved_pattern_id = self.pattern_manager.select_pattern()
+            if resolved_pattern_id is None:
+                print("Pattern selection cancelled.")
                 return None
         else:
-            resolved_system_id = system_id
+            resolved_pattern_id = pattern_id
             
         self.logger.info(json.dumps({
-            "log_message": "System used", 
-            "system": resolved_system_id
+            "log_message": "Pattern used", 
+            "pattern": resolved_pattern_id
         }))
         
-        system_data = self.system_manager.get_system_content(resolved_system_id)
-        if system_data is None:
-            print(f"System '{resolved_system_id}' does not exist")
+        pattern_data = self.pattern_manager.get_pattern_content(resolved_pattern_id)
+        if pattern_data is None:
+            print(f"Pattern '{resolved_pattern_id}' does not exist")
             return None
             
-        # Get and validate system data
-        system_inputs = self.system_manager.process_system_inputs(
-            system_id=resolved_system_id,
-            input_values=system_input
+        # Get and validate pattern data
+        pattern_inputs = self.pattern_manager.process_pattern_inputs(
+            pattern_id=resolved_pattern_id,
+            input_values=pattern_input
         )
-        if system_inputs is None:
+        if pattern_inputs is None:
             return None
             
-        # Add system prompt content (purpose and functionality only)
-        system_prompt = system_data['prompt_content']
+        # Add pattern prompt content (purpose and functionality only)
+        pattern_prompt = pattern_data['prompt_content']
         messages.append({
             "role": "system", 
-            "content": system_prompt
+            "content": pattern_prompt
         })
         
         # If there are inputs, provide them in a structured way
-        if system_inputs:
+        if pattern_inputs:
             messages.append({
                 "role": "system",
-                "content": "Available inputs:\n" + json.dumps(system_inputs, indent=2)
+                "content": "Available inputs:\n" + json.dumps(pattern_inputs, indent=2)
             })
             
         # If there are output definitions, provide them to help the AI structure its response
-        if system_outputs := system_data.get('outputs'):
+        if pattern_outputs := pattern_data.get('outputs'):
             output_spec = {
                 output.name: {
                     "description": output.description,
                     "type": output.output_type.value,
                     "required": output.required,
                     "schema": output.schema if hasattr(output, 'schema') else None
-                } for output in system_outputs
+                } for output in pattern_outputs
             }
             messages.append({
                 "role": "system",
                 "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
             })
             
-        return resolved_system_id
+        return resolved_pattern_id

@@ -40,23 +40,23 @@ class CLIParser:
         # Model options
         parser.add_argument('-m', '--model', help='Override default AI model')
         
-        # System options
-        system_group = parser.add_argument_group('System logic')
-        system_group.add_argument('-us', '--use-system',
+        # Pattern options
+        pattern_group = parser.add_argument_group('Pattern logic')
+        pattern_group.add_argument('-up', '--use-pattern',
                            nargs='?',
-                           const='new',  # When -s is used without value
-                           metavar='SYSTEM_ID',
-                           help='Add system-specific context. Use without ID to select from available systems')
-        system_group.add_argument('-ls', '--list-systems', 
+                           const='new',  # When -p is used without value
+                           metavar='PATTERN_ID',
+                           help='Add pattern-specific context. Use without ID to select from available patterns')
+        pattern_group.add_argument('-lp', '--list-patterns', 
                            action='store_true', 
-                           help='List all available system files')
-        system_group.add_argument('-vs', '--view-system',
+                           help='List all available pattern files')
+        pattern_group.add_argument('-vp', '--view-pattern',
                            nargs='?',
-                           const='',  # When -vs is used without value
-                           help='View system content. Use without ID to select from available systems')
-        system_group.add_argument('-si', '--system-input',
+                           const='',  # When -vp is used without value
+                           help='View pattern content. Use without ID to select from available patterns')
+        pattern_group.add_argument('-pi', '--pattern-input',
                            type=json.loads,
-                           help='Provide system inputs as JSON object')
+                           help='Provide pattern inputs as JSON object')
         
         # Debug options
         parser.add_argument('--debug', 
@@ -108,7 +108,7 @@ class CLIParser:
     def validate_arguments(self, args, logger):
         """Validate command line arguments and log warnings/errors."""
         # Check if user is using any command that doesn't require a question
-        has_command = (args.list_systems or args.view_system is not None or 
+        has_command = (args.list_patterns or args.view_pattern is not None or 
                       args.list_chats or args.view_chat is not None or 
                       args.openrouter is not None)
         
@@ -117,12 +117,12 @@ class CLIParser:
         has_image = args.image is not None
         has_pdf = args.pdf is not None
         
-        if not args.question and not args.use_system and not has_command and not has_url and not has_image and not has_pdf:
+        if not args.question and not args.use_pattern and not has_command and not has_url and not has_image and not has_pdf:
             logger.error(json.dumps({
-                "log_message": "User did not provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
+                "log_message": "User did not provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated pattern with -up"
             }))
             print_error_or_warnings(
-                text="Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated system with -us"
+                text="Provide a question with -q, URL with -url, image with -img, PDF with -pdf, or a dedicated pattern with -up"
             )
             sys.exit(1)
 

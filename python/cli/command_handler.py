@@ -10,43 +10,43 @@ from utils import print_error_or_warnings
 
 
 class CommandHandler:
-    """Handles various CLI commands for systems and chats."""
+    """Handles various CLI commands for patterns and chats."""
     
-    def __init__(self, system_manager, chat_manager, logger):
-        self.system_manager = system_manager
+    def __init__(self, pattern_manager, chat_manager, logger):
+        self.pattern_manager = pattern_manager
         self.chat_manager = chat_manager
         self.logger = logger
 
-    def handle_system_commands(self, args):
-        """Handle system-related commands."""
-        if args.list_systems:
-            self.logger.info(json.dumps({"log_message": "User requested to list all available system files"}))
-            systems = self.system_manager.list_systems()
-            if not systems:
-                print("No system files found.")
+    def handle_pattern_commands(self, args):
+        """Handle pattern-related commands."""
+        if args.list_patterns:
+            self.logger.info(json.dumps({"log_message": "User requested to list all available pattern files"}))
+            patterns = self.pattern_manager.list_patterns()
+            if not patterns:
+                print("No pattern files found.")
             else:
-                print("\nAvailable systems:")
+                print("\nAvailable patterns:")
                 print("-" * 60)
-                for system in systems:
-                    print(f"ID: {system['system_id']}")
-                    print(f"Name: {system['name']}")
+                for pattern in patterns:
+                    print(f"ID: {pattern['pattern_id']}")
+                    print(f"Name: {pattern['name']}")
                     print("-" * 60)
             return True
 
-        if args.view_system is not None:  # -vs was used
-            # If no specific system ID was provided, show selection
-            system_id = args.view_system or self.system_manager.select_system()
+        if args.view_pattern is not None:  # -vp was used
+            # If no specific pattern ID was provided, show selection
+            pattern_id = args.view_pattern or self.pattern_manager.select_pattern()
             
-            if system_id is None:
-                print("System selection cancelled.")
+            if pattern_id is None:
+                print("Pattern selection cancelled.")
                 return True
                 
             self.logger.info(json.dumps({
-                "log_message": "User requested to view system file",
-                "system": system_id
+                "log_message": "User requested to view pattern file",
+                "pattern": pattern_id
             }))
             try:
-                self.system_manager.display_system(system_id)
+                self.pattern_manager.display_pattern(pattern_id)
             except ValueError as e:
                 print_error_or_warnings(str(e))
             return True

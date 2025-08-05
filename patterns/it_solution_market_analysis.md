@@ -1,4 +1,4 @@
-# System: IT Solution Market Analysis Generator
+# Pattern: IT Solution Market Analysis Generator
 
 ## Purpose:
 
@@ -21,7 +21,7 @@ The purpose of `market_analysis_gen` is to generate comprehensive market analysi
 * Ensures all online references are scrutinized for correctness and updated information.
 * Outputs the analysis in markdown format to facilitate easy sharing and documentation.
 
-## System Inputs:
+## Pattern Inputs:
 
 ```yaml
 inputs:
@@ -60,7 +60,7 @@ inputs:
 ```
   ```
 
-## System Outputs:
+## Pattern Outputs:
 
 ```yaml
 outputs:
