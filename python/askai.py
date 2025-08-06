@@ -100,33 +100,6 @@ def main():
         pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
         if pattern_data:
             pattern_outputs = pattern_data.get('outputs', [])
-            
-    # Special handling for Linux CLI command generation pattern
-    is_linux_cli_pattern = (resolved_pattern_id == "linux_cli_command_generation")
-    if is_linux_cli_pattern:
-        logger.debug("Linux CLI command pattern detected early")
-        
-        # Make sure we have a response in the expected format
-        if isinstance(response, dict) and "content" in response:
-            try:
-                content_text = response["content"]
-                import re
-                
-                # Try to parse the content as JSON
-                json_match = re.search(r'\{[\s\S]*?"result":\s*"([^"]+)"[\s\S]*?"visual_output":\s*"([\s\S]*?)"[\s\S]*?\}', content_text)
-                
-                if json_match:
-                    command = json_match.group(1)
-                    visual_output = json_match.group(2).replace('\\n', '\n').replace('\\"', '"')
-                    
-                    # Create a clean response
-                    response = {
-                        "result": command,
-                        "visual_output": visual_output
-                    }
-                    logger.debug("Successfully restructured response for Linux CLI pattern")
-            except Exception as e:
-                logger.debug(f"Error restructuring response: {str(e)}")
 
     # Handle output
     console_output = True  # Default to showing console output
@@ -151,30 +124,6 @@ def main():
     # Add format to output_config so the handler knows what format to use
     output_config['format'] = args.format
     
-    # Special handling for Linux CLI command generation pattern
-    if resolved_pattern_id == "linux_cli_command_generation":
-        # Check if the response has the expected format
-        if isinstance(response, dict) and "result" in response and "visual_output" in response:
-            command = response["result"]
-            visual_output = response["visual_output"]
-            
-            # Print the visual output
-            print("\n" + "=" * 80)
-            print("LINUX COMMAND GENERATED")
-            print("=" * 80)
-            print(f"\nCommand: {command}")
-            print("\nEXPLANATION:")
-            print("-" * 50)
-            print(visual_output)
-            print("-" * 50)
-            
-            # Prompt for execution
-            from patterns.pattern_outputs import PatternOutput
-            PatternOutput.execute_command(command, "result")
-            
-            # Exit successfully
-            sys.exit(0)
-    
     # Don't override file_output if it was already set by pattern outputs
     if has_output_arg and not pattern_has_file_output:
         file_output = True
@@ -198,7 +147,7 @@ def main():
     # For pattern output files, if no directory specified, use interactive prompt
     
     formatted_output, created_files = output_handler.process_output(
-        output=response,
+        response=response,
         output_config=output_config,
         console_output=console_output,
         file_output=file_output,

@@ -2,7 +2,9 @@ import os
 import sys
 import json
 import yaml
+import logging
 from typing import List, Dict, Any, Optional, Union, Tuple
+
 from .pattern_inputs import PatternInput, InputGroup, InputType
 from .pattern_outputs import PatternOutput
 from .pattern_configuration import (
@@ -12,6 +14,8 @@ from .pattern_configuration import (
     PatternFunctionality
 )
 from utils import print_error_or_warnings
+
+logger = logging.getLogger(__name__)
 
 class PatternManager:
     def __init__(self, base_path: str):
