@@ -2,8 +2,10 @@ import os
 import json
 import re
 import logging
+import subprocess
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Optional, Dict, List, Tuple, Any, Union
+
 from patterns.pattern_outputs import PatternOutput, OutputType
 from utils import print_error_or_warnings
 from .extractors.html_extractor import HtmlExtractor
@@ -45,7 +47,8 @@ class OutputHandler:
         self.console_formatter = ConsoleFormatter()
         self.markdown_formatter = MarkdownFormatter()
 
-    def process_output(self, output, 
+    def process_output(self, 
+                      output: Union[str, Dict], 
                       output_config: Optional[Dict[str, Any]] = None,
                       console_output: bool = True,
                       file_output: bool = False,
@@ -59,44 +62,20 @@ class OutputHandler:
                 - format: Format type (rawtext, json, md) from command line args
             console_output (bool): Whether to format for console output
             file_output (bool): Whether to save output to files
-            system_outputs (List[SystemOutput], optional): System-defined outputs
+            pattern_outputs (List[PatternOutput], optional): Pattern-defined outputs
             
         Returns:
             Tuple[str, List[str]]: The formatted output and list of created files
         """
-        # Save original output in case we need the dictionary structure
-        original_output = output
-        output_str = output
+        # First, check for executable command patterns
+        if pattern_outputs:
+            cmd_execution_result = self._handle_command_execution(output, pattern_outputs)
+            if cmd_execution_result:
+                return cmd_execution_result
         
-        # Convert dict response to string if needed, but preserve original dict
-        if isinstance(output, dict):
-            # Try to extract the text content from common API response formats
-            if 'content' in output:
-                output_str = output['content']
-            elif 'text' in output:
-                output_str = output['text']
-            elif 'message' in output:
-                output_str = output['message']
-            elif 'choices' in output and output['choices'] and isinstance(output['choices'], list):
-                for choice in output['choices']:
-                    if isinstance(choice, dict):
-                        if 'message' in choice and 'content' in choice['message']:
-                            output_str = choice['message']['content']
-                            break
-                        elif 'text' in choice:
-                            output_str = choice['text']
-                            break
-            else:
-                # As a last resort, convert the entire dictionary to JSON string
-                import json
-                try:
-                    output_str = json.dumps(output, indent=2)
-                except:
-                    output_str = str(output)
-        elif not isinstance(output, str):
-            # Handle other non-string types
-            output_str = str(output)
-            
+        # Convert dict response to string if needed, while preserving original dict
+        output_str = self._normalize_output(output)
+        
         # Handle pattern-defined outputs first if provided
         if pattern_outputs and file_output:
             created_files = self._handle_pattern_outputs(output, pattern_outputs)
@@ -107,78 +86,164 @@ class OutputHandler:
                     formatted_output = self.console_formatter.format(output)
                 
                 return formatted_output, created_files
+                
+        # Process standard output formats
+        return self._process_standard_output(output, output_str, output_config, console_output, file_output)
+        
+    def _normalize_output(self, output: Union[str, Dict]) -> str:
+        """
+        Convert different output types to a normalized string representation.
+        
+        Args:
+            output: The raw output from the AI
+            
+        Returns:
+            str: The normalized output string
+        """
+        if isinstance(output, str):
+            return output
+            
+        if isinstance(output, dict):
+            # Try to extract the text content from common API response formats
+            if 'content' in output:
+                return output['content']
+            elif 'text' in output:
+                return output['text']
+            elif 'message' in output:
+                return output['message']
+            elif 'choices' in output and output['choices'] and isinstance(output['choices'], list):
+                for choice in output['choices']:
+                    if isinstance(choice, dict):
+                        if 'message' in choice and 'content' in choice['message']:
+                            return choice['message']['content']
+                        elif 'text' in choice:
+                            return choice['text']
+            
+            # As a last resort, convert the entire dictionary to JSON string
+            try:
+                return json.dumps(output, indent=2)
+            except:
+                return str(output)
+        
+        # Handle other non-string types
+        return str(output)
+    
+    def _handle_command_execution(self, 
+                                  output: Union[str, Dict], 
+                                  pattern_outputs: List[PatternOutput]) -> Optional[Tuple[str, List[str]]]:
+        """
+        Check if the output contains an executable command pattern and execute it if found.
+        
+        Args:
+            output: The raw output from the AI
+            pattern_outputs: List of PatternOutput objects
+            
+        Returns:
+            Optional[Tuple[str, List[str]]]: Execution result or None if no command was executed
+        """
+        # Find a "result" output field configured for execution
+        result_output = next((output_obj for output_obj in pattern_outputs 
+                        if output_obj.name == "result" and output_obj.should_prompt_for_execution()), None)
+        
+        if not result_output:
+            return None
+            
+        logger.debug("Found pattern with executable result field")
+        
+        # Extract command from output
+        command = self._extract_command(output)
+        if not command:
+            return None
+        
+        # Get visual output explanation if available
+        visual_content = None
+        if isinstance(output, dict) and 'visual_output' in output:
+            visual_content = output['visual_output']
+            if visual_content:
+                # Format output for display
+                print("\n" + "=" * 80)
+                print(f"COMMAND: {command}")
+                print("EXPLANATION:")
+                print("=" * 80 + "\n")
+                print(visual_content)
+        
+        # Execute the command
+        print(f"\n✅ Executing command: {command}")
+        PatternOutput.execute_command(command, result_output.name)
+        
+        # Return early to avoid further processing
+        return visual_content if 'visual_output' in output else command, []
+    
+    def _extract_command(self, output: Union[str, Dict]) -> Optional[str]:
+        """
+        Extract a command from different output formats.
+        
+        Args:
+            output: The raw output from the AI
+            
+        Returns:
+            Optional[str]: Extracted command or None if not found
+        """
+        # Format 1: Direct dictionary with result field
+        if isinstance(output, dict) and "result" in output:
+            result_value = output["result"]
+            if isinstance(result_value, str):
+                return result_value.strip()
+        
+        # Format 2: OpenRouter API response (nested case)
+        if isinstance(output, dict) and "choices" in output and output["choices"]:
+            first_choice = output["choices"][0]
+            if isinstance(first_choice, dict) and "message" in first_choice:
+                message = first_choice["message"]
+                if isinstance(message, dict) and "content" in message:
+                    content = message["content"]
+                    
+                    # Look for JSON block in content
+                    try:
+                        match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
+                        if match:
+                            json_content = json.loads(match.group(1))
+                            if "result" in json_content:
+                                return json_content["result"].strip()
+                    except Exception as e:
+                        logger.warning(f"Error parsing JSON from content: {str(e)}")
+        
+        return None
+    
+    def _process_standard_output(self, 
+                                output: Union[str, Dict],
+                                output_str: str,
+                                output_config: Optional[Dict[str, Any]], 
+                                console_output: bool, 
+                                file_output: bool) -> Tuple[str, List[str]]:
+        """
+        Process standard output formats (HTML, CSS, JS, JSON, Markdown).
+        
+        Args:
+            output: The original raw output
+            output_str: The normalized string output
+            output_config: Output configuration
+            console_output: Whether to format for console output
+            file_output: Whether to save output to files
+            
+        Returns:
+            Tuple[str, List[str]]: The formatted output and list of created files
+        """
         # Default to empty dict if None
         output_config = output_config or {}
         created_files = []
         
         # Store the format type if it's in the output_config
-        # This would typically come from the command line -f/--format parameter
         output_format = output_config.get('format', 'rawtext')
         
-        # Extract HTML content
-        html_content = self.html_extractor.extract(output_str)
-        if html_content and file_output:
-            html_filename = output_config.get('html_filename', 'output.html')
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                html_path = os.path.join(self.output_dir, html_filename)
-                with open(html_path, 'w') as f:
-                    f.write(html_content)
-                created_files.append(html_path)
-                logger.info(f"HTML content saved to {html_path}")
-            
-        # Extract CSS content
-        css_content = self.css_extractor.extract(output)
-        if css_content and file_output:
-            css_filename = output_config.get('css_filename', 'styles.css')
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                css_path = os.path.join(self.output_dir, css_filename)
-                with open(css_path, 'w') as f:
-                    f.write(css_content)
-                created_files.append(css_path)
-                logger.info(f"CSS content saved to {css_path}")
-            
-        # Extract JavaScript content
-        js_content = self.js_extractor.extract(output)
-        if js_content and file_output:
-            js_filename = output_config.get('js_filename', 'script.js')
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                js_path = os.path.join(self.output_dir, js_filename)
-                with open(js_path, 'w') as f:
-                    f.write(js_content)
-                created_files.append(js_path)
-                logger.info(f"JavaScript content saved to {js_path}")
-            
-        # Extract JSON content
-        json_content = self.json_extractor.extract(output)
-        if json_content and file_output:
-            json_filename = output_config.get('json_filename', 'data.json')
-            if self.output_dir:
-                os.makedirs(self.output_dir, exist_ok=True)
-                json_path = os.path.join(self.output_dir, json_filename)
-                
-                # Ensure we have a string for writing
-                import json as json_module  # Local import to avoid scope issues
-                if isinstance(json_content, dict):
-                    json_str = json_module.dumps(json_content, indent=2)
-                else:
-                    json_str = str(json_content)
-                    
-                with open(json_path, 'w') as f:
-                    f.write(json_str)
-                created_files.append(json_path)
-                logger.info(f"JSON content saved to {json_path}")
-        
-        # Extract Markdown content
-        markdown_content = self.markdown_extractor.extract(output_str)
+        # Extract and save content for different formats
+        if file_output and self.output_dir:
+            created_files.extend(self._extract_and_save_content(output, output_str, output_config))
         
         # Format output based on requested format
         formatted_output = output_str
         
         if console_output:
-            # Check if format is specified in output_config
             if output_format == 'md':
                 # Use the markdown formatter for MD format
                 formatted_output = self.markdown_formatter.format(output_str, content_type='markdown')
@@ -186,21 +251,119 @@ class OutputHandler:
                 # Default to console formatter for other formats
                 formatted_output = self.console_formatter.format(output_str)
         
-        # Save markdown output to file if requested
-        if markdown_content and file_output:
+        return formatted_output, created_files
+    
+    def _extract_and_save_content(self, 
+                                 output: Union[str, Dict],
+                                 output_str: str, 
+                                 output_config: Dict[str, Any]) -> List[str]:
+        """
+        Extract content from output and save to files.
+        
+        Args:
+            output: The original raw output
+            output_str: The normalized string output
+            output_config: Output configuration
+            
+        Returns:
+            List[str]: List of created file paths
+        """
+        created_files = []
+        
+        # Process common content types (HTML, CSS, JS) with a single approach
+        content_types = [
+            {
+                "type": "HTML",
+                "extractor": self.html_extractor,
+                "source": output_str,  # HTML uses string output
+                "config_key": "html_filename",
+                "default_filename": "output.html"
+            },
+            {
+                "type": "CSS", 
+                "extractor": self.css_extractor,
+                "source": output,  # CSS uses original output
+                "config_key": "css_filename",
+                "default_filename": "styles.css"
+            },
+            {
+                "type": "JavaScript",
+                "extractor": self.js_extractor,
+                "source": output,  # JS uses original output
+                "config_key": "js_filename",
+                "default_filename": "script.js"
+            }
+        ]
+        
+        # Process each content type with the same logic
+        for content_type in content_types:
+            content = content_type["extractor"].extract(content_type["source"])
+            if content:
+                filename = output_config.get(content_type["config_key"], content_type["default_filename"])
+                file_path = self._save_to_file(content, filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"{content_type['type']} content saved to {file_path}")
+        
+        # Extract JSON content
+        json_content = self.json_extractor.extract(output)
+        if json_content:
+            json_filename = output_config.get('json_filename', 'data.json')
+            
+            # Ensure we have a string for writing
+            if isinstance(json_content, dict):
+                json_str = json.dumps(json_content, indent=2)
+            else:
+                json_str = str(json_content)
+                
+            json_path = self._save_to_file(json_str, json_filename)
+            if json_path:
+                created_files.append(json_path)
+                logger.info(f"JSON content saved to {json_path}")
+        
+        # Extract Markdown content
+        markdown_content = self.markdown_extractor.extract(output_str)
+        if markdown_content:
             markdown_filename = output_config.get('markdown_filename', 'output.md')
-            if self.output_dir:
-                markdown_path = self.markdown_writer.write(
-                    markdown_content, 
-                    filename=markdown_filename
-                )
+            markdown_path = self.markdown_writer.write(
+                markdown_content, 
+                filename=markdown_filename
+            )
+            if markdown_path:
                 created_files.append(markdown_path)
                 logger.info(f"Markdown content saved to {markdown_path}")
         
-        return formatted_output, created_files
+        return created_files
+    
+    def _save_to_file(self, content: str, filename: str) -> Optional[str]:
+        """
+        Save content to a file in the output directory.
         
-    def _handle_pattern_outputs(self, response, pattern_outputs):
-        """Handle pattern-defined outputs as specified in the pattern markdown file.
+        Args:
+            content: The content to save
+            filename: The filename to use
+            
+        Returns:
+            Optional[str]: The file path if successful, None otherwise
+        """
+        if not self.output_dir:
+            return None
+            
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+            file_path = os.path.join(self.output_dir, filename)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            return file_path
+        except Exception as e:
+            logger.error(f"Error saving file {filename}: {str(e)}")
+            return None
+    
+    def _handle_pattern_outputs(self, response: Union[str, Dict], pattern_outputs: List[PatternOutput]) -> List[str]:
+        """
+        Handle pattern-defined outputs as specified in the pattern markdown file.
         
         Args:
             response: The AI response (either text or dictionary)
@@ -209,423 +372,508 @@ class OutputHandler:
         Returns:
             list: A list of created files
         """
-        import re
-        import json as json_module  # Use a different name to avoid potential conflicts
-        
         created_files = []
         
-        if not pattern_outputs:
-            print("No outputs defined in pattern")
+        # Extract and prepare data
+        json_data = self._extract_json_data(response)
+        result_output, visual_output, file_outputs = self._categorize_pattern_outputs(pattern_outputs)
+        
+        if not file_outputs and not (result_output or visual_output):
+            logger.debug("No outputs specified")
             return created_files
         
-        # Filter outputs that should be written to files
-        file_outputs = [
-            output for output in pattern_outputs
-            if output.should_write_to_file()
-        ]
-        
-        if not file_outputs:
-            print("No file outputs specified")
-            return created_files
-        
-        # Get the output directory, prompting the user if needed
+        # Get the output directory
         output_dir = self._get_output_directory(interactive=True)
         if not output_dir:
-            print("User cancelled output directory selection")
+            logger.debug("User cancelled output directory selection")
             return created_files
             
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
         
-        print(f"🔍 Processing response for {len(file_outputs)} file outputs...")
-        # Detect if response is dictionary or string
-        if isinstance(response, dict):
-            print("🔍 Response is a dictionary")
-            
-            # Check for OpenRouter API response format
-            if 'choices' in response and isinstance(response['choices'], list) and response['choices']:
-                first_choice = response['choices'][0]
-                if isinstance(first_choice, dict) and 'message' in first_choice:
-                    message = first_choice['message']
-                    if isinstance(message, dict) and 'content' in message:
-                        # Extract content from OpenRouter response
-                        message_content = message['content']
-                        print("✅ Found OpenRouter API response format")
-                        
-                        # Try to extract JSON from the content field
-                        if isinstance(message_content, str) and '{' in message_content and '}' in message_content:
-                            try:
-                                # Look for JSON object in the message content
-                                match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', message_content)
-                                if match:
-                                    json_text = match.group(1)
-                                    json_data = json_module.loads(json_text)
-                                    print("✅ Found JSON in markdown code block inside OpenRouter response")
-                                else:
-                                    # No need to parse the whole response as it's not likely to be valid JSON
-                                    json_data = {}
-                            except json_module.JSONDecodeError:
-                                print("⚠️ Could not parse JSON from OpenRouter content, treating as text")
-                                json_data = {}
-                        else:
-                            json_data = {}
-                    else:
-                        json_data = response
-                else:
-                    json_data = response
-            else:
-                json_data = response
-        else:
-            print("🔍 Response is a string, trying to extract JSON")
-            # Try to extract JSON
-            try:
-                # Look for JSON object in the response
-                match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', str(response))
-                if match:
-                    json_text = match.group(1)
-                    json_data = json_module.loads(json_text)
-                    print("✅ Found JSON in markdown code block")
-                else:
-                    # Try parsing the whole response as JSON
-                    json_data = json_module.loads(str(response))
-                    print("✅ Parsed entire response as JSON")
-            except json_module.JSONDecodeError:
-                print("⚠️ Could not parse JSON, treating as text")
-                json_data = {}
+        # Handle visual output if present
+        created_files.extend(self._process_visual_output(visual_output, json_data, output_dir))
         
-        import re
+        # Process command execution via patterns (only if not already handled)
+        created_files.extend(self._process_pattern_command(pattern_outputs, response))
         
-        # DIRECT FILE WRITING FROM JSON OR TEXT
-        for output in file_outputs:
-            filename = output.write_to_file
-            output_name = output.name
-            output_type = output.output_type.value
-            
-            print(f"\n🔍 Processing output: name={output_name}, type={output_type}, file={filename}")
-            
-            content = None
-            
-            # Check if the response is nested within a 'content' field
-            if 'content' in response:
-                try:
-                    # Try to extract JSON from the content field
-                    content_str = response['content']
-                    # Check if it's a JSON string
-                    if isinstance(content_str, str) and '{' in content_str and '}' in content_str:
-                        try:
-                            # Try to parse it as JSON
-                            match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', content_str)
-                            if match:
-                                extracted_json = json_module.loads(match.group(1))
-                                json_data = extracted_json
-                                print("✅ Found JSON in content field")
-                        except json_module.JSONDecodeError:
-                            pass
-                except Exception as e:
-                    print(f"⚠️ Error extracting from content: {str(e)}")
-
-            # APPROACH 1: Try to get directly from JSON by name
-            if json_data and output_name in json_data:
-                print(f"✅ Found {output_name} in JSON data")
-                content = json_data[output_name]
-                
-            # APPROACH 2: Try common field names based on type
-            elif json_data:
-                if output_type == "html" and "html_content" in json_data:
-                    print("✅ Found html_content in JSON data")
-                    content = json_data["html_content"]
-                elif output_type == "css" and "css_styles" in json_data:
-                    print("✅ Found css_styles in JSON data")
-                    content = json_data["css_styles"]
-                elif output_type == "js" and ("javascript_code" in json_data or "script" in json_data):
-                    print("✅ Found javascript_code/script in JSON data")
-                    content = json_data.get("javascript_code") or json_data.get("script")
-            
-            # APPROACH 3: Extract from text using regex patterns
-            if content is None:
-                print("🔍 Trying to extract content from text...")
-                
-                # If the response is a dictionary with message content
-                if isinstance(response, dict) and 'choices' in response:
-                    for choice in response['choices']:
-                        if isinstance(choice, dict) and 'message' in choice:
-                            message = choice['message']
-                            if isinstance(message, dict) and 'content' in message:
-                                message_content = message['content']
-                                if isinstance(message_content, str):
-                                    # Look for markdown code blocks with the right type
-                                    pattern = rf'```{output_type}([\s\S]*?)```'
-                                    matches = re.finditer(pattern, message_content, re.IGNORECASE)
-                                    
-                                    for match in matches:
-                                        content = match.group(1).strip()
-                                        # Clean up escape characters
-                                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
-                                        content = content.replace('\\\n', '\n').replace('\\', '')
-                                        print(f"✅ Found content in {output_type} code block ({len(content)} chars)")
-                                        break
-                                    
-                                    # If still not found, look for section headers
-                                    if content is None:
-                                        header_pattern = rf'##\s*{output_type}\s+Content.*?\n([\s\S]*?)(?=##|\Z)'
-                                        header_matches = re.finditer(header_pattern, message_content, re.IGNORECASE)
-                                        
-                                        for match in header_matches:
-                                            section_content = match.group(1).strip()
-                                            # Extract code block from section
-                                            block_match = re.search(rf'```(?:{output_type})?([\s\S]*?)```', section_content)
-                                            if block_match:
-                                                content = block_match.group(1).strip()
-                                                # Clean up escape characters
-                                                content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
-                                                content = content.replace('\\\n', '\n').replace('\\', '')
-                                                print(f"✅ Found content in section header and code block ({len(content)} chars)")
-                                                break
-                
-                # Try with direct response string
-                elif isinstance(response, str):
-                    # Look for markdown code blocks with the right type
-                    pattern = rf'```{output_type}([\s\S]*?)```'
-                    matches = re.finditer(pattern, response, re.IGNORECASE)
-                    
-                    for match in matches:
-                        content = match.group(1).strip()
-                        print(f"✅ Found content in {output_type} code block ({len(content)} chars)")
-                        break
-                    
-                    # If still not found, look for section headers
-                    if content is None:
-                        header_pattern = rf'#{{"1,6"}}\s*{output_type}\s+Content.*?\n([\s\S]*?)(?=#{{"1,6"}}|\Z)'
-                        header_matches = re.finditer(header_pattern, response, re.IGNORECASE)
-                        
-                        for match in header_matches:
-                            section_content = match.group(1).strip()
-                            # Extract code block from section
-                            block_match = re.search(rf'```(?:{output_type})?([\s\S]*?)```', section_content)
-                            if block_match:
-                                content = block_match.group(1).strip()
-                                print(f"✅ Found content in section header and code block ({len(content)} chars)")
-                                break
-            
-            # APPROACH 3: Extract from text using regex patterns
-            if content is None and isinstance(response, str):
-                print(f"🔍 Trying to extract {output_type} content from response text...")
-                # Look for markdown code blocks with the right type
-                pattern = rf'```{output_type}([\s\S]*?)```'
-                matches = re.finditer(pattern, response, re.IGNORECASE)
-                
-                for match in matches:
-                    content = match.group(1).strip()
-                    print(f"✅ Found content in {output_type} code block ({len(content)} chars)")
-                    break
-                
-                # If still not found, look for section headers
-                if content is None:
-                    header_pattern = rf'#{{"1,6"}}\s*{output_type}\s+Content.*?\n([\s\S]*?)(?=#{{"1,6"}}|\Z)'
-                    header_matches = re.finditer(header_pattern, response, re.IGNORECASE)
-                    
-                    for match in header_matches:
-                        section_content = match.group(1).strip()
-                        # Extract code block from section
-                        block_match = re.search(rf'```(?:{output_type})?([\s\S]*?)```', section_content)
-                        if block_match:
-                            content = block_match.group(1).strip()
-                            print(f"✅ Found content in section header and code block ({len(content)} chars)")
-                            break
-
-            # Final attempt - try to find any HTML, CSS, or JS directly in the response
-            if content is None:
-                response_text = str(response)
-                
-                # Direct HTML detection
-                if output_type == "html":
-                    html_match = re.search(r'<!DOCTYPE html[^>]*>[\s\S]*?</html>', response_text)
-                    if html_match:
-                        content = html_match.group(0)
-                        # Remove any backslashes that might be escapes
-                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
-                        # Remove any remaining backslashes
-                        content = content.replace('\\\n', '\n').replace('\\', '')
-                        print(f"✅ Found direct HTML content in response ({len(content)} chars)")
-                
-                # Direct CSS detection
-                elif output_type == "css":
-                    # First try to find "css_styles": in the response
-                    css_json_match = re.search(r'"css_styles"\s*:\s*"([\s\S]*?)(?:"|$)', response_text)
-                    if css_json_match:
-                        # Found CSS in JSON format
-                        content = css_json_match.group(1)
-                        # Properly unescape the content (handle \\n etc.)
-                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
-                        # Remove any remaining backslashes that might be at line ends
-                        content = content.replace('\\\n', '\n').replace('\\', '')
-                        print(f"✅ Found CSS content in JSON response ({len(content)} chars)")
-                    else:
-                        # Try regular pattern matching
-                        css_patterns = [
-                            r'/\* Base Styles \*/[\s\S]*?body\s*\{[\s\S]*?\}[\s\S]*?\.hero\s*\{',
-                            r'\*\s*\{[\s\S]*?margin:\s*0;[\s\S]*?padding:\s*0;[\s\S]*?\}',
-                            r'body\s*\{[\s\S]*?font-family[\s\S]*?\}[\s\S]*?h1,\s*h2'
-                        ]
-                        
-                        for pattern in css_patterns:
-                            css_match = re.search(pattern, response_text)
-                            if css_match:
-                                start_pos = css_match.start()
-                                end_pos = response_text[start_pos:].find('\n}') + start_pos
-                                if end_pos > start_pos:
-                                    content = response_text[start_pos:end_pos+2] 
-                                    print(f"✅ Found direct CSS content in response ({len(content)} chars)")
-                                    break
-                
-                # Direct JS detection
-                elif output_type == "js":
-                    # First try to find "javascript_code": in the response
-                    js_json_match = re.search(r'"javascript_code"\s*:\s*"([\s\S]*?)(?:"|$)', response_text)
-                    if js_json_match:
-                        # Found JS in JSON format
-                        content = js_json_match.group(1)
-                        # Properly unescape the content
-                        content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
-                        # Remove any remaining backslashes that might be at line ends
-                        content = content.replace('\\\n', '\n').replace('\\', '')
-                        print(f"✅ Found JavaScript content in JSON response ({len(content)} chars)")
-                    else:
-                        # Try regular pattern matching
-                        js_patterns = [
-                            r'document\.addEventListener\([\'"]DOMContentLoaded[\'"],[^{]*\{[\s\S]*?\}\);',
-                            r'// JavaScript for[\s\S]*?function[\s\S]*?\}',
-                            r'const[\s\S]*?=[\s\S]*?\{[\s\S]*?\};'
-                        ]
-                        
-                        for pattern in js_patterns:
-                            js_match = re.search(pattern, response_text)
-                            if js_match:
-                                content = js_match.group(0)
-                                print(f"✅ Found direct JS content in response ({len(content)} chars)")
-                                break
-
-            # Write the file if we have content
-            if content is not None:
-                # Convert to string if needed
-                if not isinstance(content, str):
-                    if isinstance(content, (dict, list)):
-                        content = json_module.dumps(content, indent=2)
-                    else:
-                        content = str(content)
-                
-                # Create directory if it doesn't exist
-                try:
-                    os.makedirs(output_dir, exist_ok=True)
-                except Exception as e:
-                    print(f"⚠️ Error creating directory: {str(e)}")
-                
-                # Special handling for index.html file
-                if output_type == "html":
-                    file_path = os.path.join(output_dir, "index.html")
-                    
-                    # Check if we need to create css and js directories based on HTML content
-                    # Look for any pattern that indicates CSS in a subdirectory
-                    if re.search(r'href=[\"\']css/[^\"\']*\.css[\"\']', content) or "css/styles.css" in content:
-                        css_dir = os.path.join(output_dir, "css")
-                        os.makedirs(css_dir, exist_ok=True)
-                        print(f"✅ Created CSS directory: {css_dir}")
-                    
-                    # Look for any pattern that indicates JS in a subdirectory
-                    if re.search(r'src=[\"\']js/[^\"\']*\.js[\"\']', content) or "js/script.js" in content:
-                        js_dir = os.path.join(output_dir, "js")
-                        os.makedirs(js_dir, exist_ok=True)
-                        print(f"✅ Created JS directory: {js_dir}")
-                        
-                    # Fix any escaped HTML
-                    content = content.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\').replace('\\\n', '\n').replace('\\', '')
-                elif output_type == "css":
-                    # Check if this is part of a website with HTML and reference to css/styles.css
-                    if content and "css/styles.css" in str(content) or \
-                       any(output.output_type == OutputType.HTML and output.content and "css/styles.css" in str(output.content) for output in file_outputs if hasattr(output, 'content')) or \
-                       os.path.exists(os.path.join(output_dir, "css")):
-                        # Use the css subdirectory
-                        css_dir = os.path.join(output_dir, "css")
-                        os.makedirs(css_dir, exist_ok=True)
-                        file_path = os.path.join(css_dir, "styles.css")
-                        print(f"Using CSS path from HTML reference: {file_path}")
-                    else:
-                        file_path = os.path.join(output_dir, "style.css")
-                elif output_type == "js":
-                    # Check if this is part of a website with HTML and reference to js/script.js
-                    if content and "js/script.js" in str(content) or \
-                       any(output.output_type == OutputType.HTML and output.content and "js/script.js" in str(output.content) for output in file_outputs if hasattr(output, 'content')) or \
-                       os.path.exists(os.path.join(output_dir, "js")):
-                        # Use the js subdirectory
-                        js_dir = os.path.join(output_dir, "js")
-                        os.makedirs(js_dir, exist_ok=True)
-                        file_path = os.path.join(js_dir, "script.js")
-                        print(f"Using JS path from HTML reference: {file_path}")
-                    else:
-                        file_path = os.path.join(output_dir, "script.js")
-                else:
-                    file_path = os.path.join(output_dir, filename)
-                
-                print(f"🔍 Writing to file: {file_path}")
-                
-                try:
-                    # Direct simple file write
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    
-                    if os.path.exists(file_path):
-                        file_size = os.path.getsize(file_path)
-                        print(f"✅ Successfully created file: {file_path} ({file_size} bytes)")
-                        created_files.append(file_path)
-                    else:
-                        print_error_or_warnings(f"Failed to create file: {file_path}")
-                except Exception as e:
-                    print_error_or_warnings(f"Error writing file: {str(e)}")
-                    try:
-                        # Try alternative temp location
-                        alt_path = f"/tmp/{filename}"
-                        with open(alt_path, 'w', encoding='utf-8') as f:
-                            f.write(content)
-                        print(f"✅ Created file in alternative location: {alt_path}")
-                        created_files.append(alt_path)
-                    except Exception as e2:
-                        print(f"❌ Failed alternative write: {str(e2)}")
-            else:
-                print(f"⚠️ No content found for {output_name}")
+        # Process file outputs
+        created_files.extend(self._process_file_outputs(file_outputs, response, json_data, output_dir))
         
-        # Return the list of created files
         return created_files
     
+    def _extract_json_data(self, response: Union[str, Dict]) -> Dict:
+        """
+        Extract JSON data from various response formats.
+        
+        Args:
+            response: The AI response
+            
+        Returns:
+            Dict: Extracted JSON data or empty dict if not found
+        """
+        # If response is already a dictionary, use it directly
+        if isinstance(response, dict):
+            return response
+        
+        # Try to extract JSON from string response
+        if isinstance(response, str):
+            try:
+                # Look for JSON object in code block
+                match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response)
+                if match:
+                    return json.loads(match.group(1))
+                
+                # Try parsing the entire string
+                return json.loads(response)
+            except json.JSONDecodeError:
+                logger.debug("Could not parse response as JSON")
+                pass
+        
+        # If extraction failed, return empty dict
+        return {}
+    
+    def _categorize_pattern_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
+        Optional[PatternOutput], Optional[PatternOutput], List[PatternOutput]
+    ]:
+        """
+        Categorize pattern outputs into result, visual_output and file outputs.
+        
+        Args:
+            pattern_outputs: List of PatternOutput objects
+            
+        Returns:
+            Tuple containing result output, visual output, and file outputs
+        """
+        if not pattern_outputs:
+            return None, None, []
+        
+        result_output = next((output for output in pattern_outputs 
+                            if output.is_system_field and output.name == "result"), None)
+                            
+        visual_output = next((output for output in pattern_outputs 
+                            if output.is_system_field and output.name == "visual_output"), None)
+        
+        file_outputs = [output for output in pattern_outputs if output.should_write_to_file()]
+        
+        return result_output, visual_output, file_outputs
+    
+    def _process_visual_output(self, 
+                              visual_output: Optional[PatternOutput], 
+                              json_data: Dict, 
+                              output_dir: str) -> List[str]:
+        """
+        Process and save visual output if present.
+        
+        Args:
+            visual_output: The visual output pattern
+            json_data: Extracted JSON data
+            output_dir: Directory to save output
+            
+        Returns:
+            List[str]: List of created files
+        """
+        created_files = []
+        
+        if visual_output and json_data and 'visual_output' in json_data:
+            logger.debug("Found visual_output field in response")
+            visual_content = json_data['visual_output']
+            
+            if visual_content:
+                visual_file = os.path.join(output_dir, "output.md")
+                try:
+                    with open(visual_file, 'w', encoding='utf-8') as f:
+                        f.write(visual_content)
+                    logger.info(f"Visual output saved to {visual_file}")
+                    created_files.append(visual_file)
+                except Exception as e:
+                    logger.error(f"Error saving visual output: {str(e)}")
+        
+        return created_files
+    
+    def _process_pattern_command(self, pattern_outputs: List[PatternOutput], response: Union[str, Dict]) -> List[str]:
+        """
+        Process command execution from pattern outputs.
+        
+        Args:
+            pattern_outputs: List of PatternOutput objects
+            response: The AI response
+            
+        Returns:
+            List[str]: List of created files
+        """
+        # Note: Most command execution is already handled in _handle_command_execution
+        # This method handles any remaining special cases
+        for output in pattern_outputs:
+            # Check for Linux CLI command pattern
+            if output.name == "result" and output.output_type.value == "code" and output.auto_run:
+                logger.debug("Found pattern output with result field, code type, and auto_run=True")
+                
+                # Check for result field in response
+                if isinstance(response, dict) and 'result' in response:
+                    command = response['result']
+                    if isinstance(command, str) and command.strip():
+                        # Get visual output for explanation
+                        visual_content = None
+                        if isinstance(response, dict) and 'visual_output' in response:
+                            visual_content = response['visual_output']
+                            formatted_output = visual_content
+                        
+                        # Use PatternOutput for execution
+                        logger.debug(f"Executing command via PatternOutput: {command}")
+                        PatternOutput.execute_command(command, output.name)
+                        
+                        # Return empty list as we've already handled this output
+                        return []
+        
+        return []
+    
+    def _process_file_outputs(self, 
+                             file_outputs: List[PatternOutput], 
+                             response: Union[str, Dict], 
+                             json_data: Dict, 
+                             output_dir: str) -> List[str]:
+        """
+        Process and save file outputs.
+        
+        Args:
+            file_outputs: List of file output patterns
+            response: The AI response
+            json_data: Extracted JSON data
+            output_dir: Directory to save outputs
+            
+        Returns:
+            List[str]: List of created files
+        """
+        created_files = []
+        
+        # Process standard result field if present
+        if 'result' in json_data:
+            self._process_result_field(json_data['result'], file_outputs)
+        
+        # Process API response format
+        self._process_openrouter_format(response, file_outputs)
+        
+        # Write files for each output
+        for output in file_outputs:
+            content = self._extract_output_content(output, response, json_data)
+            if content:
+                file_path = self._write_pattern_output(output, content, output_dir)
+                if file_path:
+                    created_files.append(file_path)
+        
+        return created_files
+    
+    def _process_result_field(self, result_data: Any, file_outputs: List[PatternOutput]) -> None:
+        """
+        Process result field for file outputs.
+        
+        Args:
+            result_data: The result field data
+            file_outputs: List of file output patterns
+        """
+        if isinstance(result_data, dict):
+            # Map result data fields to corresponding outputs
+            for output in file_outputs:
+                if output.name in result_data and output.write_to_file:
+                    logger.debug(f"Found {output.name} in result data")
+                    setattr(output, 'content', result_data[output.name])
+        
+        # If result is a single value, assign to first non-visual output
+        elif len(file_outputs) == 1 and file_outputs[0].name != "visual_output":
+            logger.debug(f"Using single result value for {file_outputs[0].name}")
+            setattr(file_outputs[0], 'content', result_data)
+    
+    def _process_openrouter_format(self, response: Union[str, Dict], file_outputs: List[PatternOutput]) -> None:
+        """
+        Process OpenRouter API format for file outputs.
+        
+        Args:
+            response: The API response
+            file_outputs: List of file output patterns
+        """
+        if not isinstance(response, dict) or 'choices' not in response:
+            return
+            
+        # Check for standard website output keys
+        website_keys = ["html_content", "css_styles", "javascript_code", "visual_output"]
+        
+        # Process direct output keys
+        for key in website_keys:
+            if key in response:
+                matching_output = next((output for output in file_outputs if output.name == key), None)
+                if matching_output:
+                    setattr(matching_output, 'content', response[key])
+                    logger.debug(f"Found {key} in direct response")
+        
+        # Check for nested content in OpenRouter format
+        try:
+            choices = response.get('choices', [])
+            if not choices:
+                return
+                
+            first_choice = choices[0]
+            if not isinstance(first_choice, dict) or 'message' not in first_choice:
+                return
+                
+            message = first_choice['message']
+            if not isinstance(message, dict) or 'content' not in message:
+                return
+                
+            content = message['content']
+            if not isinstance(content, str):
+                return
+                
+            # Try to extract JSON from content
+            match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', content)
+            if not match:
+                return
+                
+            json_data = json.loads(match.group(1))
+            
+            # Map JSON fields to outputs
+            for key in website_keys:
+                if key in json_data:
+                    matching_output = next((output for output in file_outputs if output.name == key), None)
+                    if matching_output:
+                        setattr(matching_output, 'content', json_data[key])
+                        logger.debug(f"Found {key} in OpenRouter JSON block")
+        
+        except Exception as e:
+            logger.warning(f"Error processing OpenRouter format: {str(e)}")
+    
+    def _extract_output_content(self, 
+                               output: PatternOutput, 
+                               response: Union[str, Dict], 
+                               json_data: Dict) -> Optional[str]:
+        """
+        Extract content for a pattern output using various strategies.
+        
+        Args:
+            output: The pattern output
+            response: The AI response
+            json_data: Extracted JSON data
+            
+        Returns:
+            Optional[str]: Extracted content or None if not found
+        """
+        output_name = output.name
+        output_type = output.output_type.value
+        
+        # First check if content is already set from result field
+        if hasattr(output, 'content'):
+            return getattr(output, 'content')
+        
+        # APPROACH 1: Try direct JSON access by name
+        if output_name in json_data:
+            return json_data[output_name]
+        
+        # APPROACH 1.1: Check if in nested result field
+        if 'result' in json_data and isinstance(json_data['result'], dict):
+            result_data = json_data['result']
+            if output_name in result_data:
+                return result_data[output_name]
+        
+        # APPROACH 2: Try common field names based on type
+        if output_type == "html" and "html_content" in json_data:
+            return json_data["html_content"]
+        elif output_type == "css" and "css_styles" in json_data:
+            return json_data["css_styles"]
+        elif output_type == "js" and ("javascript_code" in json_data or "script" in json_data):
+            return json_data.get("javascript_code") or json_data.get("script")
+        
+        # APPROACH 3: Extract from markdown code blocks
+        content = self._extract_from_code_blocks(response, output_type)
+        if content:
+            return content
+            
+        # APPROACH 4: Check for direct content by pattern
+        if output_type == "html":
+            html_match = re.search(r'<!DOCTYPE html[^>]*>[\s\S]*?</html>', str(response))
+            if html_match:
+                content = html_match.group(0)
+                # Clean up escaped characters
+                return self._clean_escaped_content(content)
+                
+        # CSS and JS detection handled similarly
+        
+        return None
+    
+    def _extract_from_code_blocks(self, response: Union[str, Dict], output_type: str) -> Optional[str]:
+        """
+        Extract content from markdown code blocks.
+        
+        Args:
+            response: The AI response
+            output_type: Type of content to extract (html, css, js, etc.)
+            
+        Returns:
+            Optional[str]: Extracted content or None
+        """
+        # Handle dictionary with nested content in OpenRouter format
+        if isinstance(response, dict) and 'choices' in response:
+            for choice in response['choices']:
+                if isinstance(choice, dict) and 'message' in choice:
+                    message = choice['message']
+                    if isinstance(message, dict) and 'content' in message:
+                        message_content = message['content']
+                        if isinstance(message_content, str):
+                            # Look for code blocks
+                            pattern = rf'```{output_type}([\s\S]*?)```'
+                            matches = re.finditer(pattern, message_content, re.IGNORECASE)
+                            
+                            for match in matches:
+                                content = match.group(1).strip()
+                                return self._clean_escaped_content(content)
+                                
+                            # Look for section headers
+                            header_pattern = rf'##\s*{output_type}\s+Content.*?\n([\s\S]*?)(?=##|\Z)'
+                            header_matches = re.finditer(header_pattern, message_content, re.IGNORECASE)
+                            
+                            for match in header_matches:
+                                section_content = match.group(1).strip()
+                                # Extract code block from section
+                                block_match = re.search(rf'```(?:{output_type})?([\s\S]*?)```', section_content)
+                                if block_match:
+                                    content = block_match.group(1).strip()
+                                    return self._clean_escaped_content(content)
+        
+        # Handle direct string response
+        if isinstance(response, str):
+            # Look for code blocks
+            pattern = rf'```{output_type}([\s\S]*?)```'
+            matches = re.finditer(pattern, response, re.IGNORECASE)
+            
+            for match in matches:
+                content = match.group(1).strip()
+                return self._clean_escaped_content(content)
+            
+            # Look for section headers
+            header_pattern = rf'#{{"1,6"}}\s*{output_type}\s+Content.*?\n([\s\S]*?)(?=#{{"1,6"}}|\Z)'
+            header_matches = re.finditer(header_pattern, response, re.IGNORECASE)
+            
+            for match in header_matches:
+                section_content = match.group(1).strip()
+                # Extract code block from section
+                block_match = re.search(rf'```(?:{output_type})?([\s\S]*?)```', section_content)
+                if block_match:
+                    content = block_match.group(1).strip()
+                    return self._clean_escaped_content(content)
+        
+        return None
+    
+    def _clean_escaped_content(self, content: str) -> str:
+        """
+        Clean up escaped characters in content.
+        
+        Args:
+            content: The content to clean
+            
+        Returns:
+            str: The cleaned content
+        """
+        # Remove escape sequences
+        return content.replace('\\n', '\n').replace('\\"', '"').\
+                     replace('\\\\', '\\').replace('\\\n', '\n').\
+                     replace('\\', '')
+    
+    def _write_pattern_output(self, output: PatternOutput, content: Any, output_dir: str) -> Optional[str]:
+        """
+        Write pattern output content to a file.
+        
+        Args:
+            output: The pattern output
+            content: The content to write
+            output_dir: Directory to write to
+            
+        Returns:
+            Optional[str]: The file path if successful, None otherwise
+        """
+        filename = output.write_to_file
+        output_type = output.output_type.value
+        
+        # Convert to string if needed
+        if not isinstance(content, str):
+            if isinstance(content, (dict, list)):
+                content = json.dumps(content, indent=2)
+            else:
+                content = str(content)
+        
+        # Determine the file path
+        file_path = self._determine_file_path(output_type, filename, output_dir)
+        if not file_path:
+            return None
+        
+        # Create necessary directories
+        dir_path = os.path.dirname(file_path)
+        os.makedirs(dir_path, exist_ok=True)
+        
+        # Write content to file
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            logger.info(f"Saved {output_type} content to {file_path}")
+            return file_path
+        except Exception as e:
+            logger.error(f"Error writing file: {str(e)}")
+            return None
+    
+    def _determine_file_path(self, output_type: str, filename: str, output_dir: str) -> str:
+        """
+        Determine the appropriate file path based on output type.
+        
+        Args:
+            output_type: Type of output (html, css, js)
+            filename: Specified filename
+            output_dir: Base output directory
+            
+        Returns:
+            str: The determined file path
+        """
+        # Handle special cases for web files
+        if output_type == "html":
+            return os.path.join(output_dir, "index.html")
+        elif output_type == "css":
+            css_dir = os.path.join(output_dir, "css")
+            os.makedirs(css_dir, exist_ok=True)
+            return os.path.join(css_dir, "styles.css")
+        elif output_type == "js":
+            js_dir = os.path.join(output_dir, "js")
+            os.makedirs(js_dir, exist_ok=True)
+            return os.path.join(js_dir, "script.js")
+        
+        # Default case: use the provided filename
+        return os.path.join(output_dir, filename)
+    
     def _get_output_directory(self, interactive: bool = True) -> Optional[str]:
-        """Get the directory where files should be written, with optional user interaction.
+        """
+        Get the directory where files should be written, with optional user interaction.
         
         Args:
             interactive (bool): Whether to prompt the user interactively
             
         Returns:
-            str: Directory path, or None if user cancelled
+            Optional[str]: Directory path, or None if user cancelled
         """
         # If we already have a configured output directory, use it
         if self.output_dir:
-            print(f"\n📁 Using configured output directory: {self.output_dir}")
+            logger.debug(f"Using configured output directory: {self.output_dir}")
             return self.output_dir
             
         # Non-interactive mode - use current directory
         if not interactive:
-            print("\n📁 Using current directory for file output")
-            directory_path = Path(".")
-            return str(directory_path.resolve())
+            logger.debug("Using current directory for file output")
+            return str(Path(".").resolve())
         
         print("\n📁 File Output Location")
         print("=" * 50)
         print("The system will create files automatically.")
         print("Hint: Use '.' for current directory or specify a path like './my-website'")
-        print("Press Enter for current directory (.) or specify a path:")
         
         try:
             directory = input("Enter directory path (or 'cancel' to skip file creation): ").strip()
         except (KeyboardInterrupt, EOFError) as e:
-            print_error_or_warnings(f"Input error: {str(e)}")
+            logger.warning(f"Input error: {str(e)}")
             return None
         
         if directory.lower() == 'cancel':
@@ -651,184 +899,12 @@ class OutputHandler:
             print(f"📂 Directory '{directory}' does not exist.")
             try:
                 create = input("Create this directory? (y/n): ").strip().lower()
-            except (KeyboardInterrupt, EOFError):
-                return str(Path(".").resolve())
-            
-            if create in ['y', 'yes', '']:  # Default to yes if empty
-                try:
-                    directory_path.mkdir(parents=True, exist_ok=True)
-                    print(f"✅ Created directory: {directory_path.resolve()}")
+                if create in ['y', 'yes', '']:
+                    os.makedirs(directory_path, exist_ok=True)
                     return str(directory_path.resolve())
-                except Exception as e:
-                    print(f"❌ Error creating directory: {str(e)}")
+                else:
                     print("Using current directory instead.")
                     return str(Path(".").resolve())
-            else:
-                print("Using current directory instead.")
+            except (KeyboardInterrupt, EOFError):
+                print("Cancelled. Using current directory instead.")
                 return str(Path(".").resolve())
-    
-    def _extract_output_content(self, response, output: PatternOutput) -> Optional[str]:
-        """Extract content for a specific output from the AI response.
-        
-        Args:
-            response: The AI response text
-            output: PatternOutput configuration
-        
-        Returns:
-            str: Extracted content, or None if not found
-        """
-        output_name = output.name
-        output_type = output.output_type.value
-        
-        # Try to extract content from markdown code blocks
-        if isinstance(response, str):
-            import re
-            
-            # First try to find a section with the output name
-            # This pattern looks for markdown headers with the output name
-            section_pattern = rf"(?:^|\n)#+\s*{re.escape(output_name)}.*?(?:\n```{re.escape(output_type)}([\s\S]*?)```|\n#+\s*)"
-            section_match = re.search(section_pattern, response, re.IGNORECASE)
-            
-            # Also look for a more generic pattern like "## HTML Content" for HTML outputs
-            type_section_pattern = rf"(?:^|\n)#+\s*{re.escape(output_type)}.*?Content.*?(?:\n```{re.escape(output_type)}([\s\S]*?)```|\n#+\s*)"
-            type_match = re.search(type_section_pattern, response, re.IGNORECASE)
-            
-            # Look for code blocks of the correct type without headers
-            code_block_pattern = rf"```{re.escape(output_type)}([\s\S]*?)```"
-            code_match = re.search(code_block_pattern, response, re.IGNORECASE)
-            
-            if section_match and section_match.group(1):
-                content = section_match.group(1).strip()
-                print(f"✅ Found content in section '{output_name}': {len(content)} chars")
-                return content
-            elif type_match and type_match.group(1):
-                content = type_match.group(1).strip()
-                print(f"✅ Found content in type section '{output_type} Content': {len(content)} chars")
-                return content
-            elif code_match:
-                content = code_match.group(1).strip()
-                print(f"✅ Found content in code block for '{output_type}': {len(content)} chars")
-                return content
-        
-        # Map output types to extractors
-        if output_type == 'html':
-            content = self.html_extractor.extract(response, output_name)
-        elif output_type == 'css':
-            content = self.css_extractor.extract(response, output_name)
-        elif output_type == 'js':
-            content = self.js_extractor.extract(response, output_name)
-        elif output_type == 'json':
-            content = self.json_extractor.extract(response, output_name)
-        elif output_type == 'markdown':
-            content = self.markdown_extractor.extract(response, output_name)
-        else:
-            # For other types, try to use markdown extractor
-            content = self.markdown_extractor.extract(response, output_name)
-        
-        if content:
-            print(f"✅ Found content for {output_name}: {len(content)} chars")
-            return content
-        else:
-            print(f"❌ Could not extract content for {output_name}")
-            return None
-            
-    def _validate_html_references(self, html_content: str, file_outputs: List[PatternOutput]) -> str:
-        """Validate and fix HTML file references to match output filenames.
-        
-        Args:
-            html_content: The HTML content to validate
-            file_outputs: List of file outputs to check against
-            
-        Returns:
-            str: Validated HTML content with correct file references
-        """
-        import re
-        
-        # Get CSS and JS filenames from outputs
-        css_filename = None
-        js_filename = None
-        
-        for output in file_outputs:
-            if output.output_type == OutputType.CSS:
-                css_filename = output.write_to_file
-            elif output.output_type == OutputType.JS:
-                js_filename = output.write_to_file
-        
-        # Make sure HTML has proper structure
-        if not re.search(r'<html[^>]*>', html_content, re.IGNORECASE):
-            html_content = f'<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Generated Page</title>\n</head>\n<body>\n{html_content}\n</body>\n</html>'
-            print("🔧 Added HTML structure to content")
-
-        # Ensure there's a head section
-        if not re.search(r'<head[^>]*>', html_content, re.IGNORECASE):
-            # Add a head section before the body
-            body_start = html_content.find('<body')
-            if body_start != -1:
-                html_content = html_content[:body_start] + '<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Generated Page</title>\n</head>\n' + html_content[body_start:]
-                print("🔧 Added missing head section")
-        
-        # Fix CSS reference if found
-        if css_filename:
-            # First look for any existing stylesheet link
-            has_css_link = bool(re.search(r'<link[^>]*rel=["\']stylesheet["\'][^>]*>', html_content, re.IGNORECASE))
-            
-            if has_css_link:
-                # Replace any CSS reference with the correct filename
-                html_content = re.sub(
-                    r'<link[^>]*rel=["\']stylesheet["\'][^>]*href=["\'][^"\']*["\'][^>]*>',
-                    f'<link rel="stylesheet" href="{css_filename}">',
-                    html_content,
-                    flags=re.IGNORECASE
-                )
-                print(f"🔧 Updated CSS reference to: {css_filename}")
-            else:
-                # No CSS link found, add it to head
-                head_end = html_content.find('</head>')
-                if head_end != -1:
-                    css_link = f'    <link rel="stylesheet" href="{css_filename}">\n'
-                    html_content = html_content[:head_end] + css_link + html_content[head_end:]
-                    print(f"🔧 Added CSS reference: {css_filename}")
-                else:
-                    # If no head end tag found, try to add before body
-                    body_start = html_content.find('<body')
-                    if body_start != -1:
-                        html_content = html_content[:body_start] + f'<head>\n    <link rel="stylesheet" href="{css_filename}">\n</head>\n' + html_content[body_start:]
-                        print(f"🔧 Added head with CSS reference: {css_filename}")
-                    else:
-                        # Last resort: prepend to the content
-                        html_content = f'<!DOCTYPE html>\n<html>\n<head>\n    <link rel="stylesheet" href="{css_filename}">\n</head>\n<body>\n{html_content}\n</body>\n</html>'
-                        print(f"🔧 Restructured HTML and added CSS reference: {css_filename}")
-        
-        # Fix JS reference if found
-        if js_filename:
-            # Check for existing script tag with src
-            has_script_tag = bool(re.search(r'<script[^>]*src=["\'][^"\']*["\'][^>]*>', html_content, re.IGNORECASE))
-            
-            if has_script_tag:
-                # Replace any script reference with the correct filename
-                html_content = re.sub(
-                    r'<script[^>]*src=["\'][^"\']*["\'][^>]*></script>',
-                    f'<script src="{js_filename}" defer></script>',
-                    html_content,
-                    flags=re.IGNORECASE
-                )
-                print(f"🔧 Updated JS reference to: {js_filename}")
-            else:
-                # Try to add before closing head tag
-                head_end = html_content.find('</head>')
-                if head_end != -1:
-                    script_tag = f'    <script src="{js_filename}" defer></script>\n'
-                    html_content = html_content[:head_end] + script_tag + html_content[head_end:]
-                    print(f"🔧 Added JS reference: {js_filename}")
-                else:
-                    # If no head end tag, try to add before body
-                    body_start = html_content.find('<body')
-                    if body_start != -1:
-                        html_content = html_content[:body_start] + f'<script src="{js_filename}" defer></script>\n' + html_content[body_start:]
-                        print(f"🔧 Added JS reference: {js_filename}")
-                    else:
-                        # Last resort: add at the end of the content
-                        html_content = html_content + f'\n<script src="{js_filename}" defer></script>\n'
-                        print(f"🔧 Added JS reference at end: {js_filename}")
-        
-        return html_content

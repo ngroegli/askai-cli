@@ -88,12 +88,27 @@ input_groups:
 
 ```yaml
 outputs:
-  - name: visualization
-    description: The generated visualization
+  - name: result
+    description: Raw visualization code (Mermaid, Chart.js, etc.)
+    type: text
+    required: true
+    group: visualization_code
+    example: |
+      pie
+        title Product Sales Distribution
+        "Product A" : 35
+        "Product B" : 25
+        "Product C" : 40
+
+  - name: visual_output
+    description: Formatted visualization with analysis and insights
     type: markdown
     required: true
+    group: analysis
     example: |
-      ## Data Visualization: Sales Performance
+      # Data Visualization: Sales Performance
+      
+      ## Visualization
       ```mermaid
       pie
         title Product Sales Distribution
@@ -101,16 +116,16 @@ outputs:
         "Product B" : 25
         "Product C" : 40
       ```
-
-  - name: analysis
-    description: Analysis of the key insights from the data
-    type: text
-    required: true
-    example: |
-      # Key Insights:
+      
+      ## Key Insights
       1. Product C accounts for 40% of total sales
       2. Sales show a seasonal pattern with peaks in Q4
       3. There's a strong correlation (r=0.87) between marketing spend and sales
+      
+      ## Recommendations
+      * Focus marketing efforts on Product C which shows the strongest performance
+      * Increase inventory planning for Q4 to meet seasonal demand
+      * Consider bundling Products A and B to improve their market share
 ```
 
 ## Model Configuration:
@@ -121,4 +136,26 @@ model:
   model_name: anthropic/claude-3.5-sonnet
   temperature: 0.7
   max_tokens: 2000
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "THE_RAW_VISUALIZATION_CODE_HERE",
+    "visual_output": "THE_FORMATTED_VISUALIZATION_WITH_ANALYSIS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains ONLY the raw visualization code (e.g., Mermaid diagram syntax) without any markdown formatting
+  - `visual_output`: Contains the complete visualization with markdown formatting, analysis, and insights
+  
+  Example:
+  ```json
+  {
+    "result": "pie\n  title Product Sales Distribution\n  \"Product A\" : 35\n  \"Product B\" : 25\n  \"Product C\" : 40",
+    "visual_output": "# Data Visualization: Sales Performance\n\n## Visualization\n```mermaid\npie\n  title Product Sales Distribution\n  \"Product A\" : 35\n  \"Product B\" : 25\n  \"Product C\" : 40\n```\n\n## Key Insights\n1. Product C accounts for 40% of total sales...(more analysis)..."
+  }
+  ```
 ```

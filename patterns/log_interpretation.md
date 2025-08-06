@@ -67,17 +67,8 @@ input_groups:
 
 ```yaml
 outputs:
-  - name: summary
-    description: A structured summary of log analysis
-    type: text
-    required: true
-    example: |
-      Analysis found 3 common message patterns and 2 anomalies.
-      Most frequent pattern: User login events (60% of logs)
-      Detected anomalies in timestamp sequence at lines 145-148
-
-  - name: patterns
-    description: Detailed analysis of detected patterns
+  - name: result
+    description: JSON structured analysis of log patterns and anomalies
     type: json
     required: true
     schema:
@@ -102,11 +93,17 @@ outputs:
               content: { type: string }
               reason: { type: string }
 
-  - name: visualization
-    description: Visual representation of log patterns
+  - name: visual_output
+    description: Formatted visualization and summary of log analysis
     type: markdown
-    required: false
+    required: true
     example: |
+      # Log Analysis Summary
+      
+      Analysis found 3 common message patterns and 2 anomalies.
+      Most frequent pattern: User login events (60% of logs)
+      Detected anomalies in timestamp sequence at lines 145-148
+      
       ## Log Pattern Distribution
       ```mermaid
       pie
@@ -115,6 +112,68 @@ outputs:
         "System Status" : 30
         "Error Events" : 10
       ```
+      
+      ## Common Patterns
+      
+      ### Pattern 1: User Login (60%)
+      Example: `2023-06-15 08:32:45 INFO [Auth] User jsmith logged in from 192.168.1.45`
+      
+      ### Pattern 2: System Status (30%)
+      Example: `2023-06-15 09:15:22 INFO [System] Disk usage: 68%`
+      
+      ### Pattern 3: Error Events (10%)
+      Example: `2023-06-15 10:45:12 ERROR [DB] Connection timeout after 30s`
+      
+      ## Detected Anomalies
+      
+      1. **Timestamp sequence disruption** at lines 145-148
+         Content: `2023-06-15 11:45:12 ERROR [Auth] Failed login attempt from 203.0.113.42`
+         Reason: Timestamp out of sequence, 5 identical failed login attempts within 1 second
+      
+      2. **Unusual log format** at line 267
+         Content: `<0x8F2D> SYSTEM_CRITICAL: /usr/bin/auth process terminated unexpectedly`
+         Reason: Non-standard log format differs from all other entries
+```
+
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.7-sonnet
+  temperature: 0.7
+  max_tokens: 2000
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": {
+      "common_patterns": [
+        {
+          "pattern": "pattern description",
+          "frequency": 60,
+          "example_lines": ["example log line 1", "example log line 2"]
+        }
+      ],
+      "anomalies": [
+        {
+          "line_number": 145,
+          "content": "log content",
+          "reason": "reason for anomaly"
+        }
+      ]
+    },
+    "visual_output": "THE_FORMATTED_LOG_ANALYSIS_WITH_VISUALIZATIONS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains structured JSON data of log patterns and anomalies
+  - `visual_output`: Contains the formatted summary, visualizations, and detailed analysis in markdown
+  
+  Ensure the `result` contains properly structured JSON with all the pattern and anomaly details.
 ```
 
 ## Model Configuration:

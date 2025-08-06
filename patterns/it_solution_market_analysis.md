@@ -64,27 +64,8 @@ inputs:
 
 ```yaml
 outputs:
-  - name: market_analysis
-    description: Comprehensive market analysis report in markdown format
-    type: markdown
-    required: true
-    example: |
-      # Market Analysis Report: CloudStore Pro
-
-      ## Product Overview
-      - **Type**: Cloud Storage Solution
-      - **Key Features**: 
-        - End-to-end encryption
-        - Multi-region redundancy
-      - **Benefits**:
-        - Enhanced security
-        - High availability
-      - **Cons**: 
-        - Higher cost
-        - Complex setup
-
-  - name: competitor_comparison
-    description: Detailed comparison of competitors in structured format
+  - name: result
+    description: Structured competitor comparison data in JSON format
     type: json
     required: true
     schema:
@@ -118,16 +99,85 @@ outputs:
               reference_url: { type: string }
               last_verified: { type: string }
 
-  - name: market_trends
-    description: Analysis of current market trends and future predictions
-    type: text
-    required: false
+  - name: visual_output
+    description: Formatted market analysis report with competitor comparison and trends
+    type: markdown
+    required: true
     example: |
+      # Market Analysis Report: CloudStore Pro
+
+      ## Product Overview
+      - **Type**: Cloud Storage Solution
+      - **Key Features**: 
+        - End-to-end encryption
+        - Multi-region redundancy
+      - **Benefits**:
+        - Enhanced security
+        - High availability
+      - **Cons**: 
+        - Higher cost
+        - Complex setup
+        
+      ## Competitor Analysis
+      
+      ### Comparison Table
+      
+      | Competitor | Features | Pros | Cons | Pricing | Deployment |
+      |------------|----------|------|------|---------|------------|
+      | StorageGiant | Local redundancy, Basic encryption | Cost effective, Easy setup | Limited features, Single region | Pay-per-use | Cloud-only |
+      | CloudSave | Global redundancy, Advanced encryption | Feature-rich, Enterprise support | Expensive, Complex admin | Subscription | Hybrid |
+      
+      ## Market Trends
+      
       Current market trends show increasing demand for hybrid cloud solutions.
       Key growth drivers include:
       1. Remote work adoption
       2. Data security concerns
       3. Cost optimization needs
+```
+
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.7-sonnet
+  temperature: 0.7
+  max_tokens: 4000
+
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": {
+      "analyzed_product": {
+        "name": "Product Name",
+        "type": "Product Type",
+        "features": ["Feature 1", "Feature 2"]
+      },
+      "competitors": [
+        {
+          "name": "Competitor Name",
+          "features": ["Feature 1", "Feature 2"],
+          "pros": ["Pro 1", "Pro 2"],
+          "cons": ["Con 1", "Con 2"],
+          "pricing": "Pricing model",
+          "deployment": "Deployment option",
+          "reference_url": "URL",
+          "last_verified": "YYYY-MM-DD"
+        }
+      ]
+    },
+    "visual_output": "THE_FORMATTED_MARKET_ANALYSIS_REPORT"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains structured JSON data with competitor comparison details
+  - `visual_output`: Contains the formatted market analysis report with all sections in markdown
+  
+  Ensure the `result` contains properly structured JSON with all the product and competitor details.
 ```
 
 ## Model Configuration:

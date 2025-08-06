@@ -40,47 +40,51 @@ inputs:
 
 ```yaml
 outputs:
-  - name: queries
-    description: Generated KQL queries with explanations
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        solutions:
-          type: array
-          items:
-            type: object
-            properties:
-              kql_query: { type: string }
-              explanation: { type: string }
-              tables:
-                type: array
-                items: { type: string }
-              key_fields:
-                type: array
-                items: { type: string }
-
-  - name: summary
-    description: A brief overview of the proposed solutions
+  - name: result
+    description: Primary KQL query (the best solution)
     type: text
     required: true
-    example: |
-      Generated 2 KQL queries for the requested analysis:
-      1. Basic query with time filtering
-      2. Advanced query with aggregations and joins
+    example: "SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc"
 
-  - name: visualization
-    description: Visual representation of the query structure
+  - name: visual_output
+    description: Formatted output with all KQL queries, explanations, and visualizations
     type: markdown
-    required: false
+    required: true
     example: |
-      ## Query Structure
+      # KQL Query Solutions
+      
+      ## Primary Query
+      ```kql
+      SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc
+      ```
+      
+      ### Explanation
+      Basic query showing failed sign-in count by user in the last hour
+      
+      ### Tables Used
+      - SigninLogs
+      
+      ### Key Fields
+      - UserPrincipalName
+      - ResultType
+      - TimeGenerated
+      
+      ## Alternative Query
+      ```kql
+      SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize failedCount=count(), IPAddresses=make_set(IPAddress) by UserPrincipalName | project-reorder UserPrincipalName, failedCount, IPAddresses | order by failedCount desc
+      ```
+      
+      ### Explanation
+      Detailed analysis showing failed sign-ins with associated IP addresses
+      
+      ## Query Flow - Detailed Analysis
       ```mermaid
       graph TD
-        A[Table] --> B[Time Filter]
-        B --> C[Join]
-        C --> D[Aggregation]
+        A[SigninLogs] --> B[Time Filter]
+        B --> C[Filter Failed]
+        C --> D[Group by User]
+        D --> E[Collect IPs]
+        E --> F[Sort]
       ```
 ```
 
@@ -94,10 +98,29 @@ model:
   max_tokens: 2000
 
 format_instructions: |
-  When generating KQL queries:
-  1. First provide a brief summary of the proposed solutions
-  2. Then provide detailed queries with explanations in JSON format
-  3. For complex queries, include a visual representation of the query flow
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "THE_PRIMARY_KQL_QUERY_HERE",
+    "visual_output": "THE_FORMATTED_OUTPUT_WITH_ALL_QUERIES_AND_EXPLANATIONS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains ONLY the direct KQL query (the best solution) with no markdown formatting or explanations
+  - `visual_output`: Contains all queries, explanations, and visualizations in a formatted markdown presentation
+  
+  Example:
+  ```json
+  {
+    "result": "SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc",
+    "visual_output": "# KQL Query Solutions\n\n## Primary Query\n```kql\nSigninLogs | where TimeGenerated > ago(1h)...(more content)..."
+  }
+  ```
+  
+  For complex queries, include diagrams and explanations in the visual_output section only.
+```
 
 example_conversation:
   - role: user

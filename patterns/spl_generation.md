@@ -43,54 +43,81 @@ inputs:
 
 ```yaml
 outputs:
-  - name: queries
-    description: Generated SPL queries with explanations
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        solutions:
-          type: array
-          items:
-            type: object
-            properties:
-              spl_query: { type: string }
-              explanation: { type: string }
-              data_sources:
-                type: object
-                properties:
-                  indexes: 
-                    type: array
-                    items: { type: string }
-                  sourcetypes:
-                    type: array
-                    items: { type: string }
-                  key_fields:
-                    type: array
-                    items: { type: string }
-
-  - name: summary
-    description: A brief overview of the proposed solutions
+  - name: result
+    description: Primary SPL query (the best solution)
     type: text
     required: true
-    example: |
-      Generated 2 SPL queries to analyze login failures:
-      1. Basic search with simple filtering
-      2. Advanced statistical analysis with time correlation
+    example: "index=* sourcetype=* login failed OR failure earliest=-24h | stats count by user, src_ip | sort -count"
 
-  - name: visualization
-    description: Visualization of the query structure
+  - name: visual_output
+    description: Formatted output with all SPL queries, explanations, and visualizations
     type: markdown
-    required: false
+    required: true
     example: |
-      ## Query Flow
+      # SPL Query Solutions
+      
+      ## Primary Query
+      ```spl
+      index=* sourcetype=* login failed OR failure earliest=-24h | stats count by user, src_ip | sort -count
+      ```
+      
+      ### Explanation
+      Statistical analysis showing top users and source IPs with failed logins
+      
+      ### Data Sources
+      - **Indexes**: security, auth
+      - **Sourcetypes**: auth*, security*
+      - **Key Fields**: user, src_ip
+      
+      ## Alternative Query
+      ```spl
+      index=* sourcetype=* login failed OR failure earliest=-24h | table _time user src_ip status
+      ```
+      
+      ### Explanation
+      Basic search showing all failed logins with key fields in the last 24 hours
+      
+      ## Query Flow - Statistical Analysis
       ```mermaid
       graph TD
-        A[Base Search] --> B[Filter]
-        B --> C[Aggregation]
-        C --> D[Sort]
+        A[Base Search] --> B[Time Filter]
+        B --> C[Group by user/IP]
+        C --> D[Sort by count]
       ```
+```
+
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.7-sonnet
+  temperature: 0.7
+  max_tokens: 2000
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "THE_PRIMARY_SPL_QUERY_HERE",
+    "visual_output": "THE_FORMATTED_OUTPUT_WITH_ALL_QUERIES_AND_EXPLANATIONS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains ONLY the direct SPL query (the best solution) with no markdown formatting or explanations
+  - `visual_output`: Contains all queries, explanations, and visualizations in a formatted markdown presentation
+  
+  Example:
+  ```json
+  {
+    "result": "index=* sourcetype=* login failed OR failure earliest=-24h | stats count by user, src_ip | sort -count",
+    "visual_output": "# SPL Query Solutions\n\n## Primary Query\n```spl\nindex=* sourcetype=*...(more content)..."
+  }
+  ```
+  
+  For complex queries, include diagrams and explanations in the visual_output section only.
 ```
 
 ## Model Configuration:

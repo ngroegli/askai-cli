@@ -127,7 +127,9 @@ class PatternManager:
             yaml_text = content.split("## Pattern Outputs")[1]
             yaml_block = yaml_text.split("```yaml")[1].split("```")[0]
             outputs_data = yaml.safe_load(yaml_block)
-            return [PatternOutput.from_dict(output_data) for output_data in outputs_data.get('outputs', [])]
+            pattern_outputs = [PatternOutput.from_dict(output_data) for output_data in outputs_data.get('outputs', [])]
+            
+            return pattern_outputs
         except Exception as e:
             print_error_or_warnings(f"Error parsing pattern outputs: {str(e)}")
             return []
@@ -242,14 +244,8 @@ class PatternManager:
         try:
             # Parse individual components
             purpose = self._parse_pattern_purpose(content)
-            if not purpose:
-                print("[DEBUG] Failed to parse pattern purpose.")
             functionality = self._parse_pattern_functionality(content)
-            if not functionality:
-                print("[DEBUG] Failed to parse pattern functionality.")
             model_config = self._parse_model_configuration(content)
-            if not model_config:
-                print("[DEBUG] No model configuration found or failed to parse (this is OK if model is optional).")
             # Extract format instructions if present
             format_instructions = None
             if "format_instructions:" in content:
@@ -266,7 +262,6 @@ class PatternManager:
                     model_config=model_config,
                     format_instructions=format_instructions
                 )
-            print("[DEBUG] Pattern configuration missing required sections (purpose or functionality). Returning None.")
             return None
         except Exception as e:
             print_error_or_warnings(f"Error creating pattern configuration: {str(e)}")

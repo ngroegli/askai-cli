@@ -62,11 +62,38 @@ inputs:
 ```yaml
 outputs:
   - name: html_content
-    description: The main HTML content of the website
+    description: HTML content for the website
     type: html
     required: true
-    write_to_file: index.html
+    write_to_file: "index.html"
+    group: website_files
+
+  - name: css_styles
+    description: CSS styles for the website
+    type: css
+    required: true
+    write_to_file: "style.css"
+    group: website_files
+
+  - name: javascript_code
+    description: JavaScript code for the website
+    type: js
+    required: false
+    write_to_file: "script.js"
+    group: website_files
+
+  - name: visual_output
+    description: Formatted preview of the website with code snippets and instructions
+    type: markdown
+    required: true
+    group: documentation
     example: |
+      # Website Generated: Brand Name
+      
+      A single-page website has been created with the following files:
+      
+      ## HTML Content (index.html)
+      ```html
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -79,66 +106,37 @@ outputs:
           <!-- Website content -->
       </body>
       </html>
-
-  - name: css_styles
-    description: CSS styles for the website
-    type: css
-    required: true
-    write_to_file: style.css
-    example: |
+      ```
+      
+      ## CSS Styles (style.css)
+      ```css
       body {
           margin: 0;
           font-family: Arial, sans-serif;
       }
       .nav { /* Navigation styles */ }
       .header { /* Header styles */ }
-
-  - name: javascript_code
-    description: JavaScript for animations and interactivity
-    type: js
-    required: true
-    write_to_file: script.js
-    example: |
+      ```
+      
+      ## JavaScript (script.js)
+      ```js
       document.addEventListener('DOMContentLoaded', () => {
           // Animation code for image spinner
           // Navigation smooth scrolling
           // Interactive elements
       });
-
-  - name: project_structure
-    description: Description of the project file structure
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        root_dir:
-          type: object
-          properties:
-            files:
-              type: array
-              items: { type: string }
-            directories:
-              type: object
-              additionalProperties:
-                type: array
-                items: { type: string }
-
-  - name: preview_info
-    description: Information for previewing the website
-    type: text
-    required: true
-    example: |
-      Website files have been generated successfully!
-      Files created:
+      ```
+      
+      ## Project Structure
       - index.html (main website)
       - style.css (styling)
       - script.js (JavaScript functionality)
+      - assets/ (directory for images)
       
-      To preview:
-      1. Open index.html in a web browser
-      2. All three files work together automatically
-      3. Place any images in an assets/ directory if needed
+      ## Preview Instructions
+      1. Save all files in the same directory
+      2. Open index.html in any web browser
+      3. All files work together automatically
 ```
 
 ## Model Configuration:
@@ -151,6 +149,33 @@ model:
   max_tokens: 4000
 
 format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "html_content": "<!DOCTYPE html>...",
+    "css_styles": "/* CSS styles */...",
+    "javascript_code": "// JavaScript code...",
+    "visual_output": "THE_FORMATTED_WEBSITE_PREVIEW_WITH_CODE_SNIPPETS"
+  }
+  ```
+  
+  Where:
+  - `html_content`: Contains the complete HTML code for the website
+  - `css_styles`: Contains the complete CSS code for the website
+  - `javascript_code`: Contains the JavaScript code for the website (optional)
+  - `visual_output`: Contains a nicely formatted preview of the website with code snippets and instructions
+  
+  Requirements:
+  - HTML MUST reference exactly "style.css" and "script.js" (matching output filenames)
+  - Use: `<link rel="stylesheet" href="style.css">` in HTML head
+  - Use: `<script src="script.js" defer></script>` in HTML head
+  - CSS should be comprehensive and responsive
+  - JavaScript should include smooth scrolling and animations
+  - All code should be production-ready
+```
+
+example_conversation:
   **IMPORTANT**: Generate structured output for automatic file creation.
   
   **For JSON format responses**, provide output in this structure:
@@ -159,8 +184,7 @@ format_instructions: |
     "html_content": "<!DOCTYPE html>...",
     "css_styles": "/* CSS styles */...",
     "javascript_code": "// JavaScript code...",
-    "project_structure": {...},
-    "preview_info": "Website files..."
+    "visual_output": "Website files preview and instructions..."
   }
   ```
   

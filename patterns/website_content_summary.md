@@ -64,56 +64,87 @@ inputs:
 
 ```yaml
 outputs:
-  - name: structured_summary
-    description: Main structured summary of the website content
+  - name: result
+    description: Concise summary of the website content
+    type: text
+    required: true
+    example: "The website example.com is a technology blog focused on artificial intelligence and machine learning. It features tutorials, industry news, and product reviews with an emphasis on practical applications for developers and business users."
+
+  - name: visual_output
+    description: Detailed structured summary of the website content
     type: markdown
     required: true
     example: |
-      # Website Summary: [Site Name]
+      # Website Summary: TechAI Blog
       
       ## Overview
-      Brief description of the website and its primary purpose.
+      TechAI Blog is a technology website focused on artificial intelligence and machine learning developments. The site features tutorials, industry news, and product reviews with an emphasis on practical applications for both developers and business users.
       
       ## Key Information
-      * Important fact 1
-      * Important fact 2
-      * Important fact 3
+      * Updated weekly with new AI research and implementations
+      * Contains 120+ tutorials on machine learning frameworks
+      * Features interviews with leading AI researchers and practitioners
+      * Includes downloadable code samples and datasets
       
       ## Main Topics Covered
-      1. Topic 1 - Description
-      2. Topic 2 - Description
-      3. Topic 3 - Description
+      1. **Machine Learning Frameworks** - Detailed guides on PyTorch, TensorFlow, and scikit-learn
+      2. **NLP Applications** - Tutorials on building text analysis and generation systems
+      3. **Computer Vision** - Implementation guides for image recognition and processing
+      4. **Industry Applications** - Case studies on AI in healthcare, finance, and retail
       
       ## Key Insights & Takeaways
-      * Insight 1
-      * Insight 2
+      * The site emphasizes practical implementations over theoretical concepts
+      * Content is suitable for intermediate to advanced developers
+      * Most tutorials follow a project-based learning approach
+      * Resources are regularly updated to match latest library versions
       
-      ## Technical Details (if requested)
-      Technical specifications and implementation details.
+      ## Technical Details
+      * Content includes Python code samples compatible with Python 3.8+
+      * Jupyter notebook downloads available for most tutorials
+      * Implementation examples for both CPU and GPU environments
       
       ## Actionable Next Steps
-      * Recommended action 1
-      * Recommended action 2
+      * Begin with the "Getting Started" series for an introduction to core concepts
+      * Subscribe to the weekly newsletter for latest updates
+      * Join the community forum to ask questions and share projects
       
       ## Sources
-      - [Original URL](url)
+      - [Original URL](https://example.com)
+      - Analysis Date: August 6, 2025
+```
 
-  - name: content_metadata
-    description: Metadata about the analyzed content
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        url: { type: string }
-        content_type: { type: string }
-        analysis_date: { type: string }
-        focus_areas: { type: string }
-        summary_length: { type: string }
-        credibility_score: { type: number }
-        key_topics:
-          type: array
-          items: { type: string }
+## Model Configuration
+
+```yaml
+model:
+  provider: openrouter
+  model_name: openai/gpt-4o
+  temperature: 0.3
+  max_tokens: 4000
+  web_plugin: true
+  web_max_results: 8
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "CONCISE_WEBSITE_SUMMARY",
+    "visual_output": "DETAILED_STRUCTURED_SUMMARY"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains a concise plain text summary of the website (2-4 sentences)
+  - `visual_output`: Contains the detailed structured summary with all sections in markdown format
+  
+  Example:
+  ```json
+  {
+    "result": "The website example.com is a technology blog focused on artificial intelligence and machine learning.",
+    "visual_output": "# Website Summary: TechAI Blog\n\n## Overview\nTechAI Blog is a technology website focused on...(more content)"
+  }
+  ```
 ```
 
 # ================================================

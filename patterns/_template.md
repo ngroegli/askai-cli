@@ -73,40 +73,31 @@ input_groups:
 
 ```yaml
 outputs:
-  - name: main_output
-    description: Primary output of the system
+  - name: result
+    description: Primary output of the system (direct result)
     type: text
     required: true
-    example: |
-      This is an example of the main text output
-      It can span multiple lines
+    group: primary_output
+    example: "This is the direct result in plain text format"
 
-  - name: structured_data
-    description: Structured data output
-    type: json
-    required: false
-    schema:
-      type: object
-      properties:
-        id: { type: string }
-        score: { type: number }
-        items:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: number }
-
-  - name: visualization
-    description: Optional visualization in markdown
+  - name: visual_output
+    description: Formatted visual presentation of the results
     type: markdown
-    required: false
+    required: true
+    group: visual_presentation
     example: |
-      ## Results
+      # Results
+      
+      ## Primary Output
+      ```
+      This is the direct result in plain text format
+      ```
+      
+      ## Additional Information
       * Point 1
       * Point 2
-
+      
+      ## Visualization
       ```mermaid
       graph TD
         A[Start] --> B[End]

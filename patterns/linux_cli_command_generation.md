@@ -50,46 +50,38 @@ inputs:
 
 ```yaml
 outputs:
-  - name: command
+  - name: result
     description: The generated Linux CLI one-liner command
     type: code
     required: true
     auto_run: true
-    example: |
-      pkill -f firefox
+    example: "pkill -f firefox"
+    group: command_execution
 
-  - name: explanation
-    description: Detailed explanation of the command and its components
-    type: text
-    required: true
-    example: |
-      This command uses 'pkill' with the '-f' flag to find and terminate processes by matching the full command line (not just the process name). The pattern 'firefox' will match any process that has 'firefox' in its command line, including the main firefox process and any related processes.
-
-  - name: safety_notes
-    description: Safety considerations and potential risks
+  - name: visual_output
+    description: Formatted output with the command, explanation, and safety notes
     type: markdown
-    required: false
+    required: true
+    group: command_explanation
     example: |
+      # Linux Command
+      
+      ## Command
+      ```bash
+      pkill -f firefox
+      ```
+      
+      ## Explanation
+      This command uses 'pkill' with the '-f' flag to find and terminate processes by matching the full command line (not just the process name). The pattern 'firefox' will match any process that has 'firefox' in its command line, including the main firefox process and any related processes.
+      
       ## Safety Considerations
       * This command will kill ALL processes matching 'firefox' in their command line
       * Use with caution as it may terminate multiple firefox instances
       * Consider using `pgrep -f firefox` first to see what processes would be affected
-
-  - name: alternatives
-    description: Alternative commands or approaches for the same scenario
-    type: json
-    required: false
-    schema:
-      type: object
-      properties:
-        commands:
-          type: array
-          items:
-            type: object
-            properties:
-              command: { type: string }
-              description: { type: string }
-              use_case: { type: string }
+      
+      ## Alternative Commands
+      1. `killall firefox` - Only kills processes named exactly 'firefox'
+      2. `kill $(pgrep -f firefox)` - More explicit approach showing PIDs before killing
 ```
 
 ## Model Configuration:
@@ -100,4 +92,56 @@ model:
   model_name: anthropic/claude-3.5-sonnet
   temperature: 0.3
   max_tokens: 1500
+  
+# Special instructions for the CLI command execution handler
+execution:
+  handler: direct_execution
+  prompt_for_confirmation: true
+  show_visual_output_first: true
+
+format_instructions: |
+  **CRITICAL FORMATTING REQUIREMENT**
+  
+  Your response MUST use this EXACT JSON structure:
+  
+  ```json
+  {
+    "result": "ls -lah /var/log",
+    "visual_output": "# List Files Command\n\n## Command\n```bash\nls -lah /var/log\n```\n\n## Explanation\nLists all files in human-readable format..."
+  }
+  ```
+  
+  STRICT FORMAT RULES:
+  1. "result" MUST be a plain STRING containing ONLY the raw command to execute
+  2. "result" value CANNOT be a JSON object or nested structure
+  3. Do NOT use any nested objects like {"command": "ls -lah"} - this is WRONG
+  4. "result" MUST NOT include any explanation or additional text, ONLY the command
+  5. "visual_output" should contain the formatted markdown with explanation
+  
+  ✅ CORRECT:
+  ```json
+  {
+    "result": "find /tmp -name \"*.log\" -delete",
+    "visual_output": "# Delete Logs Command..."
+  }
+  ```
+  
+  ❌ INCORRECT (DO NOT DO THIS):
+  ```json
+  {
+    "result": {"command": "find /tmp -name \"*.log\" -delete"},
+    "visual_output": "..."
+  }
+  ```
+  
+  ❌ INCORRECT (DO NOT DO THIS):
+  ```json
+  {
+    "result": "Command: find /tmp -name \"*.log\" -delete",
+    "visual_output": "..."
+  }
+  ```
+  
+  The system will execute the command in "result" directly, so it must be a raw string.
+  The execution will fail if "result" contains anything other than the exact command to run.
 ```

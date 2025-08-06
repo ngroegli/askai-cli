@@ -49,11 +49,38 @@ inputs:
 
 ```yaml
 outputs:
-  - name: pattern_md
-    description: The generated pattern markdown file content
+  - name: result
+    description: The generated pattern markdown file content as plain text
+    type: text
+    required: true
+    example: |
+      # Pattern: Example Pattern
+
+      ## Purpose:
+      The purpose of this pattern is...
+
+      ## Functionality:
+      * Feature 1
+      * Feature 2
+
+      ## Pattern Inputs:
+      ```yaml
+      inputs:
+        - name: example_input
+          description: An example input
+          type: text
+          required: true
+      ```
+
+  - name: visual_output
+    description: Formatted output with the generated pattern and validation information
     type: markdown
     required: true
     example: |
+      # Generated Pattern: Example Pattern
+      
+      ## Pattern Content
+      ```markdown
       # Pattern: Example Pattern
 
       ## Purpose:
@@ -88,35 +115,57 @@ outputs:
         model_name: anthropic/claude-2
         temperature: 0.7
       ```
+      ```
+      
+      ## Validation Results
+      ✅ **Valid Pattern**: All required sections present
+      ✅ **Template Compatibility**: Compatible with provided template
+      
+      ### Warnings
+      None
+      
+      ### Suggestions
+      * Consider adding time range parameter
+      * Could add visualization output
+      
+      ## Pattern Metadata
+      * **Name**: Example Pattern
+      * **Recommended filename**: example_pattern.md
+      * **Input count**: 1
+      * **Output count**: 1
+      * **Has model config**: Yes
+```
 
-  - name: validation_results
-    description: Validation results for the generated pattern definition
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        is_valid: { type: boolean }
-        template_compatibility: { type: boolean }
-        warnings:
-          type: array
-          items: { type: string }
-        suggestions:
-          type: array
-          items: { type: string }
+## Model Configuration:
 
-  - name: pattern_metadata
-    description: Metadata about the generated pattern
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        name: { type: string }
-        file_name: { type: string }
-        input_count: { type: number }
-        output_count: { type: number }
-        has_model_config: { type: boolean }
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.7-sonnet
+  temperature: 0.7
+  max_tokens: 4000
+
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "THE_RAW_PATTERN_MARKDOWN_CONTENT",
+    "visual_output": "THE_FORMATTED_OUTPUT_WITH_VALIDATION_AND_METADATA"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains ONLY the raw pattern markdown content, without any extra formatting
+  - `visual_output`: Contains the formatted pattern with validation results and metadata in a user-friendly presentation
+  
+  Example:
+  ```json
+  {
+    "result": "# Pattern: Example Pattern\n\n## Purpose:\nThe purpose of this pattern is...",
+    "visual_output": "# Generated Pattern: Example Pattern\n\n## Pattern Content\n```markdown\n# Pattern: Example Pattern\n\n## Purpose:\nThe purpose of this pattern is...\n```\n\n## Validation Results\n✅ **Valid Pattern**...(more content)"
+  }
+  ```
 ```
 
 ## Model Configuration:

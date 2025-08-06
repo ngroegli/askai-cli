@@ -105,6 +105,67 @@ class AIService:
             pattern_data = None
             if pattern_id:
                 pattern_data = pattern_manager.get_pattern_content(pattern_id)
+                
+                # Check if this is the Linux CLI command generation pattern and add special validator
+                if pattern_id == "linux_cli_command_generation" or (pattern_data and "linux_cli_command_generation" in str(pattern_data)):
+                    validator_message = {
+                        "role": "system",
+                        "content": """CRITICAL OUTPUT FORMAT VALIDATOR:
+As a format validator, I need to remind you that your response MUST follow this exact structure:
+```json
+{
+  "result": "ls -la /path",
+  "visual_output": "markdown content here"
+}
+```
+Where:
+- "result" must be a DIRECT STRING containing only the command text
+- DO NOT nest "result" in an object like {"command": "ls"}
+- The "result" field must contain ONLY the raw command to execute
+
+YOUR RESPONSE WILL BE EXECUTED AS-IS, so ensure "result" is EXACTLY the command to run.
+"""
+                    }
+                    
+                    # Add the validator message at the beginning of messages
+                    messages.insert(0, validator_message)
+                    self.logger.info(json.dumps({
+                        "log_message": "Added special validator message for linux_cli_command_generation"
+                    }))
+                    
+                # Add a special validator for any pattern with code outputs and auto_run=True
+                elif pattern_data and "auto_run" in str(pattern_data) and "code" in str(pattern_data).lower():
+                    validator_message = {
+                        "role": "system",
+                        "content": """CRITICAL OUTPUT FORMAT VALIDATOR:
+For any executable code in the "result" field, ensure it is provided as a direct string value,
+not nested inside an object. For example:
+
+CORRECT:
+```json
+{
+  "result": "ls -la /path",
+  "visual_output": "content here"
+}
+```
+
+INCORRECT:
+```json
+{
+  "result": {"command": "ls -la /path"},
+  "visual_output": "content here"
+}
+```
+
+The "result" field will be executed directly, so it must contain only the command text.
+"""
+                    }
+                    
+                    # Add the validator message at the beginning of messages
+                    messages.insert(0, validator_message)
+                    self.logger.info(json.dumps({
+                        "log_message": "Added special validator message for auto-run code outputs"
+                    }))
 
             model_config = self.get_model_configuration(model_name, config, pattern_data)
             

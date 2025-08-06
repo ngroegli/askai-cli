@@ -58,18 +58,22 @@ input_groups:
 
 ```yaml
 outputs:
-  - name: summary
+  - name: result
     description: Concise summary of the PDF document's content
     type: text
     required: true
-    example: |
-      This research paper examines the effects of climate change on coastal ecosystems between 2010-2020. The authors analyzed data from 50 monitoring stations across three continents and found significant changes in biodiversity, water temperature, and acidification levels. The study concludes that immediate conservation efforts are needed, particularly in tropical regions where degradation is occurring 2.5 times faster than previously estimated.
+    example: "This research paper examines the effects of climate change on coastal ecosystems between 2010-2020. The authors analyzed data from 50 monitoring stations across three continents and found significant changes in biodiversity, water temperature, and acidification levels. The study concludes that immediate conservation efforts are needed, particularly in tropical regions where degradation is occurring 2.5 times faster than previously estimated."
 
-  - name: key_points
-    description: Bullet-point list of key information extracted from the document
+  - name: visual_output
+    description: Comprehensive analysis of the PDF with key points, structure, and important elements
     type: markdown
     required: true
     example: |
+      # PDF Summary: Climate Change Effects on Coastal Ecosystems
+      
+      ## Executive Summary
+      This research paper examines the effects of climate change on coastal ecosystems between 2010-2020. The authors analyzed data from 50 monitoring stations across three continents and found significant changes in biodiversity, water temperature, and acidification levels. The study concludes that immediate conservation efforts are needed, particularly in tropical regions where degradation is occurring 2.5 times faster than previously estimated.
+      
       ## Key Points
       * Study covered 50 coastal monitoring stations across North America, Europe, and Australia
       * Average water temperature increased by 1.2°C over the decade studied
@@ -79,12 +83,7 @@ outputs:
       * Economic impact estimated at $3.8 billion annually to coastal economies
       * Recommended conservation strategy would cost $450 million to implement
       * Without intervention, 38% of studied ecosystems face critical damage by 2030
-
-  - name: document_structure
-    description: Overview of the document's organization and main sections
-    type: markdown
-    required: false
-    example: |
+      
       ## Document Structure
       1. **Executive Summary** (pp. 1-2)
       2. **Introduction and Background** (pp. 3-7)
@@ -97,32 +96,48 @@ outputs:
       6. **Recommendations** (pp. 47-50)
       7. **References** (pp. 51-58)
       8. **Appendices** (pp. 59-73)
+      
+      ## Key Figures and Tables
+      
+      ### Figure 1 (p. 17)
+      **Caption**: "Global Temperature Increases in Coastal Waters 2010-2020"
+      **Key Insight**: Shows accelerating warming trends with regional variations
+      
+      ### Table 3 (p. 25)
+      **Title**: "Species Diversity Changes by Region"
+      **Key Data**: Provides percentage changes in biodiversity across different ecosystems
+```
 
-  - name: figures_tables
-    description: List of important figures, tables, and numerical data
-    type: json
-    required: false
-    schema:
-      type: object
-      properties:
-        figures:
-          type: array
-          items:
-            type: object
-            properties:
-              figure_number: { type: string }
-              caption: { type: string }
-              page: { type: number }
-              key_insight: { type: string }
-        tables:
-          type: array
-          items:
-            type: object
-            properties:
-              table_number: { type: string }
-              title: { type: string }
-              page: { type: number }
-              key_data: { type: string }
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.5-sonnet
+  temperature: 0.1
+  max_tokens: 2500
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "CONCISE_SUMMARY_OF_THE_PDF",
+    "visual_output": "COMPREHENSIVE_FORMATTED_ANALYSIS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains a concise plain text summary of the PDF document (2-5 sentences)
+  - `visual_output`: Contains the comprehensive analysis with all sections formatted in markdown
+  
+  Example:
+  ```json
+  {
+    "result": "This research paper examines the effects of climate change on coastal ecosystems between 2010-2020. The authors found significant changes in biodiversity and temperature levels.",
+    "visual_output": "# PDF Summary: Climate Change Effects on Coastal Ecosystems\n\n## Executive Summary\nThis research paper examines...(more content)"
+  }
+  ```
 ```
 
 ## Model Configuration:

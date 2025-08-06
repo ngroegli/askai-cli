@@ -297,7 +297,7 @@ class MessageBuilder:
                         "message_structure": messages[-1]
                     }))
                 else:
-                    print("DEBUG: Failed to encode PDF file, pdf_base64 is None")
+                    self.logger.warning("Failed to encode PDF file, pdf_base64 is None")
                     
         # Handle PDF URL input
         if pdf_url:

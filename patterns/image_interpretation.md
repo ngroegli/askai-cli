@@ -58,18 +58,22 @@ input_groups:
 
 ```yaml
 outputs:
-  - name: interpretation
-    description: Detailed interpretation and description of the image
+  - name: result
+    description: Concise interpretation of the image
     type: text
     required: true
-    example: |
-      The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon. The composition creates a peaceful, tropical atmosphere typical of vacation destinations.
+    example: "The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon."
 
-  - name: key_elements
-    description: List of key elements identified in the image
+  - name: visual_output
+    description: Detailed analysis with key elements and metadata
     type: markdown
     required: true
     example: |
+      # Image Interpretation
+      
+      ## Description
+      The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon. The composition creates a peaceful, tropical atmosphere typical of vacation destinations.
+      
       ## Key Elements Identified
       * Palm tree (silhouette in foreground)
       * Ocean/sea (extending to horizon)
@@ -77,19 +81,51 @@ outputs:
       * Two small boats (on the horizon)
       * Beach (visible in lower portion)
       * Cloud formations (scattered across the sky)
+      
+      ## Technical Analysis
+      * **Image Type**: Landscape photography
+      * **Composition**: Rule of thirds, with horizon line and focal elements
+      * **Color Palette**: Warm oranges and purples contrasting with dark silhouettes
+      * **Mood**: Peaceful, serene, contemplative
+      
+      ## Metadata Information
+      * **Dimensions**: 1920x1080
+      * **Format**: JPEG
+      * **Creation Time**: 2025-06-12 19:45:22
+      * **Location Data**: Approximate coordinates suggest tropical Pacific region
+      * **Camera Info**: DSLR with wide-angle lens
+```
 
-  - name: metadata_analysis
-    description: Analysis of available image metadata if present
-    type: json
-    required: false
-    schema:
-      type: object
-      properties:
-        dimensions: { type: string }
-        format: { type: string }
-        creation_time: { type: string }
-        location_data: { type: string }
-        camera_info: { type: string }
+## Model Configuration:
+
+```yaml
+model:
+  provider: openrouter
+  model_name: anthropic/claude-3.5-sonnet
+  temperature: 0.2
+  max_tokens: 2000
+  
+format_instructions: |
+  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  
+  ```json
+  {
+    "result": "CONCISE_IMAGE_DESCRIPTION",
+    "visual_output": "DETAILED_FORMATTED_ANALYSIS"
+  }
+  ```
+  
+  Where:
+  - `result`: Contains a concise plain text description of the image (1-3 sentences)
+  - `visual_output`: Contains the detailed analysis with all sections formatted in markdown
+  
+  Example:
+  ```json
+  {
+    "result": "The image shows a coastal sunset with a palm tree silhouette and two boats on the horizon.",
+    "visual_output": "# Image Interpretation\n\n## Description\nThe image shows a coastal sunset scene with a silhouetted palm tree...(more content)"
+  }
+  ```
 ```
 
 ## Model Configuration:

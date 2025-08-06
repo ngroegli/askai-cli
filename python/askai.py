@@ -6,6 +6,7 @@ Orchestrates the different components to provide AI assistance via command line.
 import os
 import sys
 import json
+import re
 from config import load_config
 from logger import setup_logger
 from patterns import PatternManager
@@ -99,6 +100,33 @@ def main():
         pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
         if pattern_data:
             pattern_outputs = pattern_data.get('outputs', [])
+            
+    # Special handling for Linux CLI command generation pattern
+    is_linux_cli_pattern = (resolved_pattern_id == "linux_cli_command_generation")
+    if is_linux_cli_pattern:
+        logger.debug("Linux CLI command pattern detected early")
+        
+        # Make sure we have a response in the expected format
+        if isinstance(response, dict) and "content" in response:
+            try:
+                content_text = response["content"]
+                import re
+                
+                # Try to parse the content as JSON
+                json_match = re.search(r'\{[\s\S]*?"result":\s*"([^"]+)"[\s\S]*?"visual_output":\s*"([\s\S]*?)"[\s\S]*?\}', content_text)
+                
+                if json_match:
+                    command = json_match.group(1)
+                    visual_output = json_match.group(2).replace('\\n', '\n').replace('\\"', '"')
+                    
+                    # Create a clean response
+                    response = {
+                        "result": command,
+                        "visual_output": visual_output
+                    }
+                    logger.debug("Successfully restructured response for Linux CLI pattern")
+            except Exception as e:
+                logger.debug(f"Error restructuring response: {str(e)}")
 
     # Handle output
     console_output = True  # Default to showing console output
@@ -122,6 +150,30 @@ def main():
         
     # Add format to output_config so the handler knows what format to use
     output_config['format'] = args.format
+    
+    # Special handling for Linux CLI command generation pattern
+    if resolved_pattern_id == "linux_cli_command_generation":
+        # Check if the response has the expected format
+        if isinstance(response, dict) and "result" in response and "visual_output" in response:
+            command = response["result"]
+            visual_output = response["visual_output"]
+            
+            # Print the visual output
+            print("\n" + "=" * 80)
+            print("LINUX COMMAND GENERATED")
+            print("=" * 80)
+            print(f"\nCommand: {command}")
+            print("\nEXPLANATION:")
+            print("-" * 50)
+            print(visual_output)
+            print("-" * 50)
+            
+            # Prompt for execution
+            from patterns.pattern_outputs import PatternOutput
+            PatternOutput.execute_command(command, "result")
+            
+            # Exit successfully
+            sys.exit(0)
     
     # Don't override file_output if it was already set by pattern outputs
     if has_output_arg and not pattern_has_file_output:
@@ -153,8 +205,86 @@ def main():
         pattern_outputs=pattern_outputs
     )
     
-    # Print the formatted output
-    print(formatted_output)
+    # For Linux CLI command pattern, let's handle the output specially
+    if resolved_pattern_id == "linux_cli_command_generation":
+        logger.debug("Linux CLI command pattern detected")
+        
+        # Extract the actual content from the response
+        command = None
+        visual_output = None
+        
+        # Case 1: Response is already the expected dict format with result field
+        if isinstance(response, dict) and "result" in response:
+            command = response["result"]
+            visual_output = response.get("visual_output", "")
+            logger.debug("Found result directly in response")
+            
+        # Case 2: Response is a dict with content field containing formatted output
+        elif isinstance(response, dict) and "content" in response:
+            content = response["content"]
+            logger.debug(f"Content from response: {content[:100]}...")
+            
+            # Try to extract using simple pattern matching
+            import re
+            
+            # Look for "result": "command"
+            result_match = re.search(r'"result":\s*"([^"]+)"', content)
+            if result_match:
+                command = result_match.group(1)
+                logger.debug("Extracted command using regex")
+                
+            # Look for "visual_output": "markdown content"
+            visual_match = re.search(r'"visual_output":\s*"(.*?)(?:"\s*\}|"\s*,)', content, re.DOTALL)
+            if visual_match:
+                visual_output = visual_match.group(1)
+                # Unescape the content
+                visual_output = visual_output.replace('\\n', '\n').replace('\\"', '"')
+                logger.debug("Extracted visual output using regex")
+                
+        # FALLBACK: If we couldn't extract the command, try plain text extraction
+        if command is None and isinstance(response, dict) and "content" in response:
+            content = response["content"]
+            # Look for anything that looks like a Linux command in the content
+            command_patterns = [
+                r'find\s+[.]\s+-type\s+f\s+-size',
+                r'ls\s+-[la]+h\s+',
+                r'grep\s+-[r]+',
+                r'ps\s+aux'
+            ]
+            
+            for pattern in command_patterns:
+                command_match = re.search(pattern, content)
+                if command_match:
+                    # Extract a reasonable command length
+                    start = command_match.start()
+                    end = min(start + 100, len(content))
+                    command_line = content[start:end].split('\n')[0]
+                    command = command_line.strip().strip('"')
+                    logger.debug("Extracted command using fallback pattern")
+                    break
+                
+        # Process the command if found
+        if command:
+            logger.debug(f"Command found with visual_output present: {visual_output is not None}")
+            
+            # First display the visual output explanation
+            if visual_output:
+                print("\n" + "=" * 80)
+                print(f"COMMAND: {command}")
+                print("EXPLANATION:")
+                print("=" * 80 + "\n")
+                print(visual_output)
+            
+            # Then prompt for execution
+            from patterns.pattern_outputs import PatternOutput
+            PatternOutput.execute_command(command, "result")
+        else:
+            logger.warning("Failed to parse command from response")
+            # For other patterns, print the formatted output normally
+            print(formatted_output)
+    else:
+        # For other patterns, print the formatted output normally
+        print(formatted_output)
     
     # Log created files
     if created_files:
