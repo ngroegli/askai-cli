@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 import yaml
 import re
+import os
 
 class InputType(Enum):
     TEXT = "text"
@@ -10,6 +11,8 @@ class InputType(Enum):
     SELECT = "select"
     FILE = "file"  # For file path or content
     URL = "url"    # For URL validation
+    IMAGE_FILE = "image_file"  # For image file handling with -img parameter
+    PDF_FILE = "pdf_file"  # For PDF file handling with -pdf parameter
 
 @dataclass
 class PatternInput:
@@ -68,6 +71,33 @@ class PatternInput:
                     f.read(1)  # Try to read one byte to verify access
             except Exception as e:
                 return False, f"File error: {str(e)}"
+        
+        elif self.input_type == InputType.IMAGE_FILE:
+            try:
+                # Validate that the image file exists and is readable
+                # Note: Using 'rb' mode for binary files like images
+                with open(value, 'rb') as f:
+                    f.read(1)  # Try to read one byte to verify access
+                # Check if it has an image extension
+                image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+                file_ext = os.path.splitext(value)[1].lower()
+                if file_ext not in image_extensions:
+                    return False, f"File does not appear to be an image. Supported formats: {', '.join(image_extensions)}"
+            except Exception as e:
+                return False, f"Image file error: {str(e)}"
+                
+        elif self.input_type == InputType.PDF_FILE:
+            try:
+                # Validate that the PDF file exists and is readable
+                # Using 'rb' mode for binary PDF files
+                with open(value, 'rb') as f:
+                    f.read(1)  # Try to read one byte to verify access
+                # Check if it has a PDF extension
+                file_ext = os.path.splitext(value)[1].lower()
+                if file_ext != '.pdf':
+                    return False, "File does not appear to be a PDF. Only .pdf extension is supported."
+            except Exception as e:
+                return False, f"PDF file error: {str(e)}"
 
         elif self.input_type == InputType.URL:
             # Basic URL validation using regex

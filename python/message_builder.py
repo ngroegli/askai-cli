@@ -432,11 +432,196 @@ class MessageBuilder:
             "content": pattern_prompt
         })
         
-        # If there are inputs, provide them in a structured way
-        if pattern_inputs:
+        # Check for special file inputs and handle them specially
+        image_file_input = None
+        pdf_file_input = None
+        structured_inputs = dict(pattern_inputs)  # Make a copy to modify
+        
+        # Check if there are any special inputs to handle (image_file, pdf_file, image_url, pdf_url)
+        for input_def in pattern_data.get('inputs', []):
+            # Handle image files
+            if input_def.input_type.value == "image_file" and input_def.name in pattern_inputs:
+                image_file_input = pattern_inputs[input_def.name]
+                # Remove from structured inputs to avoid duplication
+                structured_inputs.pop(input_def.name, None)
+                
+                # Only process image file if it's not None
+                if image_file_input is not None:
+                    # Handle the image file like -img parameter
+                    image_path = image_file_input
+                    image_filename = os.path.basename(image_path)
+                    image_ext = os.path.splitext(image_filename)[1].lower().replace(".", "")
+                    if not image_ext:
+                        image_ext = "jpeg"  # Default extension if none detected
+                        
+                    self.logger.info(json.dumps({
+                        "log_message": "Processing image_file from pattern input",
+                        "image_path": image_path
+                    }))
+                    
+                    # Encode the image to base64
+                    image_base64 = encode_file_to_base64(image_path)
+                
+                if image_base64:
+                    # Find user question in pattern inputs or use default
+                    user_question = "Please analyze this image based on the provided inputs."
+                    
+                    # Create multimodal message with image content
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_question},
+                            {
+                                "type": "image_url", 
+                                "image_url": {
+                                    "url": f"data:image/{image_ext};base64,{image_base64}"
+                                }
+                            }
+                        ]
+                    })
+                    
+                    self.logger.debug(json.dumps({
+                        "log_message": "Created multimodal message for pattern image input",
+                        "message_structure": "multimodal with image"
+                    }))
+            
+            # Handle PDF files
+            elif input_def.input_type.value == "pdf_file" and input_def.name in pattern_inputs:
+                pdf_file_input = pattern_inputs[input_def.name]
+                # Remove from structured inputs to avoid duplication
+                structured_inputs.pop(input_def.name, None)
+                
+                # Only process PDF file if it's not None
+                if pdf_file_input is not None:
+                    # Handle the PDF file like -pdf parameter
+                    pdf_path = pdf_file_input
+                    pdf_filename = os.path.basename(pdf_path)
+                    
+                    self.logger.info(json.dumps({
+                        "log_message": "Processing pdf_file from pattern input",
+                        "pdf_path": pdf_path
+                    }))
+                    
+                    # Encode the PDF to base64
+                    pdf_base64 = encode_file_to_base64(pdf_path)
+                    
+                    if pdf_base64:
+                        # Find user question in pattern inputs or use default
+                        user_question = "Please analyze this PDF document based on the provided inputs."
+                        
+                        # Create multimodal message with PDF content
+                        pdf_data_url = f"data:application/pdf;base64,{pdf_base64}"
+                        
+                        messages.append({
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_question},
+                                {
+                                    "type": "file",
+                                    "file": {
+                                        "filename": pdf_filename,
+                                        "file_data": pdf_data_url
+                                    }
+                                }
+                            ]
+                        })
+                        
+                        self.logger.debug(json.dumps({
+                            "log_message": "Created multimodal message for pattern PDF input",
+                            "message_structure": "multimodal with PDF"
+                        }))
+            
+            # Handle PDF URL inputs from pattern
+            elif input_def.name == "pdf_url" and input_def.name in pattern_inputs:
+                pdf_url = pattern_inputs[input_def.name]
+                # Remove from structured inputs to avoid duplication
+                structured_inputs.pop(input_def.name, None)
+                
+                if pdf_url is not None:
+                    self.logger.info(json.dumps({
+                        "log_message": "Processing pdf_url from pattern input",
+                        "pdf_url": pdf_url
+                    }))
+                    
+                    try:
+                        # Create a filename from the URL
+                        pdf_filename = pdf_url.split('/')[-1]
+                        if not pdf_filename.lower().endswith('.pdf'):
+                            pdf_filename += '.pdf'
+                        
+                        # Create default question if none provided
+                        user_question = "Please analyze and summarize this PDF document based on the provided inputs."
+                        
+                        # Create multimodal message with PDF URL
+                        messages.append({
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_question},
+                                {
+                                    "type": "file",
+                                    "file": {
+                                        "filename": pdf_filename,
+                                        "file_data": pdf_url
+                                    }
+                                }
+                            ]
+                        })
+                        
+                        self.logger.debug(json.dumps({
+                            "log_message": "Created multimodal message for pattern PDF URL input",
+                            "message_structure": "multimodal with PDF URL"
+                        }))
+                        
+                    except Exception as e:
+                        self.logger.error(json.dumps({
+                            "log_message": "Error processing PDF URL from pattern input",
+                            "error": str(e)
+                        }))
+                        
+            # Handle image URL inputs from pattern
+            elif input_def.name == "image_url" and input_def.name in pattern_inputs:
+                image_url = pattern_inputs[input_def.name]
+                # Remove from structured inputs to avoid duplication
+                structured_inputs.pop(input_def.name, None)
+                
+                if image_url is not None:
+                    self.logger.info(json.dumps({
+                        "log_message": "Processing image_url from pattern input",
+                        "image_url": image_url
+                    }))
+                    
+                    try:
+                        # Create default question if none provided
+                        user_question = "Please analyze and describe this image based on the provided inputs."
+                        
+                        # Create multimodal message with image URL
+                        messages.append({
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_question},
+                                {
+                                    "type": "image_url", 
+                                    "image_url": {
+                                        "url": image_url
+                                    }
+                                }
+                            ]
+                        })
+                        
+                        self.logger.debug(json.dumps({
+                            "log_message": "Created multimodal message for pattern image URL input",
+                            "message_structure": "multimodal with image URL"
+                        }))
+                        
+                    except Exception as e:
+                        self.logger.error(json.dumps({
+                            "log_message": "Error processing image URL from pattern input",
+                            "error": str(e)
+                        }))        # If there are inputs (excluding handled image_file), provide them in a structured way
+        if structured_inputs:
             messages.append({
                 "role": "system",
-                "content": "Available inputs:\n" + json.dumps(pattern_inputs, indent=2)
+                "content": "Available inputs:\n" + json.dumps(structured_inputs, indent=2)
             })
             
         # If there are output definitions, provide them to help the AI structure its response

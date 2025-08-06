@@ -389,6 +389,14 @@ class PatternManager:
                     if content is None:
                         continue
                     result[input_def.name] = content
+                # For IMAGE_FILE type, preserve the path to use with -img parameter
+                elif input_def.input_type == InputType.IMAGE_FILE:
+                    # Store the file path directly for image files
+                    result[input_def.name] = value
+                # For PDF_FILE type, preserve the path to use with -pdf parameter
+                elif input_def.input_type == InputType.PDF_FILE:
+                    # Store the file path directly for PDF files
+                    result[input_def.name] = value
                 else:
                     result[input_def.name] = value
                 
