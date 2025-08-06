@@ -28,12 +28,13 @@ inputs:
     description: A text input example
     type: text
     required: true
+    group: input_source
 
   - name: example_file
     description: A file input example
     type: file
     required: true
-    alternative_to: example_text
+    group: input_source
 
   - name: example_optional
     description: An optional parameter example
@@ -61,6 +62,11 @@ inputs:
     default: 10
     min: 1
     max: 100
+
+input_groups:
+  - name: input_source
+    description: Select the source of input data
+    required_inputs: 1
 ```
 
 ## Pattern Outputs:

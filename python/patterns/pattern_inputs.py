@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Set
 import yaml
 import re
 import os
@@ -15,6 +15,24 @@ class InputType(Enum):
     PDF_FILE = "pdf_file"  # For PDF file handling with -pdf parameter
 
 @dataclass
+class InputGroup:
+    """Represents a group of related inputs where only a subset needs to be provided"""
+    name: str
+    description: str
+    required_inputs: int = 1  # How many inputs from this group must be provided
+    input_names: List[str] = field(default_factory=list)  # Names of inputs in this group
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'InputGroup':
+        """Create an InputGroup instance from a dictionary."""
+        return cls(
+            name=data['name'],
+            description=data.get('description', f"Group {data['name']}"),
+            required_inputs=data.get('required_inputs', 1),
+            input_names=data.get('input_names', [])
+        )
+
+@dataclass
 class PatternInput:
     name: str
     description: str
@@ -24,7 +42,7 @@ class PatternInput:
     options: List[str] = None  # For SELECT type
     min_value: float = None    # For NUMBER type
     max_value: float = None    # For NUMBER type
-    alternative_to: str = None  # Name of alternative input (only one of them needs to be provided)
+    group: str = None  # Name of the input group this input belongs to
     ignore_undefined: bool = False  # Whether to ignore this input if not provided in non-interactive mode
 
     @classmethod
@@ -39,7 +57,7 @@ class PatternInput:
             options=data.get('options'),
             min_value=data.get('min'),
             max_value=data.get('max'),
-            alternative_to=data.get('alternative_to'),
+            group=data.get('group'),
             ignore_undefined=data.get('ignore_undefined', False)
         )
 

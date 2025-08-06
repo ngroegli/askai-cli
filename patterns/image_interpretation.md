@@ -21,14 +21,14 @@ inputs:
     description: URL to an image on the web
     type: text
     required: true
-    alternative_to: image_file
+    group: image_source
     example: "https://example.com/sample-image.jpg"
 
   - name: image_file
     description: Path to the local image file
     type: image_file
     required: true
-    alternative_to: image_url
+    group: image_source
 
   - name: detail_level
     description: Level of detail in the interpretation
@@ -47,6 +47,11 @@ inputs:
     required: false
     ignore_undefined: true
     example: "text content, brand logos, facial expressions"
+
+input_groups:
+  - name: image_source
+    description: Select the source of the image to interpret
+    required_inputs: 1
 ```
 
 ## Pattern Outputs:

@@ -21,14 +21,14 @@ inputs:
     description: URL to a PDF on the web
     type: text
     required: true
-    alternative_to: pdf_file
+    group: pdf_source
     example: "https://example.com/document.pdf"
 
   - name: pdf_file
     description: Path to the local PDF file
     type: pdf_file
     required: true
-    alternative_to: pdf_url
+    group: pdf_source
 
   - name: summary_length
     description: Preferred length of the summary
@@ -47,6 +47,11 @@ inputs:
     required: false
     ignore_undefined: true
     example: "executive summary, financial data, methodology"
+
+input_groups:
+  - name: pdf_source
+    description: Select the source of the PDF document to summarize
+    required_inputs: 1
 ```
 
 ## Pattern Outputs:
