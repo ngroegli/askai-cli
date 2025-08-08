@@ -379,10 +379,11 @@ class MessageBuilder:
                 return None, None
 
         # Add format instructions
-        messages.append({
-            "role": "system", 
-            "content": build_format_instruction(format)
-        })
+        if pattern_id is None: # Only if no pattern is used -> question logic
+            messages.append({
+                "role": "system", 
+                "content": build_format_instruction(format)
+            })
 
         # Add user question if provided
         if question:
@@ -624,19 +625,37 @@ class MessageBuilder:
                 "content": "Available inputs:\n" + json.dumps(structured_inputs, indent=2)
             })
             
-        # If there are output definitions, provide them to help the AI structure its response
+        # If there are output definitions, generate a dynamic output format template
         if pattern_outputs := pattern_data.get('outputs'):
-            output_spec = {
-                output.name: {
-                    "description": output.description,
-                    "type": output.output_type.value,
-                    "required": output.required,
-                    "schema": output.schema if hasattr(output, 'schema') else None
-                } for output in pattern_outputs
-            }
-            messages.append({
-                "role": "system",
-                "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
-            })
+            # First check if the pattern has its own format_instructions
+            custom_format = None
+            if pattern_data.get('configuration') and pattern_data['configuration'].format_instructions:
+                custom_format = pattern_data['configuration'].format_instructions
+            
+            # If no custom format, generate one dynamically
+            if not custom_format:
+                from utils import generate_output_format_template
+                custom_format = generate_output_format_template(pattern_outputs)
+            
+            # Add the format instructions to the messages
+            if custom_format:
+                messages.append({
+                    "role": "system",
+                    "content": custom_format
+                })
+            else:
+                # Fallback to basic output spec if generation fails
+                output_spec = {
+                    output.name: {
+                        "description": output.description,
+                        "type": output.output_type.value,
+                        "required": output.required,
+                        "schema": output.schema if hasattr(output, 'schema') else None
+                    } for output in pattern_outputs
+                }
+                messages.append({
+                    "role": "system",
+                    "content": "Required output format:\n" + json.dumps(output_spec, indent=2)
+                })
             
         return resolved_pattern_id

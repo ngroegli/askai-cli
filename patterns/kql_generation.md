@@ -39,14 +39,14 @@ inputs:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: kql_query
     description: Primary KQL query (the best solution)
     type: text
     required: true
     example: "SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc"
 
-  - name: visual_output
+  - name: explanation
     description: Formatted output with all KQL queries, explanations, and visualizations
     type: markdown
     required: true
@@ -98,28 +98,12 @@ model:
   max_tokens: 2000
 
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
-  
-  ```json
-  {
-    "result": "THE_PRIMARY_KQL_QUERY_HERE",
-    "visual_output": "THE_FORMATTED_OUTPUT_WITH_ALL_QUERIES_AND_EXPLANATIONS"
-  }
-  ```
-  
-  Where:
-  - `result`: Contains ONLY the direct KQL query (the best solution) with no markdown formatting or explanations
-  - `visual_output`: Contains all queries, explanations, and visualizations in a formatted markdown presentation
-  
-  Example:
-  ```json
-  {
-    "result": "SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc",
-    "visual_output": "# KQL Query Solutions\n\n## Primary Query\n```kql\nSigninLogs | where TimeGenerated > ago(1h)...(more content)..."
-  }
-  ```
-  
-  For complex queries, include diagrams and explanations in the visual_output section only.
+  When generating KQL queries:
+  1. First provide a brief summary of the solution
+  2. Then provide the KQL query and detailed explanation
+  3. Include information about tables used and key fields
+  4. Optionally include a query flow visualization for complex queries
+  5. Provide alternative queries when applicable
 ```
 
 example_conversation:

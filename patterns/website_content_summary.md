@@ -63,14 +63,14 @@ inputs:
 ## System Outputs
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: brief_summary
     description: Concise summary of the website content
     type: text
     required: true
     example: "The website example.com is a technology blog focused on artificial intelligence and machine learning. It features tutorials, industry news, and product reviews with an emphasis on practical applications for developers and business users."
 
-  - name: visual_output
+  - name: detailed_analysis
     description: Detailed structured summary of the website content
     type: markdown
     required: true
@@ -125,26 +125,19 @@ model:
   web_max_results: 8
   
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  When analyzing website content:
   
-  ```json
-  {
-    "result": "CONCISE_WEBSITE_SUMMARY",
-    "visual_output": "DETAILED_STRUCTURED_SUMMARY"
-  }
-  ```
+  1. First provide a concise summary of the website's purpose and main content (2-4 sentences)
+  2. Then provide a detailed analysis with the following sections:
+     - Overview: A comprehensive description of the website's purpose and content
+     - Key Information: Important facts, figures, and data points
+     - Main Topics Covered: Primary subject areas with brief descriptions
+     - Key Insights & Takeaways: Important findings and conclusions
+     - Actionable Next Steps: Recommendations based on the content
+     - Sources: Reference to the original URL and analysis date
   
-  Where:
-  - `result`: Contains a concise plain text summary of the website (2-4 sentences)
-  - `visual_output`: Contains the detailed structured summary with all sections in markdown format
-  
-  Example:
-  ```json
-  {
-    "result": "The website example.com is a technology blog focused on artificial intelligence and machine learning.",
-    "visual_output": "# Website Summary: TechAI Blog\n\n## Overview\nTechAI Blog is a technology website focused on...(more content)"
-  }
-  ```
+  Your analysis should be thorough, well-structured, and highlight the most relevant 
+  information from the website to help users quickly understand the content.
 ```
 
 # ================================================

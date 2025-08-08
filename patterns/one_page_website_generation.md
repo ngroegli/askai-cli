@@ -60,12 +60,13 @@ inputs:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
+results:
   - name: html_content
     description: HTML content for the website
     type: html
     required: true
     write_to_file: "index.html"
+    action: write
     group: website_files
 
   - name: css_styles
@@ -73,6 +74,7 @@ outputs:
     type: css
     required: true
     write_to_file: "style.css"
+    action: write
     group: website_files
 
   - name: javascript_code
@@ -80,12 +82,14 @@ outputs:
     type: js
     required: false
     write_to_file: "script.js"
+    action: write
     group: website_files
 
-  - name: visual_output
+  - name: website_preview
     description: Formatted preview of the website with code snippets and instructions
     type: markdown
     required: true
+    action: display
     group: documentation
     example: |
       # Website Generated: Brand Name
@@ -153,10 +157,12 @@ format_instructions: |
   
   ```json
   {
-    "html_content": "<!DOCTYPE html>...",
-    "css_styles": "/* CSS styles */...",
-    "javascript_code": "// JavaScript code...",
-    "visual_output": "THE_FORMATTED_WEBSITE_PREVIEW_WITH_CODE_SNIPPETS"
+    "results": {
+      "html_content": "<!DOCTYPE html>...",
+      "css_styles": "/* CSS styles */...",
+      "javascript_code": "// JavaScript code...",
+      "website_preview": "THE_FORMATTED_WEBSITE_PREVIEW_WITH_CODE_SNIPPETS"
+    }
   }
   ```
   
@@ -164,7 +170,7 @@ format_instructions: |
   - `html_content`: Contains the complete HTML code for the website
   - `css_styles`: Contains the complete CSS code for the website
   - `javascript_code`: Contains the JavaScript code for the website (optional)
-  - `visual_output`: Contains a nicely formatted preview of the website with code snippets and instructions
+  - `website_preview`: Contains a nicely formatted preview of the website with code snippets and instructions
   
   Requirements:
   - HTML MUST reference exactly "style.css" and "script.js" (matching output filenames)
@@ -181,10 +187,12 @@ example_conversation:
   **For JSON format responses**, provide output in this structure:
   ```json
   {
-    "html_content": "<!DOCTYPE html>...",
-    "css_styles": "/* CSS styles */...",
-    "javascript_code": "// JavaScript code...",
-    "visual_output": "Website files preview and instructions..."
+    "results": {
+      "html_content": "<!DOCTYPE html>...",
+      "css_styles": "/* CSS styles */...",
+      "javascript_code": "// JavaScript code...",
+      "website_preview": "Website files preview and instructions..."
+    }
   }
   ```
   

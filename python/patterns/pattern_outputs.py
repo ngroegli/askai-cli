@@ -21,28 +21,38 @@ class OutputType(Enum):
     CSS = "css"
     JS = "js"
 
+class OutputAction(Enum):
+    """Enum representing different actions that can be performed with outputs."""
+    DISPLAY = "display"   # Just display the output to the user
+    WRITE = "write"       # Write the output to a file
+    EXECUTE = "execute"   # Execute the output as a command
+    NONE = "none"         # Do nothing with this output
+
 @dataclass
 class PatternOutput:
     """Defines the expected output from a pattern.
     
     This class represents the contract for how an AI should structure its output
-    for a specific field in the pattern response.
+    for a specific field in the pattern response. The key concept is that each output
+    has a specific action associated with it (display, write, execute).
     """
     # Basic properties
     name: str
     description: str
     output_type: OutputType
     
-    # Validation and example data
-    schema: Optional[Dict[str, Any]] = None  # JSON schema for validation
+    # Example data
     example: Optional[str] = None  # Example of the expected output
-    format_spec: Optional[Dict[str, Any]] = None  # Additional formatting specifications
     
     # Behavior flags
     required: bool = True  # Whether this output must be present in the response
-    auto_run: bool = False  # Whether CODE outputs should prompt for execution
-    write_to_file: Optional[str] = None  # Filename to write this output to (None = don't write to file)
-    is_system_field: bool = False  # Whether this is a special system field like result or visual_output
+    action: OutputAction = OutputAction.DISPLAY  # Default action is to display
+    write_to_file: Optional[str] = None  # Filename to write this output to (if action is WRITE)
+    group: Optional[str] = None  # Group name for organizing related outputs
+    
+    # Legacy compatibility flags
+    auto_run: bool = False  # Whether CODE outputs should prompt for execution (legacy)
+    is_system_field: bool = False  # Whether this is a special system field (visual_output or result)
     
     # Internal content storage
     content: Optional[Any] = field(default=None, repr=False)
@@ -79,28 +89,59 @@ class PatternOutput:
         """
         name = data['name']
         # Mark result and visual_output as special system fields
-        is_system_field = name in ["result", "visual_output"]
+        is_system_field = name in ["result", "visual_output"] or name.startswith("result_")
         
-        # Get auto_run value - ensure it's a boolean
+        # Get auto_run value for backwards compatibility - ensure it's a boolean
         auto_run = bool(data.get('auto_run', False))
         
-        # Special case for linux CLI command generation
-        if name == "result" and data.get('type') == 'code':
-            # Ensure auto_run is set for Linux CLI command generation if specified
-            if 'auto_run' in data and data['auto_run'] is True:
-                auto_run = True
+        # Determine the output type
+        output_type = OutputType(data['type'])
+        
+        # Extract group if present
+        group = data.get('group')
+        
+        # Determine action based on configuration and field name
+        action_str = data.get('action')
+        
+        # If no explicit action is specified, infer it:
+        if not action_str:
+            # For results, infer action
+            if name == "result" or name.startswith("result_"):
+                if output_type == OutputType.CODE and auto_run:
+                    action_str = "execute"
+                elif data.get('write_to_file'):
+                    action_str = "write"
+                else:
+                    action_str = "display"
+            # For visual_output, always display
+            elif name == "visual_output":
+                action_str = "display"
+            # For outputs with write_to_file, the action is write
+            elif data.get('write_to_file'):
+                action_str = "write"
+            # Default action is display
+            else:
+                action_str = "display"
+        
+        # Convert string action to enum
+        try:
+            action = OutputAction(action_str)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid action '{action_str}' for output '{name}', defaulting to DISPLAY")
+            action = OutputAction.DISPLAY
         
         output_obj = cls(
             name=name,
             description=data['description'],
-            output_type=OutputType(data['type']),
-            schema=data.get('schema'),
+            output_type=output_type,
             example=data.get('example'),
-            format_spec=data.get('format_spec'),
             required=data.get('required', True),
-            auto_run=auto_run,
+            action=action,
             write_to_file=data.get('write_to_file'),
-            is_system_field=is_system_field
+            group=group,
+            auto_run=auto_run,
+            is_system_field=is_system_field,
+            content=None
         )
         
         return output_obj
@@ -120,14 +161,11 @@ class PatternOutput:
             return True, None
 
         # Validate based on output type
-        if self.output_type == OutputType.JSON and self.schema:
+        if self.output_type == OutputType.JSON:
             try:
                 # Parse string to JSON if needed
                 if isinstance(value, str):
                     value = json.loads(value)
-                validate(instance=value, schema=self.schema)
-            except ValidationError as e:
-                return False, f"JSON validation error: {str(e)}"
             except json.JSONDecodeError as e:
                 return False, f"Invalid JSON: {str(e)}"
 
@@ -153,15 +191,17 @@ class PatternOutput:
         Returns:
             bool: True if execution prompt should be shown
         """
-        # Method 1: Code outputs that have auto_run set
+        # Check if action is EXECUTE
+        if self.action == OutputAction.EXECUTE:
+            return True
+            
+        # Legacy compatibility checks
         if self.output_type == OutputType.CODE and self.auto_run:
             return True
             
-        # Method 2: Special case for "result" field of type CODE
         if self.name == "result" and self.is_system_field and self.output_type == OutputType.CODE:
             return True
         
-        # Not executable
         return False
 
     def should_write_to_file(self) -> bool:
@@ -170,7 +210,20 @@ class PatternOutput:
         Returns:
             bool: True if output should be written to file
         """
+        # Check if action is WRITE
+        if self.action == OutputAction.WRITE:
+            return self.write_to_file is not None and self.write_to_file.strip() != ""
+            
+        # Legacy compatibility
         return self.write_to_file is not None and self.write_to_file.strip() != ""
+    
+    def should_display(self) -> bool:
+        """Check if this output should be displayed to the user.
+        
+        Returns:
+            bool: True if output should be displayed
+        """
+        return self.action == OutputAction.DISPLAY or self.name == "visual_output"
     
     def get_file_extension(self) -> str:
         """Get the expected file extension based on output type.

@@ -63,8 +63,8 @@ inputs:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: market_data
     description: Structured competitor comparison data in JSON format
     type: json
     required: true
@@ -99,7 +99,7 @@ outputs:
               reference_url: { type: string }
               last_verified: { type: string }
 
-  - name: visual_output
+  - name: analysis_report
     description: Formatted market analysis report with competitor comparison and trends
     type: markdown
     required: true
@@ -146,38 +146,23 @@ model:
   max_tokens: 4000
 
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  When creating IT solution market analysis:
   
-  ```json
-  {
-    "result": {
-      "analyzed_product": {
-        "name": "Product Name",
-        "type": "Product Type",
-        "features": ["Feature 1", "Feature 2"]
-      },
-      "competitors": [
-        {
-          "name": "Competitor Name",
-          "features": ["Feature 1", "Feature 2"],
-          "pros": ["Pro 1", "Pro 2"],
-          "cons": ["Con 1", "Con 2"],
-          "pricing": "Pricing model",
-          "deployment": "Deployment option",
-          "reference_url": "URL",
-          "last_verified": "YYYY-MM-DD"
-        }
-      ]
-    },
-    "visual_output": "THE_FORMATTED_MARKET_ANALYSIS_REPORT"
-  }
-  ```
+  1. Generate a comprehensive analysis with these components:
+     - Product Overview: Key features, benefits, and potential drawbacks
+     - Competitor Analysis: Detailed comparison of competing solutions
+     - Market Trends: Current industry trends and future outlook
+     - Strategic Recommendations: Action items based on the analysis
   
-  Where:
-  - `result`: Contains structured JSON data with competitor comparison details
-  - `visual_output`: Contains the formatted market analysis report with all sections in markdown
-  
-  Ensure the `result` contains properly structured JSON with all the product and competitor details.
+  2. For the competitor analysis, include:
+     - Structured data with detailed product comparison
+     - Feature-by-feature comparison in table format
+     - Pros and cons of each solution
+     - Pricing models and deployment options
+     - Verification dates for information sources
+     
+  3. Format your analysis with clear headings, tables, and bullet points
+     to make the information easily digestible for decision-makers
 ```
 
 ## Model Configuration:

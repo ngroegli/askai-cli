@@ -53,17 +53,19 @@ def main():
     cli_parser.validate_arguments(args, logger)
 
     # Build messages and get the resolved pattern_id (after selection)
+    # When using a pattern, ignore all question logic parameters
+    using_pattern = args.use_pattern is not None
     messages, resolved_pattern_id = message_builder.build_messages(
-        question=args.question,
-        file_input=args.file_input,
+        question=None if using_pattern else args.question,
+        file_input=None if using_pattern else args.file_input,
         pattern_id=args.use_pattern,
         pattern_input=args.pattern_input,
-        format=args.format,
-        url=args.url,
-        image=args.image if hasattr(args, 'image') else None,
-        pdf=args.pdf if hasattr(args, 'pdf') else None,
-        image_url=args.image_url if hasattr(args, 'image_url') else None,
-        pdf_url=args.pdf_url if hasattr(args, 'pdf_url') else None
+        format="rawtext" if using_pattern else args.format,  # Use default format with patterns
+        url=None if using_pattern else args.url,
+        image=None if using_pattern else (args.image if hasattr(args, 'image') else None),
+        pdf=None if using_pattern else (args.pdf if hasattr(args, 'pdf') else None),
+        image_url=None if using_pattern else (args.image_url if hasattr(args, 'image_url') else None),
+        pdf_url=None if using_pattern else (args.pdf_url if hasattr(args, 'pdf_url') else None)
     )
     
     # Check if message building was cancelled
@@ -88,6 +90,8 @@ def main():
         pattern_manager=pattern_manager,
         enable_url_search=enable_url_search
     )
+
+    print(response['content'])  # Print the AI response content
 
     # Store chat history if using persistent chat
     chat_manager.store_chat_conversation(
@@ -116,15 +120,17 @@ def main():
     
     # Process output
     # Check if user specified an output file via args.output
-    has_output_arg = hasattr(args, 'output') and args.output is not None
+    has_output_arg = hasattr(args, 'output') and args.output is not None and not using_pattern
     
     # Initialize output configuration
     output_config = {}
         
     # Add format to output_config so the handler knows what format to use
-    output_config['format'] = args.format
+    # But only use the user's format if not using a pattern
+    output_config['format'] = "rawtext" if using_pattern else args.format
     
     # Don't override file_output if it was already set by pattern outputs
+    # And don't use args.output if we're using a pattern
     if has_output_arg and not pattern_has_file_output:
         file_output = True
         
@@ -146,99 +152,29 @@ def main():
         
     # For pattern output files, if no directory specified, use interactive prompt
     
-    formatted_output, created_files = output_handler.process_output(
-        response=response,
-        output_config=output_config,
-        console_output=console_output,
-        file_output=file_output,
-        pattern_outputs=pattern_outputs
-    )
-    
-    # For Linux CLI command pattern, let's handle the output specially
-    if resolved_pattern_id == "linux_cli_command_generation":
-        logger.debug("Linux CLI command pattern detected")
-        
-        # Extract the actual content from the response
-        command = None
-        visual_output = None
-        
-        # Case 1: Response is already the expected dict format with result field
-        if isinstance(response, dict) and "result" in response:
-            command = response["result"]
-            visual_output = response.get("visual_output", "")
-            logger.debug("Found result directly in response")
-            
-        # Case 2: Response is a dict with content field containing formatted output
-        elif isinstance(response, dict) and "content" in response:
-            content = response["content"]
-            logger.debug(f"Content from response: {content[:100]}...")
-            
-            # Try to extract using simple pattern matching
-            import re
-            
-            # Look for "result": "command"
-            result_match = re.search(r'"result":\s*"([^"]+)"', content)
-            if result_match:
-                command = result_match.group(1)
-                logger.debug("Extracted command using regex")
-                
-            # Look for "visual_output": "markdown content"
-            visual_match = re.search(r'"visual_output":\s*"(.*?)(?:"\s*\}|"\s*,)', content, re.DOTALL)
-            if visual_match:
-                visual_output = visual_match.group(1)
-                # Unescape the content
-                visual_output = visual_output.replace('\\n', '\n').replace('\\"', '"')
-                logger.debug("Extracted visual output using regex")
-                
-        # FALLBACK: If we couldn't extract the command, try plain text extraction
-        if command is None and isinstance(response, dict) and "content" in response:
-            content = response["content"]
-            # Look for anything that looks like a Linux command in the content
-            command_patterns = [
-                r'find\s+[.]\s+-type\s+f\s+-size',
-                r'ls\s+-[la]+h\s+',
-                r'grep\s+-[r]+',
-                r'ps\s+aux'
-            ]
-            
-            for pattern in command_patterns:
-                command_match = re.search(pattern, content)
-                if command_match:
-                    # Extract a reasonable command length
-                    start = command_match.start()
-                    end = min(start + 100, len(content))
-                    command_line = content[start:end].split('\n')[0]
-                    command = command_line.strip().strip('"')
-                    logger.debug("Extracted command using fallback pattern")
-                    break
-                
-        # Process the command if found
-        if command:
-            logger.debug(f"Command found with visual_output present: {visual_output is not None}")
-            
-            # First display the visual output explanation
-            if visual_output:
-                print("\n" + "=" * 80)
-                print(f"COMMAND: {command}")
-                print("EXPLANATION:")
-                print("=" * 80 + "\n")
-                print(visual_output)
-            
-            # Then prompt for execution
-            from patterns.pattern_outputs import PatternOutput
-            PatternOutput.execute_command(command, "result")
-        else:
-            logger.warning("Failed to parse command from response")
-            # For other patterns, print the formatted output normally
-            print(formatted_output)
+    # Use the pattern manager to handle the response if we have a pattern
+    if resolved_pattern_id:
+        logger.debug(f"Using pattern manager to handle response for {resolved_pattern_id}")
+        formatted_output, created_files = pattern_manager.process_pattern_response(
+            resolved_pattern_id, 
+            response, 
+            output_handler
+        )
     else:
-        # For other patterns, print the formatted output normally
+        # Default output handling for non-pattern responses
+        formatted_output, created_files = output_handler.process_output(
+            response=response,
+            output_config=output_config,
+            console_output=console_output,
+            file_output=file_output
+        )
         print(formatted_output)
     
     # Log created files
     if created_files:
         print(f"\nCreated output files: {', '.join(created_files)}")
-        if logger:
-            logger.info(f"Created output files: {', '.join(created_files)}")
+        logger.info(f"Created output files: {', '.join(created_files)}")
+
+
 if __name__ == "__main__":
     main()

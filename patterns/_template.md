@@ -72,15 +72,15 @@ input_groups:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: primary_output
     description: Primary output of the system (direct result)
     type: text
     required: true
     group: primary_output
     example: "This is the direct result in plain text format"
 
-  - name: visual_output
+  - name: detailed_explanation
     description: Formatted visual presentation of the results
     type: markdown
     required: true

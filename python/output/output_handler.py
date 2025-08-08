@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any, Union, Callable
 
-from patterns.pattern_outputs import PatternOutput, OutputType
+from patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
 from utils import print_error_or_warnings
 from .extractors.html_extractor import HtmlExtractor
 from .extractors.css_extractor import CssExtractor
@@ -70,24 +70,20 @@ class OutputHandler:
         Returns:
             Tuple[str, List[str]]: The formatted output and list of created files
         """
-        # Handle executable commands first if present
-        if pattern_outputs:
-            cmd_result = self._handle_command_execution(response, pattern_outputs)
-            if cmd_result:
-                return cmd_result
+        # Initialize output configuration
+        output_config = output_config or {}
+        
+        # For pattern-specific response handling
+        pattern_id = output_config.get('pattern_id')
+        if pattern_id:
+            logger.debug(f"Using pattern-specific output handling for {pattern_id}")
         
         # Get normalized string representation of response (preserving original)
         response_text = self._normalize_response(response)
         
-        # For pattern-defined outputs with file writing
-        if pattern_outputs and file_output:
-            created_files = self._handle_pattern_outputs(response, pattern_outputs)
-            if created_files:
-                # Format response for console if needed
-                formatted_output = response
-                if console_output:
-                    formatted_output = self.formatters['console'].format(response_text)
-                return formatted_output, created_files
+        # Handle pattern outputs in standardized way
+        if pattern_outputs:
+            return self._handle_standardized_pattern_output(response, pattern_outputs, output_config)
         
         # For regular output without pattern definitions
         return self._handle_standard_output(response, response_text, output_config, console_output, file_output)
@@ -267,48 +263,174 @@ class OutputHandler:
             logger.error(f"Error writing to file {filename}: {str(e)}")
             return None
     
-    def _handle_command_execution(self, 
-                               response: Union[str, Dict], 
-                               pattern_outputs: List[PatternOutput]) -> Optional[Tuple[str, List[str]]]:
-        """Handle executable command patterns.
+    def _handle_standardized_pattern_output(self,
+                                   response: Union[str, Dict],
+                                   pattern_outputs: List[PatternOutput],
+                                   output_config: Optional[Dict[str, Any]] = None) -> Tuple[str, List[str]]:
+        """Handle standardized pattern outputs.
+        
+        This method processes outputs based on pattern definitions.
+        Each output is handled according to its type and action.
         
         Args:
             response: The AI response
             pattern_outputs: List of pattern outputs
+            output_config: Optional output configuration
             
         Returns:
-            Optional[Tuple[str, List[str]]]: Result if command executed, None otherwise
+            Tuple[str, List[str]]: The formatted output and list of created files
         """
-        # Find result output configured for execution
-        result_output = next((output for output in pattern_outputs 
-                          if output.name == "result" and output.should_prompt_for_execution()), None)
         
-        if not result_output:
-            return None
+        # Extract structured data from response
+        structured_data = self._extract_structured_data(response)
+        logger.debug(f"Extracted structured data keys: {list(structured_data.keys())}")
         
-        # Extract command from response
-        command = self._extract_command_from_response(response)
-        if not command:
-            return None
+        # Prepare outputs
+        created_files = []
+        visual_content = None
         
-        # Get visual output explanation if available
-        visual_output = None
-        if isinstance(response, dict) and 'visual_output' in response:
-            visual_output = response['visual_output']
-            if visual_output:
-                # Display the visual output explanation
-                print("\n" + "=" * 80)
-                print(f"COMMAND: {command}")
-                print("EXPLANATION:")
-                print("=" * 80 + "\n")
-                print(visual_output)
+        # Check if we have usable data
+        if not structured_data:
+            error_msg = "Pattern output requires a valid JSON structure with 'results' field containing outputs"
+            logger.error(error_msg)
+            return error_msg, []
         
-        # Execute the command
-        print(f"\n✅ Executing command: {command}")
-        PatternOutput.execute_command(command, result_output.name)
+        # Get output directory with user confirmation for file operations
+        output_dir = None
+        if any(output.action == OutputAction.WRITE for output in pattern_outputs):
+            output_dir = self._get_output_directory()
         
-        # Return the result to avoid further processing
-        return visual_output if visual_output else command, []
+        # Extract and assign content from response to outputs
+        self._extract_output_content_from_response(pattern_outputs, structured_data, response)
+        
+        # Track outputs for display
+        display_outputs = []
+        
+        # Process all outputs based on their action type
+        for output in pattern_outputs:
+            # Skip outputs with no content
+            if not output.get_content():
+                continue
+                
+            content = output.get_content()
+            
+            # Process based on action
+            if output.action == OutputAction.EXECUTE:   
+                # Execute the command
+                PatternOutput.execute_command(content, output.name)
+                
+            elif output.action == OutputAction.WRITE and output_dir:
+                # For outputs that should be written to files
+                if output.write_to_file:
+                    file_path = os.path.join(output_dir, output.write_to_file)
+                    try:
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        
+                        # Ensure content is a string
+                        if not isinstance(content, str):
+                            if isinstance(content, (dict, list)):
+                                content = json.dumps(content, indent=2)
+                            else:
+                                content = str(content)
+                                
+                        # Write to file
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(content)
+                        created_files.append(file_path)
+                        logger.info(f"Saved {output.name} to {file_path}")
+                    except Exception as e:
+                        logger.error(f"Error writing output {output.name} to file: {str(e)}")
+            
+            elif output.action == OutputAction.DISPLAY:
+                # Track outputs that should be displayed
+                display_outputs.append(output)
+        
+        # Determine what to display to the user
+        visual_content = None
+        
+        # Find the best output to display
+        if display_outputs:
+            # Prefer markdown outputs for display
+            markdown_outputs = [o for o in display_outputs if o.output_type == OutputType.MARKDOWN]
+            
+            if markdown_outputs:
+                # If there are multiple markdown outputs, use the first one
+                visual_content = markdown_outputs[0].get_content()
+                logger.debug(f"Using markdown output '{markdown_outputs[0].name}' as visual content")
+            else:
+                # Otherwise use the first display output
+                visual_content = display_outputs[0].get_content()
+                logger.debug(f"Using output '{display_outputs[0].name}' as visual content")
+        
+        # Return the visual content and created files
+        return visual_content or "No visual output provided", created_files
+        
+    def _extract_output_content_from_response(self,
+                                           pattern_outputs: List[PatternOutput],
+                                           structured_data: Dict[str, Any],
+                                           response: Union[str, Dict]) -> None:
+        """Extract content for each pattern output from the response.
+        
+        Args:
+            pattern_outputs: List of pattern outputs to populate
+            structured_data: Structured data extracted from response
+            response: Original response from the AI
+        """
+        # Log what we're working with
+        logger.debug(f"Extracting content from structured data with keys: {list(structured_data.keys())}")
+        
+        # Process each output definition
+        for output in pattern_outputs:
+            # Skip if output already has content
+            if output.get_content() is not None:
+                continue
+                
+            content = None
+            logger.debug(f"Looking for content for output: {output.name}")
+            
+            # Step 1: Direct field matching in structured data - this should be the main way
+            # to get outputs in the new pattern system
+            if output.name in structured_data:
+                content = structured_data[output.name]
+                logger.debug(f"Found direct match for {output.name} in structured data")
+            
+            # Step 2: Type-based field matching for common field names
+            elif not content:
+                if output.output_type == OutputType.HTML and "html_content" in structured_data:
+                    content = structured_data["html_content"]
+                    logger.debug("Found html_content match based on output type")
+                    
+                elif output.output_type == OutputType.CSS and "css_styles" in structured_data:
+                    content = structured_data["css_styles"]
+                    logger.debug("Found css_styles match based on output type")
+                    
+                elif output.output_type == OutputType.JS and ("javascript_code" in structured_data or "script" in structured_data):
+                    content = structured_data.get("javascript_code") or structured_data.get("script")
+                    logger.debug("Found javascript match based on output type")
+            
+            # Step 3: Extract from code blocks by language (last resort)
+            if not content and isinstance(response, str):
+                language_map = {
+                    OutputType.HTML: "html",
+                    OutputType.CSS: "css",
+                    OutputType.JS: "js",
+                    OutputType.MARKDOWN: "markdown",
+                    OutputType.CODE: "code",
+                    OutputType.JSON: "json",
+                    OutputType.TEXT: "text",
+                }
+                language = language_map.get(output.output_type)
+                if language:
+                    content = self._extract_from_code_blocks(response, language)
+                    if content:
+                        logger.debug(f"Extracted {output.name} from code block of type {language}")
+            
+            # If content found, set it
+            if content is not None:
+                output.set_content(content)
+                logger.debug(f"Content found for output {output.name}")
+            else:
+                logger.debug(f"No content found for output {output.name}")
     
     def _extract_command_from_response(self, response: Union[str, Dict]) -> Optional[str]:
         """Extract command string from different response formats.
@@ -325,7 +447,26 @@ class OutputHandler:
             if isinstance(result, str):
                 return result.strip()
         
-        # Case 2: Nested API response format
+        # Case 2: Response has content field with embedded JSON
+        if isinstance(response, dict) and "content" in response:
+            content = response["content"]
+            
+            # Try to extract using simple pattern matching
+            result_match = re.search(r'"result":\s*"([^"]+)"', content)
+            if result_match:
+                return result_match.group(1).strip()
+                
+            # Look for JSON block in content
+            match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
+            if match:
+                try:
+                    json_content = json.loads(match.group(1))
+                    if "result" in json_content:
+                        return json_content["result"].strip()
+                except json.JSONDecodeError:
+                    logger.debug("Failed to parse JSON from content block")
+        
+        # Case 3: Nested API response format
         if isinstance(response, dict) and "choices" in response and response["choices"]:
             try:
                 first_choice = response["choices"][0]
@@ -342,6 +483,41 @@ class OutputHandler:
                                 return json_content["result"].strip()
             except Exception as e:
                 logger.warning(f"Error extracting command from response: {str(e)}")
+        
+        # Case 4: FALLBACK - Try to find common command patterns in text
+        text_content = ""
+        if isinstance(response, str):
+            text_content = response
+        elif isinstance(response, dict):
+            if "content" in response:
+                text_content = response["content"]
+            elif isinstance(response, dict) and "choices" in response and response["choices"]:
+                first_choice = response["choices"][0]
+                if isinstance(first_choice, dict) and "message" in first_choice:
+                    message = first_choice["message"]
+                    if isinstance(message, dict) and "content" in message:
+                        text_content = message["content"]
+        
+        if text_content:
+            # Look for anything that looks like a Linux command in the content
+            command_patterns = [
+                r'find\s+[.]\s+-type\s+f\s+-size',
+                r'ls\s+-[la]+h\s+',
+                r'grep\s+-[r]+',
+                r'ps\s+aux',
+                r'cat\s+[\w/]+',
+                r'cp\s+-[r]*\s+[\w/]+\s+[\w/]+',
+                r'curl\s+-[a-zA-Z]\s+http'
+            ]
+            
+            for pattern in command_patterns:
+                command_match = re.search(pattern, text_content)
+                if command_match:
+                    # Extract a reasonable command length
+                    start = command_match.start()
+                    end = min(start + 100, len(text_content))
+                    command_line = text_content[start:end].split('\n')[0]
+                    return command_line.strip().strip('"')
         
         return None
     
@@ -361,10 +537,10 @@ class OutputHandler:
         structured_data = self._extract_structured_data(response)
         
         # Get output types
-        result_output, visual_output, file_outputs = self._categorize_outputs(pattern_outputs)
+        execute_outputs, display_outputs, file_outputs = self._categorize_outputs(pattern_outputs)
         
         # Skip if no outputs to process
-        if not file_outputs and not (result_output or visual_output):
+        if not file_outputs and not display_outputs and not execute_outputs:
             logger.debug("No pattern outputs to process")
             return created_files
         
@@ -380,16 +556,19 @@ class OutputHandler:
         # Extract and populate content for outputs
         self._extract_pattern_contents(pattern_outputs, response, structured_data)
         
-        # Process visual output separately
-        if visual_output and visual_output.get_content():
-            visual_file = os.path.join(output_dir, "output.md")
-            try:
-                with open(visual_file, 'w', encoding='utf-8') as f:
-                    f.write(visual_output.get_content())
-                created_files.append(visual_file)
-                logger.info(f"Visual output saved to {visual_file}")
-            except Exception as e:
-                logger.error(f"Error saving visual output: {str(e)}")
+        # Process display outputs separately
+        for output in display_outputs:
+            if output.get_content():
+                # Default to markdown extension for display outputs
+                ext = ".md" if output.output_type == OutputType.MARKDOWN else ".txt"
+                display_file = os.path.join(output_dir, f"{output.name}{ext}")
+                try:
+                    with open(display_file, 'w', encoding='utf-8') as f:
+                        f.write(output.get_content())
+                    created_files.append(display_file)
+                    logger.info(f"Display output '{output.name}' saved to {display_file}")
+                except Exception as e:
+                    logger.error(f"Error saving display output '{output.name}': {str(e)}")
         
         # Write each file output to file
         for output in file_outputs:
@@ -424,59 +603,130 @@ class OutputHandler:
         return created_files
     
     def _extract_structured_data(self, response: Union[str, Dict]) -> Dict[str, Any]:
-        """Extract structured data from response.
+        """Extract structured data from response focusing on the new pattern format.
+        
+        The new pattern format expects a 'results' object containing named outputs.
+        This method extracts this structure from various response formats.
         
         Args:
             response: The AI response
             
         Returns:
-            Dict: Extracted structured data
+            Dict: Extracted structured data from the 'results' object
         """
-        # Already a dictionary
+        # Log incoming response type
+        logger.debug(f"Response type: {type(response)}")
+        
+        # Initialize empty result
+        result_data = {}
+        
+        # Handle dictionary response
         if isinstance(response, dict):
-            return response
+            logger.debug(f"Response keys: {list(response.keys())}")
+            
+            # Case 1: Standard format with a 'results' object
+            if 'results' in response and isinstance(response['results'], dict):
+                logger.debug(f"Found 'results' key with keys: {list(response['results'].keys())}")
+                return response['results']
+            # Case 2: API response with nested content field
+            elif 'content' in response and isinstance(response['content'], str):
+                # Try to extract JSON from content
+                content_data = self._extract_json_from_text(response['content'])
+                if content_data and isinstance(content_data, dict):
+                    if 'results' in content_data and isinstance(content_data['results'], dict):
+                        return content_data['results']
+
+            # Case 3: API response format with choices
+            elif 'choices' in response and isinstance(response['choices'], list) and response['choices']:
+                for choice in response['choices']:
+                    if isinstance(choice, dict) and 'message' in choice and 'content' in choice['message']:
+                        content_data = self._extract_json_from_text(choice['message']['content'])
+                        if content_data and isinstance(content_data, dict):
+                            if 'results' in content_data and isinstance(content_data['results'], dict):
+                                return content_data['results']
+
         
-        # Try to parse JSON from string
-        if isinstance(response, str):
-            try:
-                # Look for JSON code blocks
-                json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response)
-                if json_match:
-                    return json.loads(json_match.group(1))
-                
-                # Try parsing the entire string as JSON
-                return json.loads(response)
-            except json.JSONDecodeError:
-                pass
+        # Handle string response
+        elif isinstance(response, str):
+            content_data = self._extract_json_from_text(response)
+            if content_data and isinstance(content_data, dict):
+                if 'results' in content_data and isinstance(content_data['results'], dict):
+                    return content_data['results']
+
         
-        # Return empty dict if parsing failed
+        # If we couldn't find a properly structured 'results' object, return empty dict
+        logger.debug("No 'results' object found in response, returning empty dict")
         return {}
     
+    def _extract_json_from_text(self, text: str) -> Optional[Dict]:
+        """Extract JSON from text, looking in code blocks or trying to parse the entire text.
+        
+        Args:
+            text: Text to extract JSON from
+            
+        Returns:
+            Optional[Dict]: Extracted JSON data or None if not found
+        """
+        if not text or not isinstance(text, str):
+            return None
+            
+        # Try to extract JSON from code blocks first
+        json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', text)
+        if json_match:
+            try:
+                parsed_json = json.loads(json_match.group(1))
+                logger.debug("Found JSON in code block")
+                return parsed_json
+            except json.JSONDecodeError:
+                logger.debug("Failed to parse JSON from code block")
+        
+        # Try to find JSON-like structure with curly braces
+        json_pattern = r'(\{[\s\S]*?\})'
+        matches = re.finditer(json_pattern, text)
+        
+        for match in matches:
+            try:
+                potential_json = match.group(1)
+                parsed_json = json.loads(potential_json)
+                
+                # Only return if it's actually a dictionary with data
+                if isinstance(parsed_json, dict) and parsed_json:
+                    logger.debug("Found JSON-like structure in text")
+                    return parsed_json
+            except json.JSONDecodeError:
+                continue
+        
+        # Last resort: try to parse the entire text as JSON
+        try:
+            parsed_json = json.loads(text)
+            if isinstance(parsed_json, dict):
+                logger.debug("Parsed entire text as JSON")
+                return parsed_json
+        except json.JSONDecodeError:
+            logger.debug("Text is not valid JSON")
+        
+        return None
+    
     def _categorize_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
-        Optional[PatternOutput], Optional[PatternOutput], List[PatternOutput]
+        List[PatternOutput], List[PatternOutput], List[PatternOutput]
     ]:
-        """Categorize pattern outputs by type.
+        """Categorize pattern outputs by action type.
         
         Args:
             pattern_outputs: List of pattern outputs
             
         Returns:
-            Tuple: (result_output, visual_output, file_outputs)
+            Tuple: (execute_outputs, display_outputs, file_outputs)
         """
         if not pattern_outputs:
-            return None, None, []
+            return [], [], []
         
-        # Find special system fields
-        result_output = next((output for output in pattern_outputs 
-                           if output.is_system_field and output.name == "result"), None)
-                              
-        visual_output = next((output for output in pattern_outputs 
-                           if output.is_system_field and output.name == "visual_output"), None)
+        # Categorize outputs by action
+        execute_outputs = [output for output in pattern_outputs if output.action == OutputAction.EXECUTE]
+        display_outputs = [output for output in pattern_outputs if output.action == OutputAction.DISPLAY]
+        file_outputs = [output for output in pattern_outputs if output.action == OutputAction.WRITE]
         
-        # Find outputs that should be written to files
-        file_outputs = [output for output in pattern_outputs if output.should_write_to_file()]
-        
-        return result_output, visual_output, file_outputs
+        return execute_outputs, display_outputs, file_outputs
     
     def _extract_pattern_contents(self, 
                                pattern_outputs: List[PatternOutput], 
@@ -498,30 +748,42 @@ class OutputHandler:
             # Try to extract content from response
             content = None
             
-            # Method 1: Direct lookup in structured data
+            # Method 1: Direct lookup in structured data by name
             if output.name in structured_data:
                 content = structured_data[output.name]
+                logger.debug(f"Found direct match for {output.name} in structured data")
             
-            # Method 2: Check for common alternative field names
-            elif not content and output.output_type == OutputType.HTML and "html_content" in structured_data:
-                content = structured_data["html_content"]
-            elif not content and output.output_type == OutputType.CSS and "css_styles" in structured_data:
-                content = structured_data["css_styles"]
-            elif not content and output.output_type == OutputType.JS:
-                content = structured_data.get("javascript_code") or structured_data.get("script")
+            # Method 2: Type-based content extraction for common field names
+            elif not content:
+                type_field_mappings = {
+                    OutputType.HTML: ["html_content", "html"],
+                    OutputType.CSS: ["css_styles", "css", "stylesheet"],
+                    OutputType.JS: ["javascript_code", "script", "js"],
+                    OutputType.TEXT: ["text_content", "plain_text"],
+                    OutputType.MARKDOWN: ["markdown_content", "md"],
+                    OutputType.JSON: ["json_content", "data"],
+                    OutputType.CODE: ["code", "command", "query"]
+                }
+                
+                if output.output_type in type_field_mappings:
+                    for field_name in type_field_mappings[output.output_type]:
+                        if field_name in structured_data:
+                            content = structured_data[field_name]
+                            logger.debug(f"Found content for {output.name} in {field_name} field")
+                            break
             
-            # Method 3: Extract from nested result field
-            elif not content and "result" in structured_data and isinstance(structured_data["result"], dict):
-                if output.name in structured_data["result"]:
-                    content = structured_data["result"][output.name]
-            
-            # Method 4: Extract from code blocks by output type
+            # Method 3: Extract from code blocks by output type as a last resort
             if not content and isinstance(response, str):
                 content = self._extract_from_code_blocks(response, output.output_type.value)
+                if content:
+                    logger.debug(f"Extracted {output.name} from code block")
             
             # If content found, set it
             if content is not None:
                 output.set_content(content)
+                logger.debug(f"Set content for output {output.name}")
+            else:
+                logger.debug(f"No content found for output {output.name}")
     
     def _extract_from_code_blocks(self, text: str, language: str) -> Optional[str]:
         """Extract content from markdown code blocks.

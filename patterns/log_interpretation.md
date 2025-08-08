@@ -66,8 +66,8 @@ input_groups:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: log_analysis
     description: JSON structured analysis of log patterns and anomalies
     type: json
     required: true
@@ -93,7 +93,7 @@ outputs:
               content: { type: string }
               reason: { type: string }
 
-  - name: visual_output
+  - name: formatted_summary
     description: Formatted visualization and summary of log analysis
     type: markdown
     required: true
@@ -145,35 +145,22 @@ model:
   max_tokens: 2000
   
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  When analyzing log files:
   
-  ```json
-  {
-    "result": {
-      "common_patterns": [
-        {
-          "pattern": "pattern description",
-          "frequency": 60,
-          "example_lines": ["example log line 1", "example log line 2"]
-        }
-      ],
-      "anomalies": [
-        {
-          "line_number": 145,
-          "content": "log content",
-          "reason": "reason for anomaly"
-        }
-      ]
-    },
-    "visual_output": "THE_FORMATTED_LOG_ANALYSIS_WITH_VISUALIZATIONS"
-  }
-  ```
+  1. First identify common patterns and structure in the log entries
+  2. Look for anomalies, outliers, or unusual entries that deviate from patterns
+  3. Calculate frequency distributions of different log types
+  4. Provide both structured analysis data and a human-readable summary
   
-  Where:
-  - `result`: Contains structured JSON data of log patterns and anomalies
-  - `visual_output`: Contains the formatted summary, visualizations, and detailed analysis in markdown
+  Include the following in your analysis:
+  - Pattern identification with examples and frequency
+  - Anomaly detection with line numbers and reasons
+  - Visualizations of log distribution when helpful
+  - Timeline analysis if timestamps are present
+  - Clear summaries of significant findings
   
-  Ensure the `result` contains properly structured JSON with all the pattern and anomaly details.
+  Your analysis should help users quickly understand the log content and identify 
+  potential issues or areas that need further investigation.
 ```
 
 ## Model Configuration:

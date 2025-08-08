@@ -131,12 +131,62 @@ class PatternManager:
             yaml_text = content.split("## Pattern Outputs")[1]
             yaml_block = yaml_text.split("```yaml")[1].split("```")[0]
             outputs_data = yaml.safe_load(yaml_block)
-            pattern_outputs = [PatternOutput.from_dict(output_data) for output_data in outputs_data.get('outputs', [])]
+            
+            # Check for the 'results' key first, fall back to 'outputs' for backward compatibility
+            outputs_list = outputs_data.get('results', outputs_data.get('outputs', []))
+            pattern_outputs = [PatternOutput.from_dict(output_data) for output_data in outputs_list]
             
             return pattern_outputs
         except Exception as e:
             print_error_or_warnings(f"Error parsing pattern outputs: {str(e)}")
             return []
+            
+    def _parse_pattern_execution(self, content: str) -> Dict[str, Any]:
+        """Parse pattern execution configuration from markdown content.
+        
+        Args:
+            content: The markdown content to parse
+            
+        Returns:
+            Dict[str, Any]: Dictionary with execution configuration
+        """
+        execution_config = {
+            'handler': 'default',
+            'prompt_for_confirmation': True,
+            'show_visual_output_first': False
+        }
+        
+        if "execution:" not in content:
+            return execution_config
+            
+        try:
+            # Find the execution configuration section within the Model Configuration
+            config_section = content.split("## Model Configuration")[1]
+            
+            # Look for execution block
+            if "execution:" in config_section:
+                execution_text = config_section.split("execution:")[1]
+                
+                # Extract lines until the next section or end of YAML block
+                execution_lines = []
+                for line in execution_text.split('\n'):
+                    stripped = line.strip()
+                    if stripped.startswith('#') or stripped.startswith('format_instructions:') or stripped == "```":
+                        break
+                    execution_lines.append(line)
+                
+                # Join the execution lines and parse as YAML
+                if execution_lines:
+                    execution_yaml = '\n'.join(execution_lines)
+                    parsed_execution = yaml.safe_load(execution_yaml)
+                    
+                    if isinstance(parsed_execution, dict):
+                        execution_config.update(parsed_execution)
+            
+            return execution_config
+        except Exception as e:
+            logger.warning(f"Error parsing execution configuration: {str(e)}")
+            return execution_config
 
     def _parse_pattern_purpose(self, content: str) -> Optional[PatternPurpose]:
         """Parse pattern purpose from markdown content.
@@ -250,13 +300,12 @@ class PatternManager:
             purpose = self._parse_pattern_purpose(content)
             functionality = self._parse_pattern_functionality(content)
             model_config = self._parse_model_configuration(content)
-            # Extract format instructions if present
+            
+            # Format instructions are now generated dynamically from output definitions
+            # No need to extract from the pattern file
             format_instructions = None
-            if "format_instructions:" in content:
-                format_section = content.split("format_instructions: |")[1].split("\n")
-                format_instructions = "\n".join(line for line in format_section 
-                                             if not line.strip().startswith("##") 
-                                             and not line.strip().startswith("```"))
+            
+            # The format_instructions will be generated when needed using the output definitions
 
             # Create complete configuration
             if purpose and functionality:
@@ -310,13 +359,17 @@ class PatternManager:
             content = f.read()
             
         inputs, input_groups = self._parse_pattern_inputs(content)
+        outputs = self._parse_pattern_outputs(content)
+        execution_config = self._parse_pattern_execution(content)
             
         return {
             'prompt_content': self._parse_pattern_prompt(content),
             'inputs': inputs,
             'input_groups': input_groups,
-            'outputs': self._parse_pattern_outputs(content),
-            'configuration': self._parse_pattern_configuration(content)
+            'outputs': outputs,
+            'configuration': self._parse_pattern_configuration(content),
+            'execution': execution_config,
+            'pattern_id': pattern_id
         }
 
     def _read_input_file(self, file_path: str) -> Optional[str]:
@@ -595,3 +648,42 @@ class PatternManager:
                     print(f"Please enter a number between 1 and {len(patterns)}")
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
+
+    def process_pattern_response(self, pattern_id: str, response: Union[str, Dict], output_handler) -> Tuple[str, List[str]]:
+        """Process a response for a specific pattern.
+        
+        This method handles pattern-specific processing of AI responses,
+        delegating the actual output handling to output_handler.
+        
+        Args:
+            pattern_id: ID of the pattern
+            response: Response from the AI service
+            output_handler: Instance of OutputHandler
+            
+        Returns:
+            Tuple[str, List[str]]: (formatted output, list of created files)
+        """
+        logger.debug(f"Processing pattern response for {pattern_id}")
+        
+        pattern_data = self.get_pattern_content(pattern_id)
+        if not pattern_data:
+            logger.warning(f"Pattern {pattern_id} not found")
+            return "Pattern not found", []
+            
+        pattern_outputs = pattern_data.get('outputs', [])
+        execution_config = pattern_data.get('execution', {})
+        
+        # Get output configuration 
+        output_config = {
+            'pattern_id': pattern_id,
+            'execution': execution_config
+        }
+        
+        # Delegate to output handler for processing
+        return output_handler.process_output(
+            response=response,
+            output_config=output_config,
+            console_output=True,
+            file_output=True,
+            pattern_outputs=pattern_outputs
+        )

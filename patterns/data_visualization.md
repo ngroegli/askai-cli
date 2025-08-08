@@ -87,8 +87,8 @@ input_groups:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: visualization_code
     description: Raw visualization code (Mermaid, Chart.js, etc.)
     type: text
     required: true
@@ -100,7 +100,7 @@ outputs:
         "Product B" : 25
         "Product C" : 40
 
-  - name: visual_output
+  - name: analysis
     description: Formatted visualization with analysis and insights
     type: markdown
     required: true
@@ -138,24 +138,14 @@ model:
   max_tokens: 2000
   
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  When creating data visualizations:
+  1. First analyze the data to identify key patterns, trends, and insights
+  2. Then create an appropriate visualization based on the data structure and insights
+  3. Include both the raw visualization code and a detailed analysis
   
-  ```json
-  {
-    "result": "THE_RAW_VISUALIZATION_CODE_HERE",
-    "visual_output": "THE_FORMATTED_VISUALIZATION_WITH_ANALYSIS"
-  }
-  ```
-  
-  Where:
-  - `result`: Contains ONLY the raw visualization code (e.g., Mermaid diagram syntax) without any markdown formatting
-  - `visual_output`: Contains the complete visualization with markdown formatting, analysis, and insights
-  
-  Example:
-  ```json
-  {
-    "result": "pie\n  title Product Sales Distribution\n  \"Product A\" : 35\n  \"Product B\" : 25\n  \"Product C\" : 40",
-    "visual_output": "# Data Visualization: Sales Performance\n\n## Visualization\n```mermaid\npie\n  title Product Sales Distribution\n  \"Product A\" : 35\n  \"Product B\" : 25\n  \"Product C\" : 40\n```\n\n## Key Insights\n1. Product C accounts for 40% of total sales...(more analysis)..."
-  }
-  ```
+  For your visualization:
+  - Choose appropriate chart types for the data relationships
+  - Use clear labeling and legends
+  - Add meaningful titles and descriptions
+  - Highlight key insights and patterns
 ```

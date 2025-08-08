@@ -1,14 +1,14 @@
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: primary_output
     description: The primary result output of the pattern (e.g., command, code, query)
     type: text
     required: true
     example: "This is the raw, direct result that should be extracted"
 
-  - name: visual_output
+  - name: detailed_explanation
     description: The formatted visual representation of the results
     type: markdown
     required: true
@@ -40,14 +40,16 @@ format_instructions: |
   
   ```json
   {
-    "result": "THE_RAW_DIRECT_RESULT_HERE",
-    "visual_output": "THE_FORMATTED_VISUAL_OUTPUT_HERE"
+    "results": {
+      "primary_output": "THE_RAW_DIRECT_RESULT_HERE",
+      "detailed_explanation": "THE_FORMATTED_VISUAL_OUTPUT_HERE"
+    }
   }
   ```
   
   Where:
-  - `result`: Contains ONLY the direct, specific result (e.g., command, code, query)
-  - `visual_output`: Contains the formatted explanation, details, and presentation of the result
+  - `primary_output`: Contains ONLY the direct, specific result (e.g., command, code, query)
+  - `detailed_explanation`: Contains the formatted explanation, details, and presentation of the result
   
-  The `result` should be as concise as possible while the `visual_output` should be comprehensive.
+  The `primary_output` should be as concise as possible while the `detailed_explanation` should be comprehensive.
 ```

@@ -57,14 +57,14 @@ input_groups:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: summary
     description: Concise interpretation of the image
     type: text
     required: true
     example: "The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon."
 
-  - name: visual_output
+  - name: detailed_analysis
     description: Detailed analysis with key elements and metadata
     type: markdown
     required: true
@@ -106,26 +106,17 @@ model:
   max_tokens: 2000
   
 format_instructions: |
-  **IMPORTANT**: Your response MUST follow this exact JSON format:
+  When interpreting images:
   
-  ```json
-  {
-    "result": "CONCISE_IMAGE_DESCRIPTION",
-    "visual_output": "DETAILED_FORMATTED_ANALYSIS"
-  }
-  ```
+  1. First provide a concise summary of what's in the image (1-3 sentences)
+  2. Then provide a detailed analysis with the following sections:
+     - Description: A comprehensive description of the image contents
+     - Key Elements: List of main objects, people, text, and visual elements
+     - Technical Analysis: Style, composition, color palette, and artistic elements
+     - Context: Cultural, historical, or other relevant contextual information when applicable
   
-  Where:
-  - `result`: Contains a concise plain text description of the image (1-3 sentences)
-  - `visual_output`: Contains the detailed analysis with all sections formatted in markdown
-  
-  Example:
-  ```json
-  {
-    "result": "The image shows a coastal sunset with a palm tree silhouette and two boats on the horizon.",
-    "visual_output": "# Image Interpretation\n\n## Description\nThe image shows a coastal sunset scene with a silhouetted palm tree...(more content)"
-  }
-  ```
+  Your analysis should be thorough, objective, and accessible, helping users understand 
+  all important aspects of the visual content.
 ```
 
 ## Model Configuration:

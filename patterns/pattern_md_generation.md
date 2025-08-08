@@ -48,8 +48,8 @@ inputs:
 ## Pattern Outputs:
 
 ```yaml
-outputs:
-  - name: result
+results:
+  - name: pattern_content
     description: The generated pattern markdown file content as plain text
     type: text
     required: true
@@ -72,7 +72,7 @@ outputs:
           required: true
       ```
 
-  - name: visual_output
+  - name: validation_report
     description: Formatted output with the generated pattern and validation information
     type: markdown
     required: true

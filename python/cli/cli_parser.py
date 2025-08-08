@@ -20,27 +20,24 @@ class CLIParser:
         """Setup and configure the argument parser for the CLI."""
         parser = BannerArgumentParser(description="AskAI - AI assistant for your terminal")
         
-        # Input options
-        parser.add_argument('-q', '--question', help='Your question for the AI')
-        parser.add_argument('-fi', '--file-input', help='Input file to include as context')
-        parser.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
-        parser.add_argument('-img', '--image', help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
-        parser.add_argument('-img-url', '--image-url', help='Image URL to analyze along with your question')
-        parser.add_argument('-pdf', '--pdf', help='PDF file to analyze along with your question (must have .pdf extension)')
-        parser.add_argument('-pdf-url', '--pdf-url', help='PDF URL to analyze along with your question')
-        
-        # Output options
-        parser.add_argument('-o', '--output', help='Output file to save result')
-        parser.add_argument('-f', '--format', 
+        # Question-related options (grouped together)
+        question_group = parser.add_argument_group('Question logic (ignored when using patterns)')
+        question_group.add_argument('-q', '--question', help='Your question for the AI')
+        question_group.add_argument('-fi', '--file-input', help='Input file to include as context')
+        question_group.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
+        question_group.add_argument('-img', '--image', help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
+        question_group.add_argument('-img-url', '--image-url', help='Image URL to analyze along with your question')
+        question_group.add_argument('-pdf', '--pdf', help='PDF file to analyze along with your question (must have .pdf extension)')
+        question_group.add_argument('-pdf-url', '--pdf-url', help='PDF URL to analyze along with your question')
+        question_group.add_argument('-o', '--output', help='Output file to save result')
+        question_group.add_argument('-f', '--format', 
                            default="rawtext", 
                            choices=["rawtext", "json", "md"], 
                            help='Instruct AI to respond in rawtext (default), json, or md format')
-        parser.add_argument('--plain-md', 
+        question_group.add_argument('--plain-md', 
                            action='store_true', 
                            help='If used with -f md, outputs raw markdown as plain text instead of rendering')
-        
-        # Model options
-        parser.add_argument('-m', '--model', help='Override default AI model')
+        question_group.add_argument('-m', '--model', help='Override default AI model')
         
         # Pattern options
         pattern_group = parser.add_argument_group('Pattern logic')
@@ -61,7 +58,8 @@ class CLIParser:
                            help='Provide pattern inputs as JSON object')
         
         # Debug options
-        parser.add_argument('--debug', 
+        debug_group = parser.add_argument_group('Debug options')
+        debug_group.add_argument('--debug', 
                            action='store_true', 
                            help='Enable debug logging for this session')
         
@@ -120,6 +118,20 @@ class CLIParser:
         has_image_url = args.image_url is not None
         has_pdf = args.pdf is not None
         has_pdf_url = args.pdf_url is not None
+        
+        # Check if pattern is being used
+        using_pattern = args.use_pattern is not None
+        
+        # Check if question-related parameters are used with a pattern
+        if using_pattern and any([args.question, has_url, has_image, has_image_url, has_pdf, has_pdf_url, args.file_input, 
+                                args.output, args.format != "rawtext", args.plain_md, args.model]):
+            logger.warning(json.dumps({
+                "log_message": "User provided question logic parameters with a pattern; these will be ignored"
+            }))
+            print_error_or_warnings(
+                text="Question logic parameters (-q, -url, -img, -img-url, -pdf, -pdf-url, -fi, -o, -f, --plain-md, -m) are ignored when using a pattern (-up). Pattern inputs should be provided using -pi.",
+                warning_only=True
+            )
         
         if not args.question and not args.use_pattern and not has_command and not has_url and not has_image and not has_pdf and not has_image_url and not has_pdf_url:
             logger.error(json.dumps({

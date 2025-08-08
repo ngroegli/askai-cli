@@ -9,6 +9,7 @@ import itertools
 import time
 import subprocess
 import base64
+import json
 from tqdm import tqdm
 from termcolor import colored, cprint
 
@@ -122,6 +123,88 @@ def build_format_instruction(format_type):
         "md": "Please format the response as GitHub-flavored Markdown.",
         "json": "Please respond with a valid JSON structure containing your answer."
     }.get(format_type, "Please provide your response as plain text.")
+    
+    
+def generate_output_format_template(pattern_outputs):
+    """Generates a dynamic output format template based on pattern output definitions.
+    
+    Args:
+        pattern_outputs: List of PatternOutput objects
+        
+    Returns:
+        str: JSON format instruction template
+    """
+    if not pattern_outputs:
+        return None
+        
+    # Create a template that matches the defined outputs
+    result_fields = {}
+    
+    # Add each output to the result fields
+    for output in pattern_outputs:
+        # Get a sample value based on the output type
+        if output.example:
+            # Use the full example as provided
+            example_value = output.example
+        else:
+            # Generate placeholder based on type
+            if output.output_type.value == "text":
+                example_value = f"sample text for {output.name}"
+            elif output.output_type.value == "markdown":
+                example_value = f"# Sample markdown for {output.name}\n\nThis is an example of markdown content."
+            elif output.output_type.value == "json":
+                example_value = {"key": f"sample value for {output.name}"}
+            elif output.output_type.value == "html":
+                example_value = f"<div>Sample HTML for {output.name}</div>"
+            elif output.output_type.value == "code":
+                example_value = f"# Sample code for {output.name}\ndef example():\n    return 'example'"
+            else:
+                example_value = f"Sample content for {output.name}"
+        
+        # Add to result fields
+        result_fields[output.name] = example_value
+    
+    # Create the full template structure
+    template = {
+        "results": result_fields
+    }
+    
+    # Convert to formatted JSON string with consistent indentation
+    template_json = json.dumps(template, indent=2, ensure_ascii=False)
+    
+    # Build a comprehensive instruction with the template
+    instruction = f"""**CRITICAL FORMATTING REQUIREMENT**
+    
+Your response MUST follow this exact JSON format:
+
+```json
+{template_json}
+```
+
+Where:
+"""
+    
+    # Add detailed descriptions for each field
+    for output in pattern_outputs:
+        instruction += f"- `{output.name}`: {output.description}\n"
+    
+    # Add additional formatting requirements
+    instruction += """
+IMPORTANT NOTES:
+1. The response MUST use the exact field names shown above
+2. The 'results' field MUST be the top-level field in the JSON object
+3. Do not add any extra fields or nested objects not shown in the template
+4. Include all required fields exactly as shown
+5. Ensure the JSON is properly formatted and valid
+"""
+    
+    # Print debug output to verify
+    print("\nGenerated format instructions:")
+    print("----------------------------")
+    print(instruction)
+    print("----------------------------\n")
+    
+    return instruction
 
 
 def capture_command_output(command):
