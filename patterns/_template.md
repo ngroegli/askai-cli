@@ -121,6 +121,3 @@ model:
     - "```"
   custom_parameters: {}        # Optional provider-specific parameters
 ```
-
-This configuration section is not included in the prompt.
-It configures how the model behaves when called through openrouter_api.py.

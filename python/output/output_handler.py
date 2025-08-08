@@ -19,12 +19,12 @@ from .formatters.markdown_formatter import MarkdownFormatter
 logger = logging.getLogger(__name__)
 
 class OutputHandler:
-    """
-    Responsible for processing AI outputs and handling all output actions.
+    """Handler for processing AI outputs and handling all output actions.
     
     This class processes output from the AI service, extracts content in various formats,
     formats it for display, and handles writing to files or executing commands.
     """
+
     def __init__(self, output_dir: str = None):
         """Initialize the OutputHandler with optional output directory.
         
@@ -83,6 +83,10 @@ class OutputHandler:
         
         # Handle pattern outputs in standardized way
         if pattern_outputs:
+            logger.info(f"Processing pattern outputs: {len(pattern_outputs)} outputs defined")
+            # Log each output for debugging
+            for i, output in enumerate(pattern_outputs):
+                logger.info(f"  Output {i+1}: name={output.name}, type={output.output_type}, action={output.action}")
             return self._handle_standardized_pattern_output(response, pattern_outputs, output_config)
         
         # For regular output without pattern definitions
@@ -285,6 +289,14 @@ class OutputHandler:
         structured_data = self._extract_structured_data(response)
         logger.debug(f"Extracted structured data keys: {list(structured_data.keys())}")
         
+        # Log more detailed information about the response for debugging
+        if isinstance(response, dict):
+            logger.debug(f"Response type: dictionary with keys {list(response.keys())}")
+            if 'content' in response:
+                logger.debug(f"Response content sample: {response['content'][:200]}...")
+        else:
+            logger.debug(f"Response type: {type(response)}")
+            
         # Prepare outputs
         created_files = []
         visual_content = None
@@ -293,6 +305,9 @@ class OutputHandler:
         if not structured_data:
             error_msg = "Pattern output requires a valid JSON structure with 'results' field containing outputs"
             logger.error(error_msg)
+            # Try to return raw content instead of error
+            if isinstance(response, dict) and 'content' in response:
+                return response['content'], []
             return error_msg, []
         
         # Get output directory with user confirmation for file operations
@@ -303,67 +318,141 @@ class OutputHandler:
         # Extract and assign content from response to outputs
         self._extract_output_content_from_response(pattern_outputs, structured_data, response)
         
-        # Track outputs for display
-        display_outputs = []
-        
-        # Process all outputs based on their action type
+        # Track outputs in the original order from pattern definition
+        ordered_outputs = []
         for output in pattern_outputs:
             # Skip outputs with no content
             if not output.get_content():
                 continue
-                
+            ordered_outputs.append(output)
+            
+        logger.info(f"Processing {len(ordered_outputs)} pattern outputs in original order")
+        
+        # Process outputs strictly in the original order they were defined in the pattern
+        # This ensures we follow the pattern definition order exactly
+        display_content = None
+        collected_display_outputs = []
+        
+        # Process each output in the exact order defined in the pattern
+        for output in ordered_outputs:
             content = output.get_content()
+            logger.info(f"Processing output: {output.name}, type: {output.output_type}, action: {output.action}")
             
-            # Process based on action
-            if output.action == OutputAction.EXECUTE:   
-                # Execute the command
+            # Process based on action type
+            if output.action == OutputAction.DISPLAY:
+                if output.output_type == OutputType.MARKDOWN:
+                    # Clean up any whitespace or unwanted characters
+                    content = content.strip()
+                    
+                    # Format the markdown content
+                    display_content = self.formatters['console'].format(
+                        content, 
+                        content_type='markdown'
+                    )
+                    # Print the display content immediately before executing any commands
+                    print(display_content)
+                    # Also store for return value
+                    collected_display_outputs.append(display_content)
+                    logger.info(f"Displayed markdown content for '{output.name}'")
+                elif output.output_type == OutputType.TEXT:
+                    display_content = self.formatters['console'].format(content, content_type='text')
+                    print(display_content)
+                    collected_display_outputs.append(display_content)
+                    logger.info(f"Displayed text content for '{output.name}'")
+                else:
+                    display_content = self.formatters['console'].format(content)
+                    print(display_content)
+                    collected_display_outputs.append(display_content)
+                    logger.info(f"Displayed generic content for '{output.name}'")
+            
+            # Execute commands in order
+            elif output.action == OutputAction.EXECUTE:
+                logger.info(f"Executing command: {output.name}")
                 PatternOutput.execute_command(content, output.name)
+            
+            # Process file writes in order    
+            elif output.action == OutputAction.WRITE:
+                content = output.get_content()
+            logger.info(f"Processing write output: {output.name}")
+            if output.write_to_file and output_dir:
+                file_path = os.path.join(output_dir, output.write_to_file)
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    
+                    # Ensure content is a string
+                    if not isinstance(content, str):
+                        if isinstance(content, (dict, list)):
+                            content = json.dumps(content, indent=2)
+                        else:
+                            content = str(content)
+                            
+                    # Write to file
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    created_files.append(file_path)
+                    logger.info(f"Saved {output.name} to {file_path}")
+                except Exception as e:
+                    logger.error(f"Error writing output {output.name} to file: {str(e)}")
+        
+        # Combine all display outputs to return (or use the first one if there are multiple)
+        if collected_display_outputs:
+            visual_content = "\n\n".join(collected_display_outputs)
+        
+        # If we still don't have visual content, try to use the raw response for debugging
+        if not visual_content:
+            logger.debug("No processed visual content found, trying alternative approaches")
+            
+            # Check if the response itself is already a properly formatted JSON
+            if isinstance(response, dict) and 'results' in response:
+                logger.debug("Response is already a JSON with results field")
+                results = response['results']
+                if 'explanation' in results and isinstance(results['explanation'], str):
+                    logger.debug("Using explanation from results directly")
+                    markdown_content = results['explanation']
+                    visual_content = self.formatters['console'].format(markdown_content, content_type='markdown')
+                    
+                    # Handle the command execution as well if it exists
+                    if 'command' in results and isinstance(results['command'], str):
+                        logger.debug("Found command in results, executing")
+                        command = results['command']
+                        PatternOutput.execute_command(command, "command")
+            
+            # If still no visual content and we have content field, use it
+            elif not visual_content and isinstance(response, dict) and 'content' in response:
+                logger.debug("Falling back to raw response content")
+                raw_content = response['content']
+                if isinstance(raw_content, str) and raw_content.strip():
+                    # Check if content contains JSON
+                    json_match = re.search(r'{.*}', raw_content, re.DOTALL)
+                    if json_match:
+                        try:
+                            # Try to parse the JSON
+                            json_content = json.loads(json_match.group(0))
+                            if 'results' in json_content:
+                                results = json_content['results']
+                                if 'explanation' in results and isinstance(results['explanation'], str):
+                                    logger.debug("Using explanation from parsed JSON content")
+                                    markdown_content = results['explanation']
+                                    visual_content = self.formatters['console'].format(markdown_content, content_type='markdown')
+                                    
+                                    # Handle the command execution as well if it exists
+                                    if 'command' in results and isinstance(results['command'], str):
+                                        logger.debug("Found command in parsed JSON, executing")
+                                        command = results['command']
+                                        PatternOutput.execute_command(command, "command")
+                                return visual_content or raw_content, created_files
+                        except json.JSONDecodeError:
+                            logger.debug("Failed to parse JSON in content")
+                    
+                    # If no JSON or JSON parsing failed, just return the raw content
+                    return raw_content, created_files
                 
-            elif output.action == OutputAction.WRITE and output_dir:
-                # For outputs that should be written to files
-                if output.write_to_file:
-                    file_path = os.path.join(output_dir, output.write_to_file)
-                    try:
-                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                        
-                        # Ensure content is a string
-                        if not isinstance(content, str):
-                            if isinstance(content, (dict, list)):
-                                content = json.dumps(content, indent=2)
-                            else:
-                                content = str(content)
-                                
-                        # Write to file
-                        with open(file_path, 'w', encoding='utf-8') as f:
-                            f.write(content)
-                        created_files.append(file_path)
-                        logger.info(f"Saved {output.name} to {file_path}")
-                    except Exception as e:
-                        logger.error(f"Error writing output {output.name} to file: {str(e)}")
+        # Return the visual content and created files (with more helpful fallback message)
+        if not visual_content:
+            logger.error(f"Failed to extract pattern outputs. Structured data keys: {list(structured_data.keys())}")
+            return "Failed to extract pattern outputs. Check the format of the AI response.", created_files
             
-            elif output.action == OutputAction.DISPLAY:
-                # Track outputs that should be displayed
-                display_outputs.append(output)
-        
-        # Determine what to display to the user
-        visual_content = None
-        
-        # Find the best output to display
-        if display_outputs:
-            # Prefer markdown outputs for display
-            markdown_outputs = [o for o in display_outputs if o.output_type == OutputType.MARKDOWN]
-            
-            if markdown_outputs:
-                # If there are multiple markdown outputs, use the first one
-                visual_content = markdown_outputs[0].get_content()
-                logger.debug(f"Using markdown output '{markdown_outputs[0].name}' as visual content")
-            else:
-                # Otherwise use the first display output
-                visual_content = display_outputs[0].get_content()
-                logger.debug(f"Using output '{display_outputs[0].name}' as visual content")
-        
-        # Return the visual content and created files
-        return visual_content or "No visual output provided", created_files
+        return visual_content, created_files
         
     def _extract_output_content_from_response(self,
                                            pattern_outputs: List[PatternOutput],
@@ -427,7 +516,13 @@ class OutputHandler:
             
             # If content found, set it
             if content is not None:
-                output.set_content(content)
+                # Ensure proper content handling based on output type
+                if output.output_type == OutputType.MARKDOWN and isinstance(content, str):
+                    # Make sure markdown content is properly formatted
+                    output.set_content(content)
+                else:
+                    output.set_content(content)
+                
                 logger.debug(f"Content found for output {output.name}")
             else:
                 logger.debug(f"No content found for output {output.name}")
@@ -628,15 +723,37 @@ class OutputHandler:
             if 'results' in response and isinstance(response['results'], dict):
                 logger.debug(f"Found 'results' key with keys: {list(response['results'].keys())}")
                 return response['results']
-            # Case 2: API response with nested content field
+                
+            # Case 2: Keys without a 'results' wrapper - see if they match pattern output names
+            # This could happen if the AI didn't wrap outputs in 'results' object
+            # Filter out common API response keys that aren't actual results
+            common_api_keys = {'content', 'choices', 'message', 'model', 'id', 'finish_reason', 
+                             'created', 'usage', 'usage_tokens', 'response_id'}
+                             
+            potential_output_keys = {k: v for k, v in response.items() 
+                                   if k not in common_api_keys and not k.startswith('_')}
+                                   
+            if len(potential_output_keys) > 0:
+                logger.debug(f"Found potential direct output fields: {list(potential_output_keys.keys())}")
+                return potential_output_keys
+                
+            # Case 3: API response with nested content field
             elif 'content' in response and isinstance(response['content'], str):
                 # Try to extract JSON from content
                 content_data = self._extract_json_from_text(response['content'])
                 if content_data and isinstance(content_data, dict):
                     if 'results' in content_data and isinstance(content_data['results'], dict):
                         return content_data['results']
+                    else:
+                        # Check if content_data directly contains output fields
+                        # (AI might have forgotten to use 'results' wrapper)
+                        potential_output_keys = {k: v for k, v in content_data.items() 
+                                             if k not in common_api_keys and not k.startswith('_')}
+                        if len(potential_output_keys) > 0:
+                            logger.debug(f"Found potential output fields in content: {list(potential_output_keys.keys())}")
+                            return potential_output_keys
 
-            # Case 3: API response format with choices
+            # Case 4: API response format with choices
             elif 'choices' in response and isinstance(response['choices'], list) and response['choices']:
                 for choice in response['choices']:
                     if isinstance(choice, dict) and 'message' in choice and 'content' in choice['message']:
@@ -644,7 +761,12 @@ class OutputHandler:
                         if content_data and isinstance(content_data, dict):
                             if 'results' in content_data and isinstance(content_data['results'], dict):
                                 return content_data['results']
-
+                            else:
+                                # Check for direct output fields
+                                potential_output_keys = {k: v for k, v in content_data.items() 
+                                                      if k not in common_api_keys and not k.startswith('_')}
+                                if len(potential_output_keys) > 0:
+                                    return potential_output_keys
         
         # Handle string response
         elif isinstance(response, str):
@@ -652,7 +774,14 @@ class OutputHandler:
             if content_data and isinstance(content_data, dict):
                 if 'results' in content_data and isinstance(content_data['results'], dict):
                     return content_data['results']
-
+                else:
+                    # Check for direct output fields
+                    common_api_keys = {'content', 'choices', 'message', 'model', 'id'}
+                    potential_output_keys = {k: v for k, v in content_data.items() 
+                                          if k not in common_api_keys and not k.startswith('_')}
+                    if len(potential_output_keys) > 0:
+                        logger.debug(f"Found potential output fields in JSON string: {list(potential_output_keys.keys())}")
+                        return potential_output_keys
         
         # If we couldn't find a properly structured 'results' object, return empty dict
         logger.debug("No 'results' object found in response, returning empty dict")
@@ -670,31 +799,73 @@ class OutputHandler:
         if not text or not isinstance(text, str):
             return None
             
-        # Try to extract JSON from code blocks first
-        json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', text)
-        if json_match:
-            try:
-                parsed_json = json.loads(json_match.group(1))
-                logger.debug("Found JSON in code block")
+        logger.debug(f"Extracting JSON from text: {text[:100]}...")
+            
+        # First try to parse the entire text as JSON directly - it might be pure JSON
+        try:
+            # Check if the whole text is valid JSON
+            if text.strip().startswith('{') and text.strip().endswith('}'):
+                parsed_json = json.loads(text)
+                logger.debug("Successfully parsed entire text as JSON")
                 return parsed_json
-            except json.JSONDecodeError:
-                logger.debug("Failed to parse JSON from code block")
+        except json.JSONDecodeError:
+            logger.debug("Full text is not valid JSON, trying other methods")
+            
+        # Try to extract JSON from code blocks
+        try:
+            # Look for code blocks with JSON content
+            json_match = re.search(r'```(?:json)?(.*?)```', text, re.DOTALL)
+            if json_match:
+                json_content = json_match.group(1).strip()
+                # Check if content looks like JSON
+                if json_content and (json_content.startswith('{') or json_content.startswith('[')):
+                    logger.debug(f"Found JSON in code block: {json_content[:100]}...")
+                    parsed_json = json.loads(json_content)
+                    return parsed_json
+        except (json.JSONDecodeError, re.error) as e:
+            logger.debug(f"Failed to parse JSON from code block: {str(e)}")
+        
+        # Look for JSON content with ```json followed by content followed by ```
+        try:
+            improved_json_match = re.search(r'```json(.*?)```', text, re.DOTALL)
+            if improved_json_match:
+                json_content = improved_json_match.group(1).strip()
+                if json_content.startswith('{') or json_content.startswith('['):
+                    parsed_json = json.loads(json_content)
+                    logger.debug("Found and parsed JSON from code block with improved regex")
+                    return parsed_json
+        except (json.JSONDecodeError, re.error) as e:
+            logger.debug(f"Failed to parse JSON with improved regex: {str(e)}")
         
         # Try to find JSON-like structure with curly braces
-        json_pattern = r'(\{[\s\S]*?\})'
-        matches = re.finditer(json_pattern, text)
-        
-        for match in matches:
-            try:
-                potential_json = match.group(1)
-                parsed_json = json.loads(potential_json)
-                
-                # Only return if it's actually a dictionary with data
-                if isinstance(parsed_json, dict) and parsed_json:
-                    logger.debug("Found JSON-like structure in text")
-                    return parsed_json
-            except json.JSONDecodeError:
-                continue
+        try:
+            # Use a more comprehensive pattern to capture the entire JSON object
+            simple_json_pattern = r'(\{.*?\})'
+            matches = re.finditer(simple_json_pattern, text, re.DOTALL)
+            
+            for match in matches:
+                try:
+                    potential_json = match.group(1)
+                    logger.debug(f"Found potential JSON: {potential_json[:100]}...")
+                    parsed_json = json.loads(potential_json)
+                    
+                    # Only return if it's actually a dictionary with data
+                    if isinstance(parsed_json, dict) and parsed_json:
+                        # Check if it has a 'results' key, which is our expected format
+                        if 'results' in parsed_json:
+                            logger.debug("Found JSON-like structure with 'results' key in text")
+                            return parsed_json
+                        else:
+                            # Even if there's no 'results' key, the JSON might be directly usable
+                            logger.debug("Found JSON-like structure, but no 'results' key")
+                            if any(key in parsed_json for key in ['command', 'explanation', 'output']):
+                                logger.debug("JSON has useful keys, using directly")
+                                return {'results': parsed_json}
+                except json.JSONDecodeError:
+                    logger.debug(f"Failed to parse potential JSON: {potential_json[:50]}...")
+                    continue
+        except re.error:
+            logger.debug("Error in regex pattern for JSON extraction")
         
         # Last resort: try to parse the entire text as JSON
         try:
@@ -706,7 +877,6 @@ class OutputHandler:
             logger.debug("Text is not valid JSON")
         
         return None
-    
     def _categorize_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
         List[PatternOutput], List[PatternOutput], List[PatternOutput]
     ]:

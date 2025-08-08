@@ -6,6 +6,9 @@ import re
 import os
 from typing import Dict, Any, Optional, List, Tuple
 import logging
+import io
+from rich.console import Console
+from rich.markdown import Markdown
 
 from .base_formatter import BaseFormatter
 
@@ -137,7 +140,7 @@ class ConsoleFormatter(BaseFormatter):
         return framed_code
     
     def _format_markdown(self, markdown: str) -> str:
-        """Format markdown content for console display.
+        """Format markdown content for console display using rich.
         
         Args:
             markdown: Markdown content
@@ -145,54 +148,71 @@ class ConsoleFormatter(BaseFormatter):
         Returns:
             str: Console-formatted markdown
         """
+        if not markdown:
+            return ""
+            
         if not self.use_colors:
             return markdown
             
-        # Format headings
-        formatted = re.sub(
-            r'^(#{1,6})\s+(.+?)$',
-            lambda m: f"{self.COLORS['bold']}{self.COLORS['cyan']}{m.group(1)} {m.group(2)}{self.COLORS['reset']}",
-            markdown,
-            flags=re.MULTILINE
-        )
-        
-        # Format bold text
-        formatted = re.sub(
-            r'\*\*(.+?)\*\*',
-            lambda m: f"{self.COLORS['bold']}{m.group(1)}{self.COLORS['reset']}",
-            formatted
-        )
-        
-        # Format italic text
-        formatted = re.sub(
-            r'\*(.+?)\*',
-            lambda m: f"{self.COLORS['italic']}{m.group(1)}{self.COLORS['reset']}",
-            formatted
-        )
-        
-        # Format code blocks
-        formatted = re.sub(
-            r'```(\w*)\n(.*?)\n```',
-            lambda m: f"{self.COLORS['bg_black']}{self.COLORS['green']}{m.group(2)}{self.COLORS['reset']}",
-            formatted,
-            flags=re.DOTALL
-        )
-        
-        # Format inline code
-        formatted = re.sub(
-            r'`(.+?)`',
-            lambda m: f"{self.COLORS['green']}`{m.group(1)}`{self.COLORS['reset']}",
-            formatted
-        )
-        
-        # Format links
-        formatted = re.sub(
-            r'\[(.+?)\]\((.+?)\)',
-            lambda m: f"{self.COLORS['underline']}{self.COLORS['blue']}[{m.group(1)}]({m.group(2)}){self.COLORS['reset']}",
-            formatted
-        )
-        
-        return formatted
+        try:
+            # Use rich's Markdown renderer
+            string_io = io.StringIO()
+            console = Console(file=string_io, highlight=True, width=120)
+            md = Markdown(markdown)
+            console.print(md)
+            return string_io.getvalue()
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Error formatting markdown with rich: {str(e)}")
+                
+            # Fallback to basic formatting
+            formatted = markdown
+            
+            # Format headings
+            formatted = re.sub(
+                r'^(#{1,6})\s+(.+?)$',
+                lambda m: f"{self.COLORS['bold']}{self.COLORS['cyan']}{m.group(1)} {m.group(2)}{self.COLORS['reset']}",
+                formatted,
+                flags=re.MULTILINE
+            )
+            
+            # Format bold text
+            formatted = re.sub(
+                r'\*\*(.+?)\*\*',
+                lambda m: f"{self.COLORS['bold']}{m.group(1)}{self.COLORS['reset']}",
+                formatted
+            )
+            
+            # Format italic text
+            formatted = re.sub(
+                r'\*(.+?)\*',
+                lambda m: f"{self.COLORS['italic']}{m.group(1)}{self.COLORS['reset']}",
+                formatted
+            )
+            
+            # Format code blocks
+            formatted = re.sub(
+                r'```(\w*)\n(.*?)\n```',
+                lambda m: f"{self.COLORS['bg_black']}{self.COLORS['green']}{m.group(2)}{self.COLORS['reset']}",
+                formatted,
+                flags=re.DOTALL
+            )
+            
+            # Format inline code
+            formatted = re.sub(
+                r'`(.+?)`',
+                lambda m: f"{self.COLORS['green']}`{m.group(1)}`{self.COLORS['reset']}",
+                formatted
+            )
+            
+            # Format links
+            formatted = re.sub(
+                r'\[(.+?)\]\((.+?)\)',
+                lambda m: f"{self.COLORS['underline']}{self.COLORS['blue']}[{m.group(1)}]({m.group(2)}){self.COLORS['reset']}",
+                formatted
+            )
+            
+            return formatted
     
     def _highlight_json(self, code: str) -> str:
         """Highlight JSON syntax.

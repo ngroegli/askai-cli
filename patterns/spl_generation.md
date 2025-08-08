@@ -43,12 +43,6 @@ inputs:
 
 ```yaml
 results:
-  - name: spl_query
-    description: Primary SPL query (the best solution)
-    type: text
-    required: true
-    example: "index=* sourcetype=* login failed OR failure earliest=-24h | stats count by user, src_ip | sort -count"
-
   - name: explanation
     description: Formatted output with all SPL queries, explanations, and visualizations
     type: markdown

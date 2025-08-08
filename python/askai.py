@@ -91,7 +91,7 @@ def main():
         enable_url_search=enable_url_search
     )
 
-    print(response['content'])  # Print the AI response content
+    # Don't print raw response here, it will be handled by output_handler
 
     # Store chat history if using persistent chat
     chat_manager.store_chat_conversation(
@@ -154,12 +154,40 @@ def main():
     
     # Use the pattern manager to handle the response if we have a pattern
     if resolved_pattern_id:
+        # Check if the response is already a properly formatted JSON with a 'results' field
+        try:
+            if isinstance(response, dict) and 'content' in response:
+                content = response['content']
+                if isinstance(content, str) and content.strip().startswith('{'):
+                    # Try to parse the content as JSON
+                    try:
+                        parsed_json = json.loads(content)
+                        if isinstance(parsed_json, dict) and 'results' in parsed_json:
+                            # We have proper JSON with results, modify the response directly
+                            logger.debug("Found direct JSON with results in content")
+                            # Create a new response object with the parsed content
+                            response = parsed_json
+                    except json.JSONDecodeError:
+                        logger.debug("Content is not valid JSON")
+        except Exception as e:
+            logger.debug(f"Error checking for direct JSON: {str(e)}")
+        
         logger.debug(f"Using pattern manager to handle response for {resolved_pattern_id}")
         formatted_output, created_files = pattern_manager.process_pattern_response(
             resolved_pattern_id, 
             response, 
             output_handler
         )
+        # Only print the formatted output if it starts with an error message
+        if formatted_output:
+            # Check if output starts with "No visual output" or "Failed to extract"
+            if formatted_output.startswith("No visual") or formatted_output.startswith("Failed to"):
+                # Fall back to printing the raw response content as a debugging measure
+                print("DEBUG: Output processing failed, showing raw response:")
+                if isinstance(response, dict) and 'content' in response:
+                    print(response['content'])
+                else:
+                    print(formatted_output)
     else:
         # Default output handling for non-pattern responses
         formatted_output, created_files = output_handler.process_output(

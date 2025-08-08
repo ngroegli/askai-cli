@@ -161,7 +161,7 @@ def generate_output_format_template(pattern_outputs):
             else:
                 example_value = f"Sample content for {output.name}"
         
-        # Add to result fields
+        # Add to result fields - ensure it's included no matter what the output action is
         result_fields[output.name] = example_value
     
     # Create the full template structure
@@ -175,11 +175,11 @@ def generate_output_format_template(pattern_outputs):
     # Build a comprehensive instruction with the template
     instruction = f"""**CRITICAL FORMATTING REQUIREMENT**
     
-Your response MUST follow this exact JSON format:
+Your response MUST follow this exact JSON format without any deviations or additional text:
 
-```json
+
 {template_json}
-```
+
 
 Where:
 """

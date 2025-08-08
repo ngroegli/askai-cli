@@ -43,41 +43,19 @@ inputs:
 
 ```yaml
 results:
+  - name: explanation
+    description: Formatted output with the command, explanation, and safety notes
+    type: markdown
+    required: true
+    action: display
+    example: "Markdown explanation"
+
   - name: command
     description: The generated Linux CLI one-liner command
     type: text
     required: true
     action: execute
     example: "ls -la /var/log"
-
-  - name: explanation
-    description: Formatted output with the command, explanation, and safety notes
-    type: markdown
-    required: true
-    action: display
-    example: |
-      # Linux Command
-
-      ## Command
-      ```bash
-      ls -la /var/log
-      ```
-
-      ## Explanation
-      This command lists all files in the /var/log directory with detailed information.
-      - `ls` is the list command
-      - `-l` shows the long format with permissions and sizes
-      - `-a` shows all files including hidden ones
-      - `/var/log` is the target directory
-
-      ## Safety Considerations
-      * This is a read-only command that doesn't modify any files
-      * Requires read permissions on the /var/log directory
-
-      ## Alternative Commands
-      1. `find /var/log -type f` - Lists only regular files in /var/log
-      2. `ls -lh /var/log` - Shows sizes in human-readable format
-```
 ```
 
 ## Model Configuration:

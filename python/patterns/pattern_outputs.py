@@ -16,6 +16,7 @@ class OutputType(Enum):
     TABLE = "table"
     LIST = "list"
     CODE = "code"
+    COMMAND = "command"
     MARKDOWN = "markdown"
     HTML = "html"
     CSS = "css"
