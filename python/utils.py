@@ -198,12 +198,6 @@ IMPORTANT NOTES:
 5. Ensure the JSON is properly formatted and valid
 """
     
-    # Print debug output to verify
-    print("\nGenerated format instructions:")
-    print("----------------------------")
-    print(instruction)
-    print("----------------------------\n")
-    
     return instruction
 
 

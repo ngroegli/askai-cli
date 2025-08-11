@@ -141,7 +141,6 @@ class AIService:
                 
             # Create OpenRouter client and get response
             openrouter_client = OpenRouterClient(config=config, logger=self.logger)
-            openrouter_client = OpenRouterClient(config=config, logger=self.logger)
             response = openrouter_client.request_completion(
                 messages=messages, 
                 model_config=model_config,

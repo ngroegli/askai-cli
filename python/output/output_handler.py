@@ -2,19 +2,14 @@ import os
 import json
 import re
 import logging
-import subprocess
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Any, Union, Callable
+from typing import Optional, Dict, List, Tuple, Any, Union
 
 from patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
 from utils import print_error_or_warnings
-from .extractors.html_extractor import HtmlExtractor
-from .extractors.css_extractor import CssExtractor
-from .extractors.js_extractor import JsExtractor
-from .extractors.json_extractor import JsonExtractor
-from .extractors.markdown_extractor import MarkdownExtractor
 from .formatters.console_formatter import ConsoleFormatter
 from .formatters.markdown_formatter import MarkdownFormatter
+from .file_writer import FileWriter
 
 logger = logging.getLogger(__name__)
 
@@ -33,20 +28,14 @@ class OutputHandler:
         """
         self.output_dir = output_dir
         
-        # Initialize extractors for different content types
-        self.extractors = {
-            'html': HtmlExtractor(),
-            'css': CssExtractor(),
-            'js': JsExtractor(),
-            'json': JsonExtractor(),
-            'markdown': MarkdownExtractor()
-        }
-        
         # Initialize formatters
         self.formatters = {
             'console': ConsoleFormatter(),
             'markdown': MarkdownFormatter()
         }
+        
+        # Initialize file writer
+        self.file_writer = FileWriter(output_dir=output_dir, logger=logger)
     
     def process_output(self, 
                       response: Union[str, Dict], 
@@ -172,7 +161,7 @@ class OutputHandler:
                                response: Union[str, Dict],
                                response_text: str, 
                                output_config: Dict[str, Any]) -> List[str]:
-        """Extract and save different types of content from the response.
+        """Save content from the response to files based on output_config.
         
         Args:
             response: The original AI response
@@ -183,52 +172,91 @@ class OutputHandler:
             List[str]: List of created file paths
         """
         created_files = []
+        content_to_save = response_text
         
-        # Extract and save HTML content
-        html_content = self.extractors['html'].extract(response_text)
-        if html_content:
-            html_filename = output_config.get('html_filename', 'output.html')
-            file_path = self._write_to_file(html_content, html_filename)
-            if file_path:
-                created_files.append(file_path)
-                logger.info(f"HTML content saved to {file_path}")
+        # Check if we have structured data with results
+        structured_data = {}
+        if isinstance(response, dict):
+            if 'results' in response:
+                structured_data = response['results']
+            elif 'content' in response and isinstance(response['content'], str):
+                # Try to parse the content as JSON
+                try:
+                    content_json = json.loads(response['content'])
+                    if isinstance(content_json, dict) and 'results' in content_json:
+                        structured_data = content_json['results']
+                except (json.JSONDecodeError, TypeError):
+                    # Not valid JSON, use as is
+                    content_to_save = response['content']
         
-        # Extract and save CSS content
-        css_content = self.extractors['css'].extract(response)
-        if css_content:
-            css_filename = output_config.get('css_filename', 'styles.css')
-            file_path = self._write_to_file(css_content, css_filename)
-            if file_path:
-                created_files.append(file_path)
-                logger.info(f"CSS content saved to {file_path}")
+        # If we have structured data, extract specific content types
+        if structured_data:
+            # HTML content
+            if 'html' in structured_data and isinstance(structured_data['html'], str):
+                html_filename = output_config.get('html_filename', 'output.html')
+                file_path = self._write_to_file(structured_data['html'], html_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"HTML content saved to {file_path}")
+            
+            # CSS content
+            if 'css' in structured_data and isinstance(structured_data['css'], str):
+                css_filename = output_config.get('css_filename', 'styles.css')
+                file_path = self._write_to_file(structured_data['css'], css_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"CSS content saved to {file_path}")
+            
+            # JavaScript content
+            if 'javascript' in structured_data and isinstance(structured_data['javascript'], str):
+                js_filename = output_config.get('js_filename', 'script.js')
+                file_path = self._write_to_file(structured_data['javascript'], js_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"JavaScript content saved to {file_path}")
+            
+            # JSON content
+            if 'json' in structured_data:
+                json_content = structured_data['json']
+                json_filename = output_config.get('json_filename', 'data.json')
+                json_str = json.dumps(json_content, indent=2) if isinstance(json_content, (dict, list)) else str(json_content)
+                file_path = self._write_to_file(json_str, json_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"JSON content saved to {file_path}")
+            
+            # Markdown content
+            if 'markdown' in structured_data and isinstance(structured_data['markdown'], str):
+                markdown_filename = output_config.get('markdown_filename', 'output.md')
+                file_path = self._write_to_file(structured_data['markdown'], markdown_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"Markdown content saved to {file_path}")
         
-        # Extract and save JavaScript content
-        js_content = self.extractors['js'].extract(response)
-        if js_content:
-            js_filename = output_config.get('js_filename', 'script.js')
-            file_path = self._write_to_file(js_content, js_filename)
-            if file_path:
-                created_files.append(file_path)
-                logger.info(f"JavaScript content saved to {file_path}")
-        
-        # Extract and save JSON content
-        json_content = self.extractors['json'].extract(response)
-        if json_content:
-            json_filename = output_config.get('json_filename', 'data.json')
-            json_str = json.dumps(json_content, indent=2) if isinstance(json_content, (dict, list)) else str(json_content)
-            file_path = self._write_to_file(json_str, json_filename)
-            if file_path:
-                created_files.append(file_path)
-                logger.info(f"JSON content saved to {file_path}")
-        
-        # Extract and save Markdown content
-        markdown_content = self.extractors['markdown'].extract(response_text)
-        if markdown_content:
-            markdown_filename = output_config.get('markdown_filename', 'output.md')
-            file_path = self._write_to_file(markdown_content, markdown_filename)
-            if file_path:
-                created_files.append(file_path)
-                logger.info(f"Markdown content saved to {file_path}")
+        # If no specific content was found but we have a filename, save the raw content
+        if not created_files:
+            # Try to save as markdown if markdown_filename is specified
+            if output_config.get('markdown_filename'):
+                markdown_filename = output_config.get('markdown_filename')
+                file_path = self._write_to_file(content_to_save, markdown_filename)
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"Content saved as markdown to {file_path}")
+            # Try to save as JSON if json_filename is specified
+            elif output_config.get('json_filename'):
+                json_filename = output_config.get('json_filename')
+                # Try to parse as JSON first
+                try:
+                    json_obj = json.loads(content_to_save) if isinstance(content_to_save, str) else content_to_save
+                    json_str = json.dumps(json_obj, indent=2)
+                    file_path = self._write_to_file(json_str, json_filename)
+                except (json.JSONDecodeError, TypeError):
+                    # If not valid JSON, save as is
+                    file_path = self._write_to_file(str(content_to_save), json_filename)
+                
+                if file_path:
+                    created_files.append(file_path)
+                    logger.info(f"Content saved as JSON to {file_path}")
         
         return created_files
     
@@ -247,9 +275,6 @@ class OutputHandler:
             return None
         
         try:
-            # Create base output directory
-            os.makedirs(self.output_dir, exist_ok=True)
-            
             # Handle subdirectory if provided
             if subdirectory:
                 dir_path = os.path.join(self.output_dir, subdirectory)
@@ -258,11 +283,11 @@ class OutputHandler:
             else:
                 file_path = os.path.join(self.output_dir, filename)
             
-            # Write content to file
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            
-            return file_path
+            # Use the unified write_by_extension method that handles all file types
+            extension = os.path.splitext(filename)[1].lower()
+            success = self.file_writer.write_by_extension(content, file_path)
+                
+            return file_path if success else None
         except Exception as e:
             logger.error(f"Error writing to file {filename}: {str(e)}")
             return None
@@ -287,7 +312,10 @@ class OutputHandler:
         
         # Extract structured data from response
         structured_data = self._extract_structured_data(response)
-        logger.debug(f"Extracted structured data keys: {list(structured_data.keys())}")
+        logger.debug("Extracted structured data keys: %s", list(structured_data.keys()))
+        
+        # Log more detailed information about structured data for debugging
+        logger.info("STRUCTURED DATA DUMP: %s", structured_data)
         
         # Log more detailed information about the response for debugging
         if isinstance(response, dict):
@@ -333,6 +361,43 @@ class OutputHandler:
         display_content = None
         collected_display_outputs = []
         
+        # Emergency fallback check - if we have a website generation pattern but no HTML content,
+        # try one last aggressive extraction from the raw response
+        website_pattern = any(output.output_type == OutputType.HTML for output in pattern_outputs)
+        html_output = next((output for output in pattern_outputs if output.output_type == OutputType.HTML), None)
+        if website_pattern and html_output and not html_output.get_content() and isinstance(response, dict) and 'content' in response:
+            logger.warning("Website pattern detected but HTML content missing - trying emergency extraction")
+            raw_content = response['content'] if isinstance(response['content'], str) else str(response['content'])
+            
+            # Try to find HTML content
+            html_match = re.search(r'<!DOCTYPE html>[\s\S]*?<html[\s\S]*?<body[\s\S]*?</body>[\s\S]*?</html>', 
+                                  raw_content, re.IGNORECASE)
+            if html_match:
+                # Get the HTML content and clean up escaped characters
+                html_content = html_match.group(0)
+                html_content = self._clean_escaped_content(html_content)
+                html_output.set_content(html_content)
+                logger.info("Emergency HTML content extraction successful")
+                
+                # Also try to find CSS and JS content
+                css_output = next((output for output in pattern_outputs if output.output_type == OutputType.CSS), None)
+                if css_output and not css_output.get_content():
+                    css_match = re.search(r'```css\s*([\s\S]*?)\s*```', raw_content, re.DOTALL)
+                    if css_match:
+                        css_content = css_match.group(1)
+                        css_content = self._clean_escaped_content(css_content)
+                        css_output.set_content(css_content)
+                        logger.info("Emergency CSS content extraction successful")
+                
+                js_output = next((output for output in pattern_outputs if output.output_type == OutputType.JS), None)
+                if js_output and not js_output.get_content():
+                    js_match = re.search(r'```(?:js|javascript)\s*([\s\S]*?)\s*```', raw_content, re.DOTALL)
+                    if js_match:
+                        js_content = js_match.group(1)
+                        js_content = self._clean_escaped_content(js_content)
+                        js_output.set_content(js_content)
+                        logger.info("Emergency JS content extraction successful")
+        
         # Process each output in the exact order defined in the pattern
         for output in ordered_outputs:
             content = output.get_content()
@@ -373,28 +438,75 @@ class OutputHandler:
             # Process file writes in order    
             elif output.action == OutputAction.WRITE:
                 content = output.get_content()
-            logger.info(f"Processing write output: {output.name}")
-            if output.write_to_file and output_dir:
-                file_path = os.path.join(output_dir, output.write_to_file)
-                try:
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    
-                    # Ensure content is a string
-                    if not isinstance(content, str):
-                        if isinstance(content, (dict, list)):
-                            content = json.dumps(content, indent=2)
-                        else:
-                            content = str(content)
+                logger.info(f"Processing write output: {output.name}")
+                if output.write_to_file and output_dir:
+                    file_path = os.path.join(output_dir, output.write_to_file)
+                    try:
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        
+                        # Check if content exists
+                        if content is None:
+                            logger.warning(f"No content found for {output.name}, skipping file write")
+                            continue
+                        
+                        # Handle content size
+                        content_size = len(str(content)) if content else 0
+                        if content_size > 1000000:  # 1MB
+                            logger.warning(f"Very large content ({content_size/1000000:.2f}MB) for {output.name}")
+                        
+                        # Ensure content is a string
+                        if not isinstance(content, str):
+                            if isinstance(content, (dict, list)):
+                                try:
+                                    content = json.dumps(content, indent=2)
+                                except Exception as je:
+                                    logger.error(f"Error converting JSON: {str(je)}")
+                                    content = str(content)  # Fallback to simple string representation
+                            else:
+                                content = str(content)
+                        
+                        # Clean content for specific output types that might have problematic characters
+                        if output.output_type in [OutputType.HTML, OutputType.CSS, OutputType.JS]:
+                            # Remove any null bytes or other problematic characters
+                            content = content.replace('\x00', '')
                             
-                    # Write to file
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content)
-                    created_files.append(file_path)
-                    logger.info(f"Saved {output.name} to {file_path}")
-                except Exception as e:
-                    logger.error(f"Error writing output {output.name} to file: {str(e)}")
-        
-        # Combine all display outputs to return (or use the first one if there are multiple)
+                            # Check for and remove leading/trailing code block markers
+                            if output.output_type == OutputType.HTML:
+                                content = re.sub(r'^```html\s*', '', content)
+                            elif output.output_type == OutputType.CSS:
+                                content = re.sub(r'^```css\s*', '', content)
+                            elif output.output_type == OutputType.JS:
+                                content = re.sub(r'^```js\s*|^```javascript\s*', '', content)
+                                
+                            content = re.sub(r'\s*```$', '', content)
+                        
+                        # Log content type information
+                        logger.info("Writing file to %s", file_path)
+                        logger.info("Content type: %s (%s)", output.name, output.output_type)
+                        logger.debug(f"First 100 chars of content: {content[:100]}")
+                                
+                        # Write to file using the file writer
+                        success = self.file_writer.write_by_extension(content, file_path)
+                        if success:
+                            created_files.append(file_path)
+                            logger.info("Write success: %s", success)
+                            logger.info("Saved %s to %s", output.name, file_path)
+                        else:
+                            logger.error("Failed to write %s to %s", output.name, file_path)
+                            
+                            # Try direct file write as a fallback
+                            try:
+                                logger.info("Attempting direct file write as fallback")
+                                with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
+                                    f.write(content)
+                                logger.info(f"Direct file write succeeded for {file_path}")
+                                created_files.append(file_path)
+                            except Exception as dw_err:
+                                logger.error(f"Direct file write also failed: {str(dw_err)}")
+                    except Exception as e:
+                        logger.error("Error writing output %s to file: %s", output.name, str(e))
+                        import traceback
+                        logger.debug(f"Error details: {traceback.format_exc()}")        # Combine all display outputs to return (or use the first one if there are multiple)
         if collected_display_outputs:
             visual_content = "\n\n".join(collected_display_outputs)
         
@@ -466,7 +578,44 @@ class OutputHandler:
             response: Original response from the AI
         """
         # Log what we're working with
-        logger.debug(f"Extracting content from structured data with keys: {list(structured_data.keys())}")
+        logger.info(f"Extracting content from structured data with keys: {list(structured_data.keys())}")
+        
+        # If we have an empty structured_data but a dict response, try to use it directly
+        if not structured_data and isinstance(response, dict):
+            logger.warning("Structured data is empty but response is a dictionary, trying direct extraction")
+            if 'content' in response and isinstance(response['content'], str):
+                # Try to get the response content
+                raw_content = response['content']
+                logger.info(f"Using raw content from response (length: {len(raw_content)})")
+                
+                # Try to extract content using regex patterns
+                html_match = re.search(r'```html\s*(.*?)\s*```', raw_content, re.DOTALL)
+                css_match = re.search(r'```css\s*(.*?)\s*```', raw_content, re.DOTALL)
+                js_match = re.search(r'```(?:js|javascript)\s*(.*?)\s*```', raw_content, re.DOTALL)
+                
+                # Add any found matches to structured_data
+                if html_match:
+                    structured_data['html_content'] = html_match.group(1)
+                    logger.info("Extracted HTML content from raw response")
+                
+                if css_match:
+                    structured_data['css_styles'] = css_match.group(1)
+                    logger.info("Extracted CSS content from raw response")
+                    
+                if js_match:
+                    structured_data['javascript_code'] = js_match.group(1)
+                    logger.info("Extracted JavaScript content from raw response")
+        
+        # Add debugging for empty structured data
+        if not structured_data:
+            logger.error("Structured data is empty, outputs will not be populated properly")
+            # Try to log the response content for debugging
+            if isinstance(response, dict) and 'content' in response:
+                content_sample = response['content'][:500] + "..." if len(response['content']) > 500 else response['content']
+                logger.debug(f"Response content: {content_sample}")
+            elif isinstance(response, str):
+                content_sample = response[:500] + "..." if len(response) > 500 else response
+                logger.debug(f"Response string: {content_sample}")
         
         # Process each output definition
         for output in pattern_outputs:
@@ -475,30 +624,30 @@ class OutputHandler:
                 continue
                 
             content = None
-            logger.debug(f"Looking for content for output: {output.name}")
+            logger.info(f"Looking for content for output: {output.name}")
             
             # Step 1: Direct field matching in structured data - this should be the main way
             # to get outputs in the new pattern system
             if output.name in structured_data:
                 content = structured_data[output.name]
-                logger.debug(f"Found direct match for {output.name} in structured data")
+                logger.info(f"Found direct match for {output.name} in structured data")
             
             # Step 2: Type-based field matching for common field names
             elif not content:
                 if output.output_type == OutputType.HTML and "html_content" in structured_data:
                     content = structured_data["html_content"]
-                    logger.debug("Found html_content match based on output type")
+                    logger.info("Found html_content match based on output type")
                     
                 elif output.output_type == OutputType.CSS and "css_styles" in structured_data:
                     content = structured_data["css_styles"]
-                    logger.debug("Found css_styles match based on output type")
+                    logger.info("Found css_styles match based on output type")
                     
                 elif output.output_type == OutputType.JS and ("javascript_code" in structured_data or "script" in structured_data):
                     content = structured_data.get("javascript_code") or structured_data.get("script")
-                    logger.debug("Found javascript match based on output type")
+                    logger.info("Found javascript match based on output type")
             
             # Step 3: Extract from code blocks by language (last resort)
-            if not content and isinstance(response, str):
+            if not content:
                 language_map = {
                     OutputType.HTML: "html",
                     OutputType.CSS: "css",
@@ -509,10 +658,25 @@ class OutputHandler:
                     OutputType.TEXT: "text",
                 }
                 language = language_map.get(output.output_type)
-                if language:
+                
+                # First try to extract from response string
+                if language and isinstance(response, str):
                     content = self._extract_from_code_blocks(response, language)
                     if content:
-                        logger.debug(f"Extracted {output.name} from code block of type {language}")
+                        logger.info(f"Extracted {output.name} from code block of type {language} in direct response")
+                
+                # If that fails, try to extract from the content field if available
+                if not content and language and isinstance(response, dict) and 'content' in response and isinstance(response['content'], str):
+                    content = self._extract_from_code_blocks(response['content'], language)
+                    if content:
+                        logger.info(f"Extracted {output.name} from code block of type {language} in response content")
+            
+            # Step 4: For website generation, try searching for common patterns if still not found
+            if not content and output.output_type in [OutputType.HTML, OutputType.CSS, OutputType.JS]:
+                logger.info(f"Trying fallback pattern extraction for {output.name}")
+                content = self._extract_content_by_patterns(response, output.output_type)
+                if content:
+                    logger.info(f"Found content for {output.name} using pattern extraction")
             
             # If content found, set it
             if content is not None:
@@ -520,12 +684,98 @@ class OutputHandler:
                 if output.output_type == OutputType.MARKDOWN and isinstance(content, str):
                     # Make sure markdown content is properly formatted
                     output.set_content(content)
+                    logger.info(f"Set content for {output.name} (MARKDOWN, length: {len(content)})")
                 else:
                     output.set_content(content)
-                
-                logger.debug(f"Content found for output {output.name}")
+                    content_len = len(content) if isinstance(content, str) else "N/A"
+                    logger.info(f"Set content for {output.name} (type: {output.output_type}, length: {content_len})")
             else:
-                logger.debug(f"No content found for output {output.name}")
+                logger.error(f"No content found for output {output.name} - will have empty output")
+    
+    def _extract_content_by_patterns(self, response: Union[str, Dict], output_type: OutputType) -> Optional[str]:
+        """Extract content from response using common patterns for web content.
+        
+        This is a more aggressive fallback method when regular extraction fails.
+        
+        Args:
+            response: The AI response
+            output_type: Type of output to extract
+            
+        Returns:
+            Optional[str]: Extracted content or None if not found
+        """
+        # Extract the string content to search in
+        content_to_search = ""
+        if isinstance(response, str):
+            content_to_search = response
+        elif isinstance(response, dict) and 'content' in response:
+            content_to_search = response['content'] if isinstance(response['content'], str) else str(response['content'])
+        else:
+            # Try to convert entire response to string as last resort
+            try:
+                content_to_search = str(response)
+            except:
+                return None
+        
+        # Early return if no content
+        if not content_to_search:
+            return None
+            
+        try:
+            # Different patterns based on output type
+            if output_type == OutputType.HTML:
+                # Pattern 1: Look for complete HTML documents
+                html_pattern = r'<!DOCTYPE html>[\s\S]*?<html[\s\S]*?<head[\s\S]*?<body[\s\S]*?</body>[\s\S]*?</html>'
+                match = re.search(html_pattern, content_to_search, re.IGNORECASE)
+                if match:
+                    return match.group(0)
+                
+                # Pattern 2: Look for HTML fragments with tags
+                html_fragment = r'<div[\s\S]*?</div>|<section[\s\S]*?</section>'
+                matches = re.findall(html_fragment, content_to_search, re.IGNORECASE)
+                if matches and len(matches[0]) > 50:  # Make sure it's substantial
+                    return matches[0]
+                    
+            elif output_type == OutputType.CSS:
+                # Pattern 1: Look for CSS rule blocks
+                css_pattern = r'(\w+(?:\s*,\s*\w+)*\s*\{[\s\S]*?\})'
+                matches = re.findall(css_pattern, content_to_search)
+                if matches:
+                    # Combine multiple CSS rules
+                    return '\n\n'.join(matches)
+                    
+                # Pattern 2: Look for anything that looks like CSS
+                css_simple = r'([\w\s\.\#\-]+\s*\{[^}]*\})'
+                matches = re.findall(css_simple, content_to_search)
+                if matches:
+                    return '\n\n'.join(matches)
+                    
+            elif output_type == OutputType.JS:
+                # Pattern 1: Look for complete JS blocks
+                js_patterns = [
+                    r'document\.addEventListener\([\'"]DOMContentLoaded[\'"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]*?\}\s*\);',
+                    r'function\s+\w+\s*\([^)]*\)\s*\{[\s\S]*?\}',
+                    r'const\s+\w+\s*=\s*function\s*\([^)]*\)\s*\{[\s\S]*?\}',
+                    r'let\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\}'
+                ]
+                
+                for pattern in js_patterns:
+                    matches = re.findall(pattern, content_to_search)
+                    if matches:
+                        return '\n\n'.join(matches)
+                
+                # Pattern 2: Look for any JavaScript-like code
+                js_vars = r'(const|let|var)\s+\w+\s*=\s*[^;]+;'
+                matches = re.findall(js_vars, content_to_search)
+                if matches and len(''.join(matches)) > 50:
+                    return '\n'.join(matches)
+            
+            # No suitable content found
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error in pattern extraction: {str(e)}")
+            return None
     
     def _extract_command_from_response(self, response: Union[str, Dict]) -> Optional[str]:
         """Extract command string from different response formats.
@@ -686,14 +936,13 @@ class OutputHandler:
             # Ensure directory exists
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             
-            # Write to file
-            try:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+            # Write to file using the file writer
+            success = self.file_writer.write_by_extension(content, file_path)
+            if success:
                 created_files.append(file_path)
                 logger.info(f"Saved {output.name} to {file_path}")
-            except Exception as e:
-                logger.error(f"Error writing output {output.name} to file: {str(e)}")
+            else:
+                logger.error(f"Failed to write {output.name} to {file_path}")
         
         return created_files
     
@@ -709,20 +958,35 @@ class OutputHandler:
         Returns:
             Dict: Extracted structured data from the 'results' object
         """
-        # Log incoming response type
-        logger.debug(f"Response type: {type(response)}")
+        # Log incoming response type for debugging
+        if isinstance(response, dict):
+            logger.debug(f"Response type: dictionary with keys {list(response.keys())}")
+        else:
+            logger.debug(f"Response type: {type(response)}")
         
         # Initialize empty result
         result_data = {}
         
         # Handle dictionary response
         if isinstance(response, dict):
-            logger.debug(f"Response keys: {list(response.keys())}")
+            # Log response size to help diagnose large response issues
+            if 'content' in response and isinstance(response['content'], str):
+                content_size = len(response['content'])
+                logger.debug(f"Response content size: {content_size} characters")
+                if content_size > 1000000:  # 1MB
+                    logger.warning(f"Very large content detected: {content_size/1000000:.2f}MB")
             
             # Case 1: Standard format with a 'results' object
             if 'results' in response and isinstance(response['results'], dict):
                 logger.debug(f"Found 'results' key with keys: {list(response['results'].keys())}")
-                return response['results']
+                # Make a deep copy to prevent any potential reference issues
+                try:
+                    result_data = dict(response['results'])
+                    return result_data
+                except Exception as e:
+                    logger.error(f"Error copying results data: {str(e)}")
+                    # Fall back to direct reference if copying fails
+                    return response['results']
                 
             # Case 2: Keys without a 'results' wrapper - see if they match pattern output names
             # This could happen if the AI didn't wrap outputs in 'results' object
@@ -965,27 +1229,67 @@ class OutputHandler:
         Returns:
             Optional[str]: Extracted content or None
         """
-        # Look for code blocks with the specified language
-        pattern = rf'```{language}?\n([\s\S]*?)\n```'
-        matches = re.finditer(pattern, text, re.IGNORECASE)
+        if not isinstance(text, str):
+            return None
         
-        for match in matches:
-            content = match.group(1).strip()
-            return self._clean_escaped_content(content)
+        try:
+            # Record original text size for debugging
+            text_size = len(text)
+            logger.debug(f"Extracting {language} code blocks from {text_size} character text")
+            
+            # Build more robust patterns for different language formats
+            language_variations = [language, language.lower(), language.capitalize()]
+            if language.lower() == 'javascript':
+                language_variations.append('js')
+            elif language.lower() == 'js':
+                language_variations.append('javascript')
+            elif language.lower() == 'markdown':
+                language_variations.append('md')
+            elif language.lower() == 'md':
+                language_variations.append('markdown')
+                
+            # First look for code blocks with the exact language
+            for lang_variation in language_variations:
+                # More robust pattern to handle various code block formats
+                pattern = rf'```\s*{lang_variation}\s*\n([\s\S]*?)\n```'
+                matches = re.finditer(pattern, text, re.IGNORECASE)
+                
+                for match in matches:
+                    content = match.group(1).strip()
+                    if content:
+                        logger.debug(f"Found {lang_variation} code block with {len(content)} chars")
+                        # Clean escaped content
+                        return re.sub(r'\\([`\'"])', r'\1', content)
+            
+            # If no specific language blocks found, try without language identifier
+            pattern = r'```\s*\n([\s\S]*?)\n```'
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            
+            for match in matches:
+                content = match.group(1).strip()
+                if content:
+                    logger.debug(f"Found generic code block with {len(content)} chars")
+                    # Clean escaped content
+                    return re.sub(r'\\([`\'"])', r'\1', content)
+            
+            # Also look for generic code blocks within language-specific sections
+            section_pattern = rf'##\s+{language}.*?\n([\s\S]*?)(?=##|\Z)'
+            section_matches = re.finditer(section_pattern, text, re.IGNORECASE)
+            
+            for match in section_matches:
+                section = match.group(1)
+                code_match = re.search(r'```([\s\S]*?)```', section, re.DOTALL)
+                if code_match:
+                    content = code_match.group(1).strip()
+                    if content:
+                        logger.debug(f"Found code block in {language} section with {len(content)} chars")
+                        return content
         
-        # Also look for generic code blocks within language-specific sections
-        section_pattern = rf'##\s+{language}.*?\n([\s\S]*?)(?=##|\Z)'
-        section_matches = re.finditer(section_pattern, text, re.IGNORECASE)
-        
-        for match in section_matches:
-            section = match.group(1)
-            code_match = re.search(r'```([\s\S]*?)```', section, re.DOTALL)
-            if code_match:
-                content = code_match.group(1).strip()
-                # Remove language identifier if present
-                content = re.sub(r'^[a-z]+\n', '', content)
-                return self._clean_escaped_content(content)
-        
+        except Exception as e:
+            logger.error(f"Error extracting code blocks: {str(e)}")
+            import traceback
+            logger.debug(f"Traceback: {traceback.format_exc()}")
+            
         return None
     
     def _clean_escaped_content(self, content: str) -> str:
@@ -997,10 +1301,24 @@ class OutputHandler:
         Returns:
             str: Cleaned content
         """
-        return (content.replace('\\n', '\n')
-                      .replace('\\"', '"')
-                      .replace('\\\\', '\\')
-                      .replace('\\\n', '\n'))
+        if not isinstance(content, str):
+            return str(content)
+            
+        # Use the same approach as the unified file writer
+        cleaned = content.replace('\\n', '\n')
+        cleaned = cleaned.replace('\\"', '"')
+        cleaned = cleaned.replace("\\'", "'")
+        cleaned = cleaned.replace('\\\\', '\\')
+        cleaned = cleaned.replace('\\t', '\t')
+        cleaned = cleaned.replace('\\r', '\r')
+        cleaned = cleaned.replace('\\\n', '\n')
+        
+        # Remove JSON-style unicode escapes
+        cleaned = re.sub(r'\\u([0-9a-fA-F]{4})', 
+                         lambda m: chr(int(m.group(1), 16)), 
+                         cleaned)
+                         
+        return cleaned
     
     def _get_output_file_path(self, output: PatternOutput, output_dir: str) -> Optional[str]:
         """Get appropriate file path for an output.

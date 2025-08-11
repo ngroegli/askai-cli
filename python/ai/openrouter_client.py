@@ -1,7 +1,6 @@
 import requests
 import json
-import os
-from typing import List, Dict, Any, Optional, Union, Callable
+from typing import List, Dict, Any, Optional, Callable
 from config import load_config
 from logger import setup_logger
 from utils import print_error_or_warnings
@@ -132,12 +131,12 @@ class OpenRouterClient:
                 
         return result
     
-    def _configure_pdf_handling(self, payload, content_info):
+
+    def _configure_pdf_handling(self, payload):
         """Configure the payload for PDF handling.
         
         Args:
             payload: The API payload to update
-            content_info: Content type information from _detect_content_types
             
         Returns:
             Updated payload with PDF handling configuration
@@ -147,7 +146,7 @@ class OpenRouterClient:
             payload["model"] = self.config["default_pdf_model"]
         else:
             payload["model"] = "anthropic/claude-sonnet-4"  # Default PDF-capable model
-            
+        
         # Add the PDF processing plugin (preserving any existing plugins if possible)
         pdf_plugin = {
             "id": "file-parser",
@@ -155,9 +154,7 @@ class OpenRouterClient:
                 "engine": "mistral-ocr"
             }
         }
-        
         self._add_plugin_to_payload(payload, pdf_plugin)
-        
         return payload
         
     def _add_plugin_to_payload(self, payload: Dict[str, Any], plugin: Dict[str, Any]) -> Dict[str, Any]:
@@ -191,12 +188,11 @@ class OpenRouterClient:
             
         return payload
         
-    def _configure_multimodal_handling(self, payload, content_info):
+    def _configure_multimodal_handling(self, payload):
         """Configure the payload for multimodal content handling.
         
         Args:
             payload: The API payload to update
-            content_info: Content type information from _detect_content_types
             
         Returns:
             Updated payload with multimodal configuration
@@ -245,7 +241,7 @@ class OpenRouterClient:
         """
         logger.warning(json.dumps({"log_message": message}))
         if warning_only:
-            print_error_or_warnings(text=message, warning_only=True)
+            print_error_or_warnings(text=message, warning_only=warning_only)
     
     def _handle_api_response(
         self, 
@@ -352,7 +348,7 @@ class OpenRouterClient:
         # Step 3: Configure payload based on content types (if no explicit model_config provided)
         if content_info["has_multimodal"] and not model_config:
             if content_info["has_pdf"]:
-                self._configure_pdf_handling(payload, content_info)
+                self._configure_pdf_handling(payload)
                 
                 # Add detailed logging for PDF handling
                 file_format_desc = ("an external PDF URL" if content_info["has_pdf_url"] 
@@ -367,7 +363,7 @@ class OpenRouterClient:
                 }
                 logger.debug(json.dumps(log_message))
             else:
-                self._configure_multimodal_handling(payload, content_info)
+                self._configure_multimodal_handling(payload)
                 
                 # Log warning if using default vision model
                 if "default_vision_model" not in self.config:
@@ -403,7 +399,7 @@ class OpenRouterClient:
         
         # Step 7: Special handling for PDF URLs (this overrides any previous plugin configuration)
         if content_info["has_pdf_url"]:
-            self._configure_pdf_handling(payload, content_info)
+            self._configure_pdf_handling(payload)
             logger.debug(json.dumps({
                 "log_message": "Configured for PDF URL processing",
                 "model": payload["model"],

@@ -3,8 +3,6 @@ Common utilities and functions shared across the output module.
 """
 
 import codecs
-import re
-from typing import Optional
 
 
 def unescape_string(text: str) -> str:
@@ -25,12 +23,12 @@ def unescape_string(text: str) -> str:
     # Quick check if this content appears to need unescaping
     needs_unescaping = False
     escape_indicators = ['\\n', '\\t', '\\"', "\\'", '\\\\', '\\r']
-    
+
     for indicator in escape_indicators:
         if indicator in text:
             needs_unescaping = True
             break
-    
+
     if not needs_unescaping:
         return text
     

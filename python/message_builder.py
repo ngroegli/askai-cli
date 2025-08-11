@@ -37,8 +37,8 @@ class MessageBuilder:
         self.pattern_manager = pattern_manager
         self.logger = logger
 
-    def build_messages(self, question=None, file_input=None, pattern_id=None, 
-                      pattern_input=None, format="rawtext", url=None, image=None, 
+    def build_messages(self, question=None, file_input=None, pattern_id=None,
+                      pattern_input=None, format="rawtext", url=None, image=None,
                       pdf=None, image_url=None, pdf_url=None):
         """Builds the message list for OpenRouter.
         
@@ -91,7 +91,7 @@ class MessageBuilder:
             else:
                 # Add URL context to the question
                 question = f"Please analyze the content from this URL: {url}\n\nQuestion: {question}"
-        
+
         # Handle image input - convert to base64 for multimodal message
         if image:
             self.logger.info(json.dumps({
@@ -436,6 +436,7 @@ class MessageBuilder:
         # Check for special file inputs and handle them specially
         image_file_input = None
         pdf_file_input = None
+        image_base64 = None
         structured_inputs = dict(pattern_inputs)  # Make a copy to modify
         
         # Check if there are any special inputs to handle (image_file, pdf_file, image_url, pdf_url)

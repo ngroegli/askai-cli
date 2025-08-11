@@ -58,18 +58,15 @@ input_groups:
 
 ```yaml
 results:
-  - name: summary
-    description: Concise interpretation of the image
-    type: text
-    required: true
-    example: "The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon."
-
   - name: detailed_analysis
     description: Detailed analysis with key elements and metadata
     type: markdown
     required: true
     example: |
       # Image Interpretation
+
+      ## Summary
+      The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon.
       
       ## Description
       The image shows a coastal sunset scene with a silhouetted palm tree in the foreground. The sky displays vibrant orange and purple hues reflected in the calm ocean water. Two small boats can be seen on the horizon. The composition creates a peaceful, tropical atmosphere typical of vacation destinations.

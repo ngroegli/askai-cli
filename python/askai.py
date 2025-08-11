@@ -91,8 +91,6 @@ def main():
         enable_url_search=enable_url_search
     )
 
-    # Don't print raw response here, it will be handled by output_handler
-
     # Store chat history if using persistent chat
     chat_manager.store_chat_conversation(
         chat_id, messages, response, resolved_pattern_id, pattern_manager
@@ -149,9 +147,7 @@ def main():
         # Set output directory to parent directory of output file
         output_dir = os.path.dirname(os.path.abspath(output_path))
         output_handler.output_dir = output_dir
-        
-    # For pattern output files, if no directory specified, use interactive prompt
-    
+            
     # Use the pattern manager to handle the response if we have a pattern
     if resolved_pattern_id:
         # Check if the response is already a properly formatted JSON with a 'results' field
@@ -178,16 +174,7 @@ def main():
             response, 
             output_handler
         )
-        # Only print the formatted output if it starts with an error message
-        if formatted_output:
-            # Check if output starts with "No visual output" or "Failed to extract"
-            if formatted_output.startswith("No visual") or formatted_output.startswith("Failed to"):
-                # Fall back to printing the raw response content as a debugging measure
-                print("DEBUG: Output processing failed, showing raw response:")
-                if isinstance(response, dict) and 'content' in response:
-                    print(response['content'])
-                else:
-                    print(formatted_output)
+
     else:
         # Default output handling for non-pattern responses
         formatted_output, created_files = output_handler.process_output(
