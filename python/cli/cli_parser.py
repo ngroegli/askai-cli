@@ -3,11 +3,10 @@ CLI argument parsing and validation module.
 Handles all command-line argument setup, parsing, and validation logic.
 """
 
-import argparse
 import sys
 import json
-from .banner_argument_parser import BannerArgumentParser
 from utils import print_error_or_warnings
+from .banner_argument_parser import BannerArgumentParser
 
 
 class CLIParser:
@@ -25,9 +24,12 @@ class CLIParser:
         question_group.add_argument('-q', '--question', help='Your question for the AI')
         question_group.add_argument('-fi', '--file-input', help='Input file to include as context')
         question_group.add_argument('-url', '--url', help='URL to analyze/summarize along with your question')
-        question_group.add_argument('-img', '--image', help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
-        question_group.add_argument('-img-url', '--image-url', help='Image URL to analyze along with your question')
-        question_group.add_argument('-pdf', '--pdf', help='PDF file to analyze along with your question (must have .pdf extension)')
+        question_group.add_argument('-img', '--image', 
+                           help='Image file to analyze along with your question (JPG, PNG, WebP, etc)')
+        question_group.add_argument('-img-url', '--image-url', 
+                           help='Image URL to analyze along with your question')
+        question_group.add_argument('-pdf', '--pdf', 
+                           help='PDF file to analyze along with your question (must have .pdf extension)')
         question_group.add_argument('-pdf-url', '--pdf-url', help='PDF URL to analyze along with your question')
         question_group.add_argument('-o', '--output', help='Output file to save result')
         question_group.add_argument('-f', '--format', 
@@ -123,28 +125,43 @@ class CLIParser:
         using_pattern = args.use_pattern is not None
         
         # Check if question-related parameters are used with a pattern
-        if using_pattern and any([args.question, has_url, has_image, has_image_url, has_pdf, has_pdf_url, args.file_input, 
-                                args.output, args.format != "rawtext", args.plain_md, args.model]):
+        if using_pattern and any([
+            args.question, has_url, has_image, has_image_url, 
+            has_pdf, has_pdf_url, args.file_input, args.output, 
+            args.format != "rawtext", args.plain_md, args.model
+        ]):
             logger.warning(json.dumps({
                 "log_message": "User provided question logic parameters with a pattern; these will be ignored"
             }))
             print_error_or_warnings(
-                text="Question logic parameters (-q, -url, -img, -img-url, -pdf, -pdf-url, -fi, -o, -f, --plain-md, -m) are ignored when using a pattern (-up). Pattern inputs should be provided using -pi.",
+                text=(
+                    "Question logic parameters (-q, -url, -img, -img-url, -pdf, -pdf-url, "
+                    "-fi, -o, -f, --plain-md, -m) are ignored when using a pattern (-up). "
+                    "Pattern inputs should be provided using -pi."
+                ),
                 warning_only=True
             )
         
-        if not args.question and not args.use_pattern and not has_command and not has_url and not has_image and not has_pdf and not has_image_url and not has_pdf_url:
+        if not (args.question or args.use_pattern or has_command or 
+                has_url or has_image or has_pdf or has_image_url or has_pdf_url):
             logger.error(json.dumps({
-                "log_message": "User did not provide a question with -q, URL with -url, image with -img/--image-url, PDF with -pdf/--pdf-url, or a dedicated pattern with -up"
+                "log_message": (
+                    "User did not provide a question with -q, URL with -url, "
+                    "image with -img/--image-url, PDF with -pdf/--pdf-url, "
+                    "or a dedicated pattern with -up"
+                )
             }))
             print_error_or_warnings(
-                text="Provide a question with -q, URL with -url, image with -img/--image-url, PDF with -pdf/--pdf-url, or a dedicated pattern with -up"
+                text=(
+                    "Provide a question with -q, URL with -url, image with -img/--image-url, "
+                    "PDF with -pdf/--pdf-url, or a dedicated pattern with -up"
+                )
             )
             sys.exit(1)
 
         # Validate OpenRouter commands
         if args.openrouter is not None:
-            if len(args.openrouter) == 0:
+            if not args.openrouter:  # Empty sequence evaluates to False in boolean context
                 logger.error(json.dumps({
                     "log_message": "User provided --openrouter without any command"
                 }))

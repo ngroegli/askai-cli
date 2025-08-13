@@ -1,12 +1,23 @@
+"""
+Output handling module for askai-cli.
+
+This module handles all output processing from AI responses, including:
+- Extracting different content types (HTML, CSS, JS, markdown, etc.)
+- Formatting content for console display
+- Writing content to files
+- Processing pattern-based outputs with structured content
+- Executing commands based on output actions
+"""
+
 import os
 import json
 import re
 import logging
+import traceback
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any, Union
 
 from patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
-from utils import print_error_or_warnings
 from .formatters.console_formatter import ConsoleFormatter
 from .formatters.markdown_formatter import MarkdownFormatter
 from .file_writer import FileWriter
@@ -20,7 +31,7 @@ class OutputHandler:
     formats it for display, and handles writing to files or executing commands.
     """
 
-    def __init__(self, output_dir: str = None):
+    def __init__(self, output_dir: Optional[str] = None):
         """Initialize the OutputHandler with optional output directory.
         
         Args:
@@ -37,12 +48,14 @@ class OutputHandler:
         # Initialize file writer
         self.file_writer = FileWriter(output_dir=output_dir, logger=logger)
     
-    def process_output(self, 
-                      response: Union[str, Dict], 
-                      output_config: Optional[Dict[str, Any]] = None,
-                      console_output: bool = True,
-                      file_output: bool = False,
-                      pattern_outputs: Optional[List[PatternOutput]] = None) -> Tuple[str, List[str]]:
+    def process_output(
+            self, 
+            response: Union[str, Dict], 
+            output_config: Optional[Dict[str, Any]] = None,
+            console_output: bool = True,
+            file_output: bool = False,
+            pattern_outputs: Optional[List[PatternOutput]] = None
+    ) -> Tuple[str, List[str]]:
         """Process AI output based on configuration.
         
         This method is the main entry point for handling output from the AI service.
@@ -65,17 +78,18 @@ class OutputHandler:
         # For pattern-specific response handling
         pattern_id = output_config.get('pattern_id')
         if pattern_id:
-            logger.debug(f"Using pattern-specific output handling for {pattern_id}")
+            logger.debug("Using pattern-specific output handling for %s", pattern_id)
         
         # Get normalized string representation of response (preserving original)
         response_text = self._normalize_response(response)
         
         # Handle pattern outputs in standardized way
         if pattern_outputs:
-            logger.info(f"Processing pattern outputs: {len(pattern_outputs)} outputs defined")
+            logger.info("Processing pattern outputs: %d outputs defined", len(pattern_outputs))
             # Log each output for debugging
             for i, output in enumerate(pattern_outputs):
-                logger.info(f"  Output {i+1}: name={output.name}, type={output.output_type}, action={output.action}")
+                logger.info("  Output %d: name=%s, type=%s, action=%s", 
+                            i+1, output.name, output.output_type, output.action)
             return self._handle_standardized_pattern_output(response, pattern_outputs, output_config)
         
         # For regular output without pattern definitions
@@ -104,7 +118,9 @@ class OutputHandler:
             elif 'message' in response:
                 return response['message']
             # API formats with nested choices
-            elif 'choices' in response and isinstance(response['choices'], list) and response['choices']:
+            elif ('choices' in response and 
+                  isinstance(response['choices'], list) and 
+                  response['choices']):
                 for choice in response['choices']:
                     if isinstance(choice, dict):
                         if 'message' in choice and 'content' in choice['message']:
@@ -197,7 +213,7 @@ class OutputHandler:
                 file_path = self._write_to_file(structured_data['html'], html_filename)
                 if file_path:
                     created_files.append(file_path)
-                    logger.info(f"HTML content saved to {file_path}")
+                    logger.info("HTML content saved to %s", file_path)
             
             # CSS content
             if 'css' in structured_data and isinstance(structured_data['css'], str):
@@ -205,7 +221,7 @@ class OutputHandler:
                 file_path = self._write_to_file(structured_data['css'], css_filename)
                 if file_path:
                     created_files.append(file_path)
-                    logger.info(f"CSS content saved to {file_path}")
+                    logger.info("CSS content saved to %s", file_path)
             
             # JavaScript content
             if 'javascript' in structured_data and isinstance(structured_data['javascript'], str):
@@ -213,17 +229,21 @@ class OutputHandler:
                 file_path = self._write_to_file(structured_data['javascript'], js_filename)
                 if file_path:
                     created_files.append(file_path)
-                    logger.info(f"JavaScript content saved to {file_path}")
+                    logger.info("JavaScript content saved to %s", file_path)
             
             # JSON content
             if 'json' in structured_data:
                 json_content = structured_data['json']
                 json_filename = output_config.get('json_filename', 'data.json')
-                json_str = json.dumps(json_content, indent=2) if isinstance(json_content, (dict, list)) else str(json_content)
+                # Format JSON content appropriately
+                if isinstance(json_content, (dict, list)):
+                    json_str = json.dumps(json_content, indent=2)
+                else:
+                    json_str = str(json_content)
                 file_path = self._write_to_file(json_str, json_filename)
                 if file_path:
                     created_files.append(file_path)
-                    logger.info(f"JSON content saved to {file_path}")
+                    logger.info("JSON content saved to %s", file_path)
             
             # Markdown content
             if 'markdown' in structured_data and isinstance(structured_data['markdown'], str):
@@ -231,36 +251,44 @@ class OutputHandler:
                 file_path = self._write_to_file(structured_data['markdown'], markdown_filename)
                 if file_path:
                     created_files.append(file_path)
-                    logger.info(f"Markdown content saved to {file_path}")
+                    logger.info("Markdown content saved to %s", file_path)
         
         # If no specific content was found but we have a filename, save the raw content
         if not created_files:
             # Try to save as markdown if markdown_filename is specified
             if output_config.get('markdown_filename'):
                 markdown_filename = output_config.get('markdown_filename')
-                file_path = self._write_to_file(content_to_save, markdown_filename)
-                if file_path:
-                    created_files.append(file_path)
-                    logger.info(f"Content saved as markdown to {file_path}")
+                if markdown_filename:  # Ensure filename is not None
+                    file_path = self._write_to_file(content_to_save, markdown_filename)
+                    if file_path:
+                        created_files.append(file_path)
+                        logger.info("Content saved as markdown to %s", file_path)
             # Try to save as JSON if json_filename is specified
             elif output_config.get('json_filename'):
                 json_filename = output_config.get('json_filename')
-                # Try to parse as JSON first
-                try:
-                    json_obj = json.loads(content_to_save) if isinstance(content_to_save, str) else content_to_save
-                    json_str = json.dumps(json_obj, indent=2)
-                    file_path = self._write_to_file(json_str, json_filename)
-                except (json.JSONDecodeError, TypeError):
-                    # If not valid JSON, save as is
-                    file_path = self._write_to_file(str(content_to_save), json_filename)
-                
-                if file_path:
-                    created_files.append(file_path)
-                    logger.info(f"Content saved as JSON to {file_path}")
+                # Ensure filename is not None
+                if json_filename:
+                    # Try to parse as JSON first
+                    try:
+                        json_obj = json.loads(content_to_save) if isinstance(content_to_save, str) else content_to_save
+                        json_str = json.dumps(json_obj, indent=2)
+                        file_path = self._write_to_file(json_str, json_filename)
+                    except (json.JSONDecodeError, TypeError):
+                        # If not valid JSON, save as is
+                        file_path = self._write_to_file(str(content_to_save), json_filename)
+                    
+                    if file_path:
+                        created_files.append(file_path)
+                        logger.info("Content saved as JSON to %s", file_path)
         
         return created_files
     
-    def _write_to_file(self, content: str, filename: str, subdirectory: str = None) -> Optional[str]:
+    def _write_to_file(
+            self, 
+            content: str, 
+            filename: str, 
+            subdirectory: Optional[str] = None
+    ) -> Optional[str]:
         """Write content to a file in the output directory.
         
         Args:
@@ -284,18 +312,22 @@ class OutputHandler:
                 file_path = os.path.join(self.output_dir, filename)
             
             # Use the unified write_by_extension method that handles all file types
-            extension = os.path.splitext(filename)[1].lower()
+            # The file_writer will extract the extension from the file path
             success = self.file_writer.write_by_extension(content, file_path)
                 
             return file_path if success else None
         except Exception as e:
-            logger.error(f"Error writing to file {filename}: {str(e)}")
+            logger.error("Error writing to file %s: %s", filename, str(e))
             return None
     
-    def _handle_standardized_pattern_output(self,
-                                   response: Union[str, Dict],
-                                   pattern_outputs: List[PatternOutput],
-                                   output_config: Optional[Dict[str, Any]] = None) -> Tuple[str, List[str]]:
+    def _handle_standardized_pattern_output(
+            self,
+            response: Union[str, Dict],
+            pattern_outputs: List[PatternOutput],
+            _output_config: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, List[str]]:
+        # Note: output_config parameter is not used but kept for API consistency
+        # Adding underscore prefix to indicate it's intentionally unused
         """Handle standardized pattern outputs.
         
         This method processes outputs based on pattern definitions.
@@ -319,11 +351,11 @@ class OutputHandler:
         
         # Log more detailed information about the response for debugging
         if isinstance(response, dict):
-            logger.debug(f"Response type: dictionary with keys {list(response.keys())}")
+            logger.debug("Response type: dictionary with keys %s", list(response.keys()))
             if 'content' in response:
-                logger.debug(f"Response content sample: {response['content'][:200]}...")
+                logger.debug("Response content sample: %s", response['content'][:200] + "...")
         else:
-            logger.debug(f"Response type: {type(response)}")
+            logger.debug("Response type: %s", type(response))
             
         # Prepare outputs
         created_files = []
@@ -331,7 +363,11 @@ class OutputHandler:
         
         # Check if we have usable data
         if not structured_data:
-            error_msg = "Pattern output requires a valid JSON structure with 'results' field containing outputs"
+            # Construct error message for invalid pattern output
+            error_msg = (
+                "Pattern output requires a valid JSON structure "
+                "with 'results' field containing outputs"
+            )
             logger.error(error_msg)
             # Try to return raw content instead of error
             if isinstance(response, dict) and 'content' in response:
@@ -354,7 +390,7 @@ class OutputHandler:
                 continue
             ordered_outputs.append(output)
             
-        logger.info(f"Processing {len(ordered_outputs)} pattern outputs in original order")
+        logger.info("Processing %d pattern outputs in original order", len(ordered_outputs))
         
         # Process outputs strictly in the original order they were defined in the pattern
         # This ensures we follow the pattern definition order exactly
@@ -364,23 +400,49 @@ class OutputHandler:
         # Emergency fallback check - if we have a website generation pattern but no HTML content,
         # try one last aggressive extraction from the raw response
         website_pattern = any(output.output_type == OutputType.HTML for output in pattern_outputs)
-        html_output = next((output for output in pattern_outputs if output.output_type == OutputType.HTML), None)
-        if website_pattern and html_output and not html_output.get_content() and isinstance(response, dict) and 'content' in response:
+        # Find HTML output if it exists
+        html_output = next(
+            (output for output in pattern_outputs if output.output_type == OutputType.HTML),
+            None
+        )
+        
+        # Check if emergency extraction is needed for website patterns
+        needs_extraction = (
+            website_pattern and html_output and 
+            not html_output.get_content() and 
+            isinstance(response, dict) and 'content' in response
+        )
+        if needs_extraction:
             logger.warning("Website pattern detected but HTML content missing - trying emergency extraction")
-            raw_content = response['content'] if isinstance(response['content'], str) else str(response['content'])
+            # Extract content as string from response
+            if isinstance(response, dict) and 'content' in response:
+                content_value = response['content']
+                raw_content = content_value if isinstance(content_value, str) else str(content_value)
+            else:
+                raw_content = str(response)
             
             # Try to find HTML content
-            html_match = re.search(r'<!DOCTYPE html>[\s\S]*?<html[\s\S]*?<body[\s\S]*?</body>[\s\S]*?</html>', 
-                                  raw_content, re.IGNORECASE)
+            # Pattern to match complete HTML documents
+            html_pattern = r'<!DOCTYPE html>[\s\S]*?<html[\s\S]*?<body[\s\S]*?</body>[\s\S]*?</html>'
+            html_match = re.search(html_pattern, raw_content, re.IGNORECASE)
             if html_match:
                 # Get the HTML content and clean up escaped characters
                 html_content = html_match.group(0)
                 html_content = self._clean_escaped_content(html_content)
-                html_output.set_content(html_content)
-                logger.info("Emergency HTML content extraction successful")
+                
+                # Make sure html_output is not None before setting content
+                if html_output:
+                    html_output.set_content(html_content)
+                    logger.info("Emergency HTML content extraction successful")
+                else:
+                    logger.warning("HTML output object is None, cannot set content")
                 
                 # Also try to find CSS and JS content
-                css_output = next((output for output in pattern_outputs if output.output_type == OutputType.CSS), None)
+                # Find CSS output if it exists
+                css_output = next(
+                    (output for output in pattern_outputs if output.output_type == OutputType.CSS),
+                    None
+                )
                 if css_output and not css_output.get_content():
                     css_match = re.search(r'```css\s*([\s\S]*?)\s*```', raw_content, re.DOTALL)
                     if css_match:
@@ -389,9 +451,15 @@ class OutputHandler:
                         css_output.set_content(css_content)
                         logger.info("Emergency CSS content extraction successful")
                 
-                js_output = next((output for output in pattern_outputs if output.output_type == OutputType.JS), None)
+                # Find JS output if it exists
+                js_output = next(
+                    (output for output in pattern_outputs if output.output_type == OutputType.JS),
+                    None
+                )
                 if js_output and not js_output.get_content():
-                    js_match = re.search(r'```(?:js|javascript)\s*([\s\S]*?)\s*```', raw_content, re.DOTALL)
+                    # Pattern to match JavaScript code blocks
+                    js_pattern = r'```(?:js|javascript)\s*([\s\S]*?)\s*```'
+                    js_match = re.search(js_pattern, raw_content, re.DOTALL)
                     if js_match:
                         js_content = js_match.group(1)
                         js_content = self._clean_escaped_content(js_content)
@@ -401,7 +469,11 @@ class OutputHandler:
         # Process each output in the exact order defined in the pattern
         for output in ordered_outputs:
             content = output.get_content()
-            logger.info(f"Processing output: {output.name}, type: {output.output_type}, action: {output.action}")
+            # Log output processing details
+            logger.info(
+                "Processing output: %s, type: %s, action: %s",
+                output.name, output.output_type, output.action
+            )
             
             # Process based on action type
             if output.action == OutputAction.DISPLAY:
@@ -418,27 +490,27 @@ class OutputHandler:
                     print(display_content)
                     # Also store for return value
                     collected_display_outputs.append(display_content)
-                    logger.info(f"Displayed markdown content for '{output.name}'")
+                    logger.info("Displayed markdown content for '%s'", output.name)
                 elif output.output_type == OutputType.TEXT:
                     display_content = self.formatters['console'].format(content, content_type='text')
                     print(display_content)
                     collected_display_outputs.append(display_content)
-                    logger.info(f"Displayed text content for '{output.name}'")
+                    logger.info("Displayed text content for '%s'", output.name)
                 else:
                     display_content = self.formatters['console'].format(content)
                     print(display_content)
                     collected_display_outputs.append(display_content)
-                    logger.info(f"Displayed generic content for '{output.name}'")
+                    logger.info("Displayed generic content for '%s'", output.name)
             
             # Execute commands in order
             elif output.action == OutputAction.EXECUTE:
-                logger.info(f"Executing command: {output.name}")
+                logger.info("Executing command: %s", output.name)
                 PatternOutput.execute_command(content, output.name)
             
             # Process file writes in order    
             elif output.action == OutputAction.WRITE:
                 content = output.get_content()
-                logger.info(f"Processing write output: {output.name}")
+                logger.info("Processing write output: %s", output.name)
                 if output.write_to_file and output_dir:
                     file_path = os.path.join(output_dir, output.write_to_file)
                     try:
@@ -446,13 +518,13 @@ class OutputHandler:
                         
                         # Check if content exists
                         if content is None:
-                            logger.warning(f"No content found for {output.name}, skipping file write")
+                            logger.warning("No content found for %s, skipping file write", output.name)
                             continue
                         
                         # Handle content size
                         content_size = len(str(content)) if content else 0
                         if content_size > 1000000:  # 1MB
-                            logger.warning(f"Very large content ({content_size/1000000:.2f}MB) for {output.name}")
+                            logger.warning("Very large content (%.2fMB) for %s", content_size/1000000, output.name)
                         
                         # Ensure content is a string
                         if not isinstance(content, str):
@@ -460,7 +532,7 @@ class OutputHandler:
                                 try:
                                     content = json.dumps(content, indent=2)
                                 except Exception as je:
-                                    logger.error(f"Error converting JSON: {str(je)}")
+                                    logger.error("Error converting JSON: %s", str(je))
                                     content = str(content)  # Fallback to simple string representation
                             else:
                                 content = str(content)
@@ -483,7 +555,7 @@ class OutputHandler:
                         # Log content type information
                         logger.info("Writing file to %s", file_path)
                         logger.info("Content type: %s (%s)", output.name, output.output_type)
-                        logger.debug(f"First 100 chars of content: {content[:100]}")
+                        logger.debug("First 100 chars of content: %s", content[:100])
                                 
                         # Write to file using the file writer
                         success = self.file_writer.write_by_extension(content, file_path)
@@ -499,14 +571,14 @@ class OutputHandler:
                                 logger.info("Attempting direct file write as fallback")
                                 with open(file_path, 'w', encoding='utf-8', errors='replace') as f:
                                     f.write(content)
-                                logger.info(f"Direct file write succeeded for {file_path}")
+                                logger.info("Direct file write succeeded for %s", file_path)
                                 created_files.append(file_path)
                             except Exception as dw_err:
-                                logger.error(f"Direct file write also failed: {str(dw_err)}")
+                                logger.error("Direct file write also failed: %s", str(dw_err))
                     except Exception as e:
                         logger.error("Error writing output %s to file: %s", output.name, str(e))
-                        import traceback
-                        logger.debug(f"Error details: {traceback.format_exc()}")        # Combine all display outputs to return (or use the first one if there are multiple)
+                        logger.debug("Error details: %s", traceback.format_exc())
+                        # Combine all display outputs to return (or use the first one if there are multiple)
         if collected_display_outputs:
             visual_content = "\n\n".join(collected_display_outputs)
         
@@ -545,7 +617,8 @@ class OutputHandler:
                                 if 'explanation' in results and isinstance(results['explanation'], str):
                                     logger.debug("Using explanation from parsed JSON content")
                                     markdown_content = results['explanation']
-                                    visual_content = self.formatters['console'].format(markdown_content, content_type='markdown')
+                                    visual_content = self.formatters['console'].format(
+                                        markdown_content, content_type='markdown')
                                     
                                     # Handle the command execution as well if it exists
                                     if 'command' in results and isinstance(results['command'], str):
@@ -561,7 +634,7 @@ class OutputHandler:
                 
         # Return the visual content and created files (with more helpful fallback message)
         if not visual_content:
-            logger.error(f"Failed to extract pattern outputs. Structured data keys: {list(structured_data.keys())}")
+            logger.error("Failed to extract pattern outputs. Structured data keys: %s", list(structured_data.keys()))
             return "Failed to extract pattern outputs. Check the format of the AI response.", created_files
             
         return visual_content, created_files
@@ -578,7 +651,7 @@ class OutputHandler:
             response: Original response from the AI
         """
         # Log what we're working with
-        logger.info(f"Extracting content from structured data with keys: {list(structured_data.keys())}")
+        logger.info("Extracting content from structured data with keys: %s", list(structured_data.keys()))
         
         # If we have an empty structured_data but a dict response, try to use it directly
         if not structured_data and isinstance(response, dict):
@@ -586,7 +659,7 @@ class OutputHandler:
             if 'content' in response and isinstance(response['content'], str):
                 # Try to get the response content
                 raw_content = response['content']
-                logger.info(f"Using raw content from response (length: {len(raw_content)})")
+                logger.info("Using raw content from response (length: %d)", len(raw_content))
                 
                 # Try to extract content using regex patterns
                 html_match = re.search(r'```html\s*(.*?)\s*```', raw_content, re.DOTALL)
@@ -611,11 +684,12 @@ class OutputHandler:
             logger.error("Structured data is empty, outputs will not be populated properly")
             # Try to log the response content for debugging
             if isinstance(response, dict) and 'content' in response:
-                content_sample = response['content'][:500] + "..." if len(response['content']) > 500 else response['content']
-                logger.debug(f"Response content: {content_sample}")
+                content_sample = (response['content'][:500] + "..." 
+                                 if len(response['content']) > 500 else response['content'])
+                logger.debug("Response content: %s", content_sample)
             elif isinstance(response, str):
                 content_sample = response[:500] + "..." if len(response) > 500 else response
-                logger.debug(f"Response string: {content_sample}")
+                logger.debug("Response string: %s", content_sample)
         
         # Process each output definition
         for output in pattern_outputs:
@@ -624,13 +698,13 @@ class OutputHandler:
                 continue
                 
             content = None
-            logger.info(f"Looking for content for output: {output.name}")
+            logger.info("Looking for content for output: %s", output.name)
             
             # Step 1: Direct field matching in structured data - this should be the main way
             # to get outputs in the new pattern system
             if output.name in structured_data:
                 content = structured_data[output.name]
-                logger.info(f"Found direct match for {output.name} in structured data")
+                logger.info("Found direct match for %s in structured data", output.name)
             
             # Step 2: Type-based field matching for common field names
             elif not content:
@@ -642,7 +716,9 @@ class OutputHandler:
                     content = structured_data["css_styles"]
                     logger.info("Found css_styles match based on output type")
                     
-                elif output.output_type == OutputType.JS and ("javascript_code" in structured_data or "script" in structured_data):
+                elif output.output_type == OutputType.JS and (
+                    "javascript_code" in structured_data or "script" in structured_data
+                ):
                     content = structured_data.get("javascript_code") or structured_data.get("script")
                     logger.info("Found javascript match based on output type")
             
@@ -663,20 +739,22 @@ class OutputHandler:
                 if language and isinstance(response, str):
                     content = self._extract_from_code_blocks(response, language)
                     if content:
-                        logger.info(f"Extracted {output.name} from code block of type {language} in direct response")
+                        logger.info("Extracted %s from code block of type %s in direct response", output.name, language)
                 
                 # If that fails, try to extract from the content field if available
-                if not content and language and isinstance(response, dict) and 'content' in response and isinstance(response['content'], str):
+                if (not content and language and isinstance(response, dict) 
+                        and 'content' in response and isinstance(response['content'], str)):
                     content = self._extract_from_code_blocks(response['content'], language)
                     if content:
-                        logger.info(f"Extracted {output.name} from code block of type {language} in response content")
+                        logger.info("Extracted %s from code block of type %s in response content", 
+                                    output.name, language)
             
             # Step 4: For website generation, try searching for common patterns if still not found
             if not content and output.output_type in [OutputType.HTML, OutputType.CSS, OutputType.JS]:
-                logger.info(f"Trying fallback pattern extraction for {output.name}")
+                logger.info("Trying fallback pattern extraction for %s", output.name)
                 content = self._extract_content_by_patterns(response, output.output_type)
                 if content:
-                    logger.info(f"Found content for {output.name} using pattern extraction")
+                    logger.info("Found content for %s using pattern extraction", output.name)
             
             # If content found, set it
             if content is not None:
@@ -684,15 +762,20 @@ class OutputHandler:
                 if output.output_type == OutputType.MARKDOWN and isinstance(content, str):
                     # Make sure markdown content is properly formatted
                     output.set_content(content)
-                    logger.info(f"Set content for {output.name} (MARKDOWN, length: {len(content)})")
+                    logger.info("Set content for %s (MARKDOWN, length: %d)", output.name, len(content))
                 else:
                     output.set_content(content)
                     content_len = len(content) if isinstance(content, str) else "N/A"
-                    logger.info(f"Set content for {output.name} (type: {output.output_type}, length: {content_len})")
+                    logger.info("Set content for %s (type: %s, length: %s)", 
+                               output.name, output.output_type, content_len)
             else:
-                logger.error(f"No content found for output {output.name} - will have empty output")
+                logger.error("No content found for output %s - will have empty output", output.name)
     
-    def _extract_content_by_patterns(self, response: Union[str, Dict], output_type: OutputType) -> Optional[str]:
+    def _extract_content_by_patterns(
+            self, 
+            response: Union[str, Dict], 
+            output_type: OutputType
+    ) -> Optional[str]:
         """Extract content from response using common patterns for web content.
         
         This is a more aggressive fallback method when regular extraction fails.
@@ -709,12 +792,14 @@ class OutputHandler:
         if isinstance(response, str):
             content_to_search = response
         elif isinstance(response, dict) and 'content' in response:
-            content_to_search = response['content'] if isinstance(response['content'], str) else str(response['content'])
+            content_to_search = (response['content'] if isinstance(response['content'], str) 
+                                else str(response['content']))
         else:
             # Try to convert entire response to string as last resort
             try:
                 content_to_search = str(response)
-            except:
+            except Exception as e:
+                logger.error("Failed to convert response to string: %s", str(e))
                 return None
         
         # Early return if no content
@@ -753,7 +838,8 @@ class OutputHandler:
             elif output_type == OutputType.JS:
                 # Pattern 1: Look for complete JS blocks
                 js_patterns = [
-                    r'document\.addEventListener\([\'"]DOMContentLoaded[\'"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]*?\}\s*\);',
+                    r'document\.addEventListener\([\'"]DOMContentLoaded[\'"]\s*,\s*function\s*\([^)]*\)'
+                    r'\s*\{[\s\S]*?\}\s*\);',
                     r'function\s+\w+\s*\([^)]*\)\s*\{[\s\S]*?\}',
                     r'const\s+\w+\s*=\s*function\s*\([^)]*\)\s*\{[\s\S]*?\}',
                     r'let\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\}'
@@ -774,7 +860,7 @@ class OutputHandler:
             return None
             
         except Exception as e:
-            logger.error(f"Error in pattern extraction: {str(e)}")
+            logger.error("Error in pattern extraction: %s", str(e))
             return None
     
     def _extract_command_from_response(self, response: Union[str, Dict]) -> Optional[str]:
@@ -827,7 +913,7 @@ class OutputHandler:
                             if "result" in json_content:
                                 return json_content["result"].strip()
             except Exception as e:
-                logger.warning(f"Error extracting command from response: {str(e)}")
+                logger.warning("Error extracting command from response: %s", str(e))
         
         # Case 4: FALLBACK - Try to find common command patterns in text
         text_content = ""
@@ -908,12 +994,16 @@ class OutputHandler:
                 ext = ".md" if output.output_type == OutputType.MARKDOWN else ".txt"
                 display_file = os.path.join(output_dir, f"{output.name}{ext}")
                 try:
-                    with open(display_file, 'w', encoding='utf-8') as f:
-                        f.write(output.get_content())
-                    created_files.append(display_file)
-                    logger.info(f"Display output '{output.name}' saved to {display_file}")
+                    content = output.get_content()
+                    if content is not None:
+                        with open(display_file, 'w', encoding='utf-8') as f:
+                            f.write(str(content))
+                        created_files.append(display_file)
+                        logger.info("Display output '%s' saved to %s", output.name, display_file)
+                    else:
+                        logger.warning("Cannot save empty content for '%s'", output.name)
                 except Exception as e:
-                    logger.error(f"Error saving display output '{output.name}': {str(e)}")
+                    logger.error("Error saving display output '%s': %s", output.name, str(e))
         
         # Write each file output to file
         for output in file_outputs:
@@ -940,9 +1030,9 @@ class OutputHandler:
             success = self.file_writer.write_by_extension(content, file_path)
             if success:
                 created_files.append(file_path)
-                logger.info(f"Saved {output.name} to {file_path}")
+                logger.info("Saved %s to %s", output.name, file_path)
             else:
-                logger.error(f"Failed to write {output.name} to {file_path}")
+                logger.error("Failed to write %s to %s", output.name, file_path)
         
         return created_files
     
@@ -960,9 +1050,9 @@ class OutputHandler:
         """
         # Log incoming response type for debugging
         if isinstance(response, dict):
-            logger.debug(f"Response type: dictionary with keys {list(response.keys())}")
+            logger.debug("Response type: dictionary with keys %s", list(response.keys()))
         else:
-            logger.debug(f"Response type: {type(response)}")
+            logger.debug("Response type: %s", type(response))
         
         # Initialize empty result
         result_data = {}
@@ -972,19 +1062,19 @@ class OutputHandler:
             # Log response size to help diagnose large response issues
             if 'content' in response and isinstance(response['content'], str):
                 content_size = len(response['content'])
-                logger.debug(f"Response content size: {content_size} characters")
+                logger.debug("Response content size: %d characters", content_size)
                 if content_size > 1000000:  # 1MB
-                    logger.warning(f"Very large content detected: {content_size/1000000:.2f}MB")
+                    logger.warning("Very large content detected: %.2fMB", content_size/1000000)
             
             # Case 1: Standard format with a 'results' object
             if 'results' in response and isinstance(response['results'], dict):
-                logger.debug(f"Found 'results' key with keys: {list(response['results'].keys())}")
+                logger.debug("Found 'results' key with keys: %s", list(response['results'].keys()))
                 # Make a deep copy to prevent any potential reference issues
                 try:
                     result_data = dict(response['results'])
                     return result_data
                 except Exception as e:
-                    logger.error(f"Error copying results data: {str(e)}")
+                    logger.error("Error copying results data: %s", str(e))
                     # Fall back to direct reference if copying fails
                     return response['results']
                 
@@ -998,7 +1088,7 @@ class OutputHandler:
                                    if k not in common_api_keys and not k.startswith('_')}
                                    
             if len(potential_output_keys) > 0:
-                logger.debug(f"Found potential direct output fields: {list(potential_output_keys.keys())}")
+                logger.debug("Found potential direct output fields: %s", list(potential_output_keys.keys()))
                 return potential_output_keys
                 
             # Case 3: API response with nested content field
@@ -1014,7 +1104,8 @@ class OutputHandler:
                         potential_output_keys = {k: v for k, v in content_data.items() 
                                              if k not in common_api_keys and not k.startswith('_')}
                         if len(potential_output_keys) > 0:
-                            logger.debug(f"Found potential output fields in content: {list(potential_output_keys.keys())}")
+                            logger.debug("Found potential output fields in content: %s", 
+                                       list(potential_output_keys.keys()))
                             return potential_output_keys
 
             # Case 4: API response format with choices
@@ -1044,7 +1135,8 @@ class OutputHandler:
                     potential_output_keys = {k: v for k, v in content_data.items() 
                                           if k not in common_api_keys and not k.startswith('_')}
                     if len(potential_output_keys) > 0:
-                        logger.debug(f"Found potential output fields in JSON string: {list(potential_output_keys.keys())}")
+                        logger.debug("Found potential output fields in JSON string: %s", 
+                                   list(potential_output_keys.keys()))
                         return potential_output_keys
         
         # If we couldn't find a properly structured 'results' object, return empty dict
@@ -1063,7 +1155,7 @@ class OutputHandler:
         if not text or not isinstance(text, str):
             return None
             
-        logger.debug(f"Extracting JSON from text: {text[:100]}...")
+        logger.debug("Extracting JSON from text: %s...", text[:100])
             
         # First try to parse the entire text as JSON directly - it might be pure JSON
         try:
@@ -1083,11 +1175,11 @@ class OutputHandler:
                 json_content = json_match.group(1).strip()
                 # Check if content looks like JSON
                 if json_content and (json_content.startswith('{') or json_content.startswith('[')):
-                    logger.debug(f"Found JSON in code block: {json_content[:100]}...")
+                    logger.debug("Found JSON in code block: %s...", json_content[:100])
                     parsed_json = json.loads(json_content)
                     return parsed_json
         except (json.JSONDecodeError, re.error) as e:
-            logger.debug(f"Failed to parse JSON from code block: {str(e)}")
+            logger.debug("Failed to parse JSON from code block: %s", str(e))
         
         # Look for JSON content with ```json followed by content followed by ```
         try:
@@ -1099,7 +1191,7 @@ class OutputHandler:
                     logger.debug("Found and parsed JSON from code block with improved regex")
                     return parsed_json
         except (json.JSONDecodeError, re.error) as e:
-            logger.debug(f"Failed to parse JSON with improved regex: {str(e)}")
+            logger.debug("Failed to parse JSON with improved regex: %s", str(e))
         
         # Try to find JSON-like structure with curly braces
         try:
@@ -1110,7 +1202,7 @@ class OutputHandler:
             for match in matches:
                 try:
                     potential_json = match.group(1)
-                    logger.debug(f"Found potential JSON: {potential_json[:100]}...")
+                    logger.debug("Found potential JSON: %s...", potential_json[:100])
                     parsed_json = json.loads(potential_json)
                     
                     # Only return if it's actually a dictionary with data
@@ -1126,7 +1218,7 @@ class OutputHandler:
                                 logger.debug("JSON has useful keys, using directly")
                                 return {'results': parsed_json}
                 except json.JSONDecodeError:
-                    logger.debug(f"Failed to parse potential JSON: {potential_json[:50]}...")
+                    logger.debug("Failed to parse potential JSON: %s...", potential_json[:50])
                     continue
         except re.error:
             logger.debug("Error in regex pattern for JSON extraction")
@@ -1185,7 +1277,7 @@ class OutputHandler:
             # Method 1: Direct lookup in structured data by name
             if output.name in structured_data:
                 content = structured_data[output.name]
-                logger.debug(f"Found direct match for {output.name} in structured data")
+                logger.debug("Found direct match for %s in structured data", output.name)
             
             # Method 2: Type-based content extraction for common field names
             elif not content:
@@ -1203,21 +1295,21 @@ class OutputHandler:
                     for field_name in type_field_mappings[output.output_type]:
                         if field_name in structured_data:
                             content = structured_data[field_name]
-                            logger.debug(f"Found content for {output.name} in {field_name} field")
+                            logger.debug("Found content for %s in %s field", output.name, field_name)
                             break
             
             # Method 3: Extract from code blocks by output type as a last resort
             if not content and isinstance(response, str):
                 content = self._extract_from_code_blocks(response, output.output_type.value)
                 if content:
-                    logger.debug(f"Extracted {output.name} from code block")
+                    logger.debug("Extracted %s from code block", output.name)
             
             # If content found, set it
             if content is not None:
                 output.set_content(content)
-                logger.debug(f"Set content for output {output.name}")
+                logger.debug("Set content for output %s", output.name)
             else:
-                logger.debug(f"No content found for output {output.name}")
+                logger.debug("No content found for output %s", output.name)
     
     def _extract_from_code_blocks(self, text: str, language: str) -> Optional[str]:
         """Extract content from markdown code blocks.
@@ -1235,7 +1327,7 @@ class OutputHandler:
         try:
             # Record original text size for debugging
             text_size = len(text)
-            logger.debug(f"Extracting {language} code blocks from {text_size} character text")
+            logger.debug("Extracting %s code blocks from %d character text", language, text_size)
             
             # Build more robust patterns for different language formats
             language_variations = [language, language.lower(), language.capitalize()]
@@ -1257,7 +1349,7 @@ class OutputHandler:
                 for match in matches:
                     content = match.group(1).strip()
                     if content:
-                        logger.debug(f"Found {lang_variation} code block with {len(content)} chars")
+                        logger.debug("Found %s code block with %d chars", lang_variation, len(content))
                         # Clean escaped content
                         return re.sub(r'\\([`\'"])', r'\1', content)
             
@@ -1268,7 +1360,7 @@ class OutputHandler:
             for match in matches:
                 content = match.group(1).strip()
                 if content:
-                    logger.debug(f"Found generic code block with {len(content)} chars")
+                    logger.debug("Found generic code block with %d chars", len(content))
                     # Clean escaped content
                     return re.sub(r'\\([`\'"])', r'\1', content)
             
@@ -1282,13 +1374,12 @@ class OutputHandler:
                 if code_match:
                     content = code_match.group(1).strip()
                     if content:
-                        logger.debug(f"Found code block in {language} section with {len(content)} chars")
+                        logger.debug("Found code block in %s section with %d chars", language, len(content))
                         return content
         
         except Exception as e:
-            logger.error(f"Error extracting code blocks: {str(e)}")
-            import traceback
-            logger.debug(f"Traceback: {traceback.format_exc()}")
+            logger.error("Error extracting code blocks: %s", str(e))
+            logger.debug("Traceback: %s", traceback.format_exc())
             
         return None
     
@@ -1400,6 +1491,6 @@ class OutputHandler:
                     return str(Path(".").resolve())
                     
         except (KeyboardInterrupt, EOFError) as e:
-            logger.warning(f"Input interrupted: {str(e)}")
+            logger.warning("Input interrupted: %s", str(e))
             print("\nUsing current directory for output.")
             return str(Path(".").resolve())

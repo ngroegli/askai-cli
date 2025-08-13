@@ -26,22 +26,27 @@ class ModelConfiguration:
     def __post_init__(self):
         """Convert provider to ModelProvider enum if it's a string."""
         if isinstance(self.provider, str):
-            try:
-                self.provider = ModelProvider(self.provider.lower())
-            except ValueError:
-                for p in ModelProvider:
-                    if p.value.lower() == self.provider.lower():
-                        self.provider = p
-                        break
-                else:
-                    self.provider = ModelProvider.OPENROUTER
+            provider_str = self.provider.lower()
+        elif isinstance(self.provider, ModelProvider):
+            provider_str = self.provider.value.lower()
+        else:
+            provider_str = str(self.provider).lower()
+        try:
+            self.provider = ModelProvider(provider_str)
+        except ValueError:
+            for p in ModelProvider:
+                if p.value.lower() == provider_str:
+                    self.provider = p
+                    break
+            else:
+                self.provider = ModelProvider.OPENROUTER
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ModelConfiguration':
         """Create a ModelConfiguration instance from a dictionary."""
         return cls(
             provider=data.get('provider', 'openrouter'),
-            model_name=data.get('model_name'),
+            model_name=data.get('model_name') or "",
             temperature=data.get('temperature', 0.7),
             max_tokens=data.get('max_tokens'),
             stop_sequences=data.get('stop_sequences'),
@@ -59,10 +64,10 @@ class ModelConfiguration:
             return {"search_context_size": self.web_search_context}
         return None
 
-    def get_web_plugin_config(self):
+    def get_web_plugin_config(self) -> Optional[Dict[str, Any]]:
         """Get web plugin configuration."""
         if self.web_plugin:
-            config = {"max_results": self.web_max_results}
+            config: Dict[str, Any] = {"max_results": self.web_max_results}
             if self.web_search_prompt:
                 config["search_prompt"] = self.web_search_prompt
             return config

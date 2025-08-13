@@ -4,9 +4,9 @@ Handles construction of messages for AI interaction based on various inputs.
 """
 
 import json
-import sys
 import os
-from utils import get_piped_input, get_file_input, build_format_instruction, encode_file_to_base64, generate_output_format_template
+from utils import (get_piped_input, get_file_input, build_format_instruction,
+                   encode_file_to_base64, generate_output_format_template)
 
 
 class MessageBuilder:
@@ -38,7 +38,7 @@ class MessageBuilder:
         self.logger = logger
 
     def build_messages(self, question=None, file_input=None, pattern_id=None,
-                      pattern_input=None, format="rawtext", url=None, image=None,
+                      pattern_input=None, response_format="rawtext", url=None, image=None,
                       pdf=None, image_url=None, pdf_url=None):
         """Builds the message list for OpenRouter.
         
@@ -47,7 +47,7 @@ class MessageBuilder:
             file_input: Optional path to input file
             pattern_id: Optional pattern ID to use
             pattern_input: Optional pattern inputs as dict
-            format: Response format (rawtext, json, or md)
+            response_format: Response format (rawtext, json, or md)
             url: Optional URL to analyze/summarize
             image: Optional path to image file
             pdf: Optional path to PDF file
@@ -204,7 +204,7 @@ class MessageBuilder:
                     })
                     # If no question provided, default to summarization
                     if not question:
-                        question = f"Please analyze and summarize the content of this file."
+                        question = "Please analyze and summarize the content of this file."
                 self.logger.debug(json.dumps({"log_message": "Treating file as text, not PDF"}))
             else:
                 # This is an actual PDF file, encode it to base64
@@ -259,7 +259,9 @@ class MessageBuilder:
                         # Add a note for the AI about PDF handling
                         messages.append({
                             "role": "system",
-                            "content": "Note: If you're unable to access the PDF content directly, please inform the user that the PDF could not be processed, and ask them to try extracting the text manually."
+                            "content": ("Note: If you're unable to access the PDF content directly, "
+                                      "please inform the user that the PDF could not be processed, "
+                                      "and ask them to try extracting the text manually.")
                         })
                         
                     except Exception as e:
@@ -276,7 +278,10 @@ class MessageBuilder:
                         })
                         messages.append({
                             "role": "system",
-                            "content": f"The user attempted to upload a PDF file named '{pdf_filename}', but it couldn't be processed. Please inform them that PDF processing may require PyPDF2 to be installed (`pip install PyPDF2`) or that the specific PDF may not be compatible with this service."
+                            "content": (f"The user attempted to upload a PDF file named '{pdf_filename}', "
+                                      f"but it couldn't be processed. Please inform them that PDF processing "
+                                      f"may require PyPDF2 to be installed (`pip install PyPDF2`) or that "
+                                      f"the specific PDF may not be compatible with this service.")
                         })
                     # Mark question as handled so we don't add it again at the end
                     question = None
@@ -288,7 +293,7 @@ class MessageBuilder:
                         "content_type": "file",
                         "mime_type": "application/pdf",
                         "filename": pdf_filename,
-                        "data_url_prefix": pdf_data_url.split(",")[0]
+                        "data_url_prefix": pdf_data_url.split(",", maxsplit=1)[0]
                     }))
                     
                     # Log the message structure for debugging
@@ -340,7 +345,9 @@ class MessageBuilder:
                 # Add a note for the AI about PDF handling
                 messages.append({
                     "role": "system",
-                    "content": "Note: If you're unable to access the PDF content directly, please inform the user that the PDF could not be processed, and ask them to try using a different PDF URL or downloading the PDF first."
+                    "content": ("Note: If you're unable to access the PDF content directly, please inform the user "
+                              "that the PDF could not be processed, and ask them to try using a different PDF URL "
+                              "or downloading the PDF first.")
                 })
                 
                 # Mark question as handled so we don't add it again at the end
@@ -365,7 +372,8 @@ class MessageBuilder:
                 })
                 messages.append({
                     "role": "system",
-                    "content": f"The user attempted to provide a PDF URL '{pdf_url}', but it couldn't be processed. Please inform them that the PDF URL may not be valid or directly accessible."
+                    "content": (f"The user attempted to provide a PDF URL '{pdf_url}', but it couldn't be processed. "
+                              f"Please inform them that the PDF URL may not be valid or directly accessible.")
                 })
                 # Mark question as handled so we don't add it again at the end
                 question = None
@@ -382,7 +390,7 @@ class MessageBuilder:
         if pattern_id is None: # Only if no pattern is used -> question logic
             messages.append({
                 "role": "system", 
-                "content": build_format_instruction(format)
+                "content": build_format_instruction(response_format)
             })
 
         # Add user question if provided
@@ -619,7 +627,9 @@ class MessageBuilder:
                         self.logger.error(json.dumps({
                             "log_message": "Error processing image URL from pattern input",
                             "error": str(e)
-                        }))        # If there are inputs (excluding handled image_file), provide them in a structured way
+                        }))
+        
+        # If there are inputs (excluding handled image_file), provide them in a structured way
         if structured_inputs:
             messages.append({
                 "role": "system",
@@ -635,7 +645,6 @@ class MessageBuilder:
             
             # If no custom format, generate one dynamically
             if not custom_format:
-                from utils import generate_output_format_template
                 custom_format = generate_output_format_template(pattern_outputs)
             
             # Add the format instructions to the messages

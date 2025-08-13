@@ -1,23 +1,37 @@
+"""
+Pattern manager module for the askai-cli.
+
+This module handles the loading, parsing, and processing of pattern files,
+which define input requirements, output formats, and execution configurations
+for AI interactions. It supports extracting structured data from markdown files
+and managing the validation and collection of pattern inputs.
+"""
+
 import os
-import sys
-import json
-import yaml
 import logging
 from typing import List, Dict, Any, Optional, Union, Tuple
+import yaml
 
+from utils import print_error_or_warnings
 from .pattern_inputs import PatternInput, InputGroup, InputType
 from .pattern_outputs import PatternOutput
 from .pattern_configuration import (
     PatternConfiguration,
-    ModelConfiguration,
-    PatternPurpose,
-    PatternFunctionality
+    PatternFunctionality,
+    PatternPurpose
 )
-from utils import print_error_or_warnings
 
 logger = logging.getLogger(__name__)
 
 class PatternManager:
+    """
+    Manages the loading, validation, and processing of pattern files.
+    
+    This class provides functionality to work with pattern definitions stored in markdown files,
+    including listing available patterns, loading pattern details, validating inputs against
+    pattern requirements, and collecting user inputs for pattern execution.
+    """
+    
     def __init__(self, base_path: str):
         """Initialize the pattern manager.
         
@@ -41,7 +55,7 @@ class PatternManager:
                 pattern_id = filename.removesuffix('.md')
                 
                 # Read first line of the file to get the pattern name
-                with open(file_path, 'r') as f:
+                with open(file_path, 'r', encoding='utf-8') as f:
                     first_line = f.readline().strip()
                     name = first_line.replace('# Pattern:', '').strip()
                 
@@ -87,7 +101,10 @@ class PatternManager:
                 
                 # If group is specified in an input, but not defined in input_groups, create the group
                 input_group_names = {group.name for group in input_groups}
-                unique_groups_in_inputs = {input_obj.group for input_obj in pattern_inputs if input_obj.group and input_obj.group not in input_group_names}
+                unique_groups_in_inputs = {
+                    input_obj.group for input_obj in pattern_inputs 
+                    if input_obj.group and input_obj.group not in input_group_names
+                }
                 
                 # Create implicit groups
                 for group_name in unique_groups_in_inputs:
@@ -104,11 +121,17 @@ class PatternManager:
                 for group in input_groups:
                     for input_name in group.input_names:
                         if input_name not in all_input_names:
-                            print_error_or_warnings(f"Input group '{group.name}' references non-existent input '{input_name}'", warning_only=True)
+                            print_error_or_warnings(
+                                f"Input group '{group.name}' references non-existent input '{input_name}'", 
+                                warning_only=True
+                            )
                     
                     # If no input_names specified, find all inputs with this group name
                     if not group.input_names:
-                        group.input_names = [input_obj.name for input_obj in pattern_inputs if input_obj.group == group.name]
+                        group.input_names = [
+                            input_obj.name for input_obj in pattern_inputs 
+                            if input_obj.group == group.name
+                        ]
             
             return pattern_inputs, input_groups
         except Exception as e:
@@ -185,7 +208,7 @@ class PatternManager:
             
             return execution_config
         except Exception as e:
-            logger.warning(f"Error parsing execution configuration: {str(e)}")
+            logger.warning("Error parsing execution configuration: %s", str(e))
             return execution_config
 
     def _parse_pattern_purpose(self, content: str) -> Optional[PatternPurpose]:
@@ -355,7 +378,7 @@ class PatternManager:
         file_path = os.path.join(self.patterns_dir, f"{pattern_id}.md")
         if not os.path.exists(file_path):
             return None
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
         inputs, input_groups = self._parse_pattern_inputs(content)
@@ -382,7 +405,7 @@ class PatternManager:
             Optional[str]: File content or None if file cannot be read
         """
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 return f.read().strip()
         except Exception as e:
             print_error_or_warnings(f"Error reading input file '{file_path}': {str(e)}")
@@ -545,7 +568,10 @@ class PatternManager:
         for group in input_groups:
             provided_count = sum(1 for input_name in group.input_names if input_name in result)
             if provided_count < group.required_inputs:
-                print_error_or_warnings(f"Group '{group.name}' requires at least {group.required_inputs} input(s), but only {provided_count} provided")
+                print_error_or_warnings(
+                    f"Group '{group.name}' requires at least {group.required_inputs} input(s), "
+                    f"but only {provided_count} provided"
+                )
                 return None
                     
         return result
@@ -560,7 +586,7 @@ class PatternManager:
         while True:
             print(f"\n{input_def.description}")
             if input_def.input_type == InputType.SELECT:
-                print("Options:", ", ".join(input_def.options))
+                print("Options:", ", ".join(input_def.options or []))
             
             if not input_def.required:
                 print("(Optional - press Enter to skip)")
@@ -631,7 +657,7 @@ class PatternManager:
             print("-" * 60)
         
         print("\nOptions:")
-        print("1-{0}. Select pattern".format(len(patterns)))
+        print(f"1-{len(patterns)}. Select pattern")
         print("q. Quit")
         
         while True:
@@ -649,7 +675,9 @@ class PatternManager:
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
 
-    def process_pattern_response(self, pattern_id: str, response: Union[str, Dict], output_handler) -> Tuple[str, List[str]]:
+    def process_pattern_response(
+        self, pattern_id: str, response: Union[str, Dict], output_handler
+    ) -> Tuple[str, List[str]]:
         """Process a response for a specific pattern.
         
         This method handles pattern-specific processing of AI responses,
@@ -663,11 +691,11 @@ class PatternManager:
         Returns:
             Tuple[str, List[str]]: (formatted output, list of created files)
         """
-        logger.debug(f"Processing pattern response for {pattern_id}")
+        logger.debug("Processing pattern response for %s", pattern_id)
         
         pattern_data = self.get_pattern_content(pattern_id)
         if not pattern_data:
-            logger.warning(f"Pattern {pattern_id} not found")
+            logger.warning("Pattern %s not found", pattern_id)
             return "Pattern not found", []
             
         pattern_outputs = pattern_data.get('outputs', [])

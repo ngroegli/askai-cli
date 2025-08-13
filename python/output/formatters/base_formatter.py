@@ -3,7 +3,7 @@ Base class for output formatters.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Optional
 import logging
 
 
@@ -29,7 +29,6 @@ class BaseFormatter(ABC):
         Returns:
             str: Formatted content
         """
-        pass
     
     def _truncate_content(self, content: str, max_length: int = 1000, 
                          ellipsis: str = "...\n[content truncated]") -> str:
@@ -46,6 +45,6 @@ class BaseFormatter(ABC):
         if len(content) > max_length:
             truncated = content[:max_length] + ellipsis
             if self.logger:
-                self.logger.info(f"Content truncated from {len(content)} to {max_length} characters")
+                self.logger.info("Content truncated from %d to %d characters", len(content), max_length)
             return truncated
         return content

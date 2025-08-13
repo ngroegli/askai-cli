@@ -1,0 +1,52 @@
+[MESSAGES CONTROL]
+# Only disable the specific C0303 (trailing whitespace) error
+# Do not disable any other errors or categories
+disable=C0303,W0718,W0719
+
+[FORMAT]
+# Allow any line length
+max-line-length=120
+
+# Be strict about syntax warnings
+# strictness=high
+
+[BASIC]
+# Check for properly formatted docstrings
+# docstring-min-length=5
+# no-docstring-rgx=^_
+
+[MASTER]
+# Add files or directories to be excluded from pylint checking
+ignore=.git,__pycache__,venv
+
+# Enable all error categories by default
+enable=all
+
+# Minimum Python version to target
+# py-version=3.8
+
+[REPORTS]
+# Set the output format
+# output-format=text
+
+# Include symbol names in messages
+# include-ids=yes
+
+# Include message's id in output
+# include-id=yes
+
+# Colorized output
+# output-format=colorized
+
+[SIMILARITIES]
+# Minimum lines number of a similarity (default is 4)
+# min-similarity-lines=5
+
+# Ignore comments when computing similarities
+# ignore-comments=yes
+
+# Ignore docstrings when computing similarities
+# ignore-docstrings=yes
+
+# Ignore imports when computing similarities
+# ignore-imports=yes

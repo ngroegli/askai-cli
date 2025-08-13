@@ -1,0 +1,19 @@
+{
+    "python.analysis.extraPaths": ["./python"],
+    "python.linting.pylintPath": "${workspaceFolder}/venv/bin/pylint",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": ["--rcfile=${workspaceFolder}/pylintrc"],
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticMode": "workspace",
+    "editor.formatOnSave": true,
+    "editor.rulers": [120],
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "files.trimTrailingWhitespace": false,
+    "[python]": {
+        "editor.trimTrailingWhitespace": true
+    }
+}

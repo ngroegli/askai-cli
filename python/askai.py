@@ -6,15 +6,15 @@ Orchestrates the different components to provide AI assistance via command line.
 import os
 import sys
 import json
-import re
-from config import load_config
-from logger import setup_logger
-from patterns import PatternManager
 from chat import ChatManager
 from cli import CLIParser, CommandHandler
 from message_builder import MessageBuilder
 from ai import AIService
 from output.output_handler import OutputHandler
+from logger import setup_logger
+from config import load_config
+from patterns import PatternManager
+
 
 
 def main():
@@ -22,15 +22,15 @@ def main():
     # Initialize configuration and base components
     config = load_config()
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
+
     # Initialize CLI parser and parse arguments
     cli_parser = CLIParser()
     args = cli_parser.parse_arguments()
-    
+
     # Setup logging
     logger = setup_logger(config, args.debug)
     logger.info(json.dumps({"log_message": "AskAI started and arguments parsed"}))
-    
+
     # Initialize managers and services
     chat_manager = ChatManager(config, logger)
     pattern_manager = PatternManager(base_path)
@@ -60,14 +60,14 @@ def main():
         file_input=None if using_pattern else args.file_input,
         pattern_id=args.use_pattern,
         pattern_input=args.pattern_input,
-        format="rawtext" if using_pattern else args.format,  # Use default format with patterns
+        response_format="rawtext" if using_pattern else args.format,  # Use default format with patterns
         url=None if using_pattern else args.url,
         image=None if using_pattern else (args.image if hasattr(args, 'image') else None),
         pdf=None if using_pattern else (args.pdf if hasattr(args, 'pdf') else None),
         image_url=None if using_pattern else (args.image_url if hasattr(args, 'image_url') else None),
         pdf_url=None if using_pattern else (args.pdf_url if hasattr(args, 'pdf_url') else None)
     )
-    
+
     # Check if message building was cancelled
     if messages is None:
         sys.exit(0)
@@ -77,10 +77,10 @@ def main():
 
     # Debug log the final messages
     logger.debug(json.dumps({"log_message": "Messages content", "messages": messages}))
-    
+
     # Determine if web search should be enabled for URL analysis
     enable_url_search = args.url is not None
-    
+
     # Get AI response
     response = ai_service.get_ai_response(
         messages=messages,
@@ -106,7 +106,7 @@ def main():
     # Handle output
     console_output = True  # Default to showing console output
     file_output = args.save if hasattr(args, 'save') else False
-    
+
     # Enable file output if we have pattern outputs with write_to_file
     pattern_has_file_output = False
     if pattern_outputs:
@@ -115,26 +115,26 @@ def main():
                 file_output = True
                 pattern_has_file_output = True
                 break
-    
+
     # Process output
     # Check if user specified an output file via args.output
     has_output_arg = hasattr(args, 'output') and args.output is not None and not using_pattern
-    
+
     # Initialize output configuration
     output_config = {}
-        
+
     # Add format to output_config so the handler knows what format to use
     # But only use the user's format if not using a pattern
     output_config['format'] = "rawtext" if using_pattern else args.format
-    
+
     # Don't override file_output if it was already set by pattern outputs
     # And don't use args.output if we're using a pattern
     if has_output_arg and not pattern_has_file_output:
         file_output = True
-        
+
         # Use the format specified with -f to determine the output file type
         output_path = args.output
-        
+
         # Simple approach: Just set the format and filename based on user's format choice
         if args.format == 'json':
             output_config['json_filename'] = os.path.basename(output_path)
@@ -143,11 +143,11 @@ def main():
         else:
             # Default to markdown for text output (most versatile format)
             output_config['markdown_filename'] = os.path.basename(output_path)
-            
+
         # Set output directory to parent directory of output file
         output_dir = os.path.dirname(os.path.abspath(output_path))
         output_handler.output_dir = output_dir
-            
+
     # Use the pattern manager to handle the response if we have a pattern
     if resolved_pattern_id:
         # Check if the response is already a properly formatted JSON with a 'results' field
@@ -165,13 +165,13 @@ def main():
                             response = parsed_json
                     except json.JSONDecodeError:
                         logger.debug("Content is not valid JSON")
-        except Exception as e:
-            logger.debug(f"Error checking for direct JSON: {str(e)}")
-        
-        logger.debug(f"Using pattern manager to handle response for {resolved_pattern_id}")
+        except (ValueError, TypeError, KeyError, AttributeError) as e:
+            logger.debug("Error checking for direct JSON: %s", str(e))
+
+        logger.debug("Using pattern manager to handle response for %s", resolved_pattern_id)
         formatted_output, created_files = pattern_manager.process_pattern_response(
-            resolved_pattern_id, 
-            response, 
+            resolved_pattern_id,
+            response,
             output_handler
         )
 
@@ -184,11 +184,11 @@ def main():
             file_output=file_output
         )
         print(formatted_output)
-    
+
     # Log created files
     if created_files:
         print(f"\nCreated output files: {', '.join(created_files)}")
-        logger.info(f"Created output files: {', '.join(created_files)}")
+        logger.info("Created output files: %s", ', '.join(created_files))
 
 
 if __name__ == "__main__":

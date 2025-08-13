@@ -5,9 +5,11 @@ Manages AI response generation and model configuration logic.
 
 import json
 import threading
-from .openrouter_client import OpenRouterClient
-from config import load_config
 from utils import tqdm_spinner
+from config import load_config
+from patterns.pattern_configuration import ModelConfiguration, ModelProvider
+from .openrouter_client import OpenRouterClient
+
 
 
 class AIService:
@@ -27,7 +29,6 @@ class AIService:
         Returns:
             ModelConfiguration: The model configuration to use
         """
-        from patterns.pattern_configuration import ModelConfiguration, ModelProvider
         
         # Priority 1: Pattern configuration
         if pattern_data and isinstance(pattern_data, dict):
@@ -46,7 +47,7 @@ class AIService:
                     return model_config
                 elif isinstance(pattern_config, dict) and 'model' in pattern_config:
                     # Handle dictionary format
-                    self.logger.info(f"Creating model configuration from dict: {pattern_config}")
+                    self.logger.info("Creating model configuration from dict: %s", pattern_config)
                     try:
                         model_data = pattern_config['model']
                         return ModelConfiguration(
@@ -57,8 +58,8 @@ class AIService:
                             stop_sequences=model_data.get('stop_sequences'),
                             custom_parameters=model_data.get('custom_parameters')
                         )
-                    except Exception as e:
-                        self.logger.error(f"Error creating model configuration from dict: {e}")
+                    except (KeyError, ValueError, TypeError) as e:
+                        self.logger.error("Error creating model configuration from dict: %s", e)
         
         # Priority 2: Explicit model name
         if model_name:
@@ -103,7 +104,7 @@ class AIService:
             # Get configuration from the proper source
             config = load_config()
             pattern_data = None
-            if pattern_id:
+            if pattern_id and pattern_manager is not None:
                 pattern_data = pattern_manager.get_pattern_content(pattern_id)
                 
                 # The format instructions are now generated dynamically from output definitions

@@ -1,11 +1,20 @@
+"""
+Pattern outputs module for the askai-cli.
+
+This module defines the structure and behavior of outputs from AI pattern executions.
+It provides classes and utilities to handle different types of outputs (text, JSON, code, etc.),
+actions that can be taken on outputs (display, write to file, execute), and validation logic
+for ensuring outputs conform to expected formats.
+"""
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, ClassVar
+from typing import Any, Dict, List, Optional, ClassVar
+import builtins
 import json
-import re
-import subprocess
-from jsonschema import validate, ValidationError
 import logging
+import subprocess
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +137,7 @@ class PatternOutput:
         try:
             action = OutputAction(action_str)
         except (ValueError, TypeError):
-            logger.warning(f"Invalid action '{action_str}' for output '{name}', defaulting to DISPLAY")
+            logger.warning("Invalid action '%s' for output '%s', defaulting to DISPLAY", action_str, name)
             action = OutputAction.DISPLAY
         
         output_obj = cls(
@@ -171,7 +180,11 @@ class PatternOutput:
                 return False, f"Invalid JSON: {str(e)}"
 
         elif self.output_type == OutputType.TABLE:
-            if not isinstance(value, (list, tuple)) or not all(isinstance(row, (list, tuple)) for row in value):
+            is_list_of_lists = (
+                isinstance(value, (list, tuple)) and 
+                all(isinstance(row, (list, tuple)) for row in value)
+            )
+            if not is_list_of_lists:
                 return False, "Table output must be a list of lists"
 
         elif self.output_type == OutputType.LIST:
@@ -179,8 +192,10 @@ class PatternOutput:
                 return False, "List output must be a list or tuple"
 
         # Text types accept any string value
-        elif self.output_type in (OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN, 
-                                 OutputType.HTML, OutputType.CSS, OutputType.JS):
+        elif self.output_type in (
+            OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN,
+            OutputType.HTML, OutputType.CSS, OutputType.JS
+        ):
             if not isinstance(value, str):
                 return False, f"{self.output_type.value} output must be a string"
 
@@ -213,10 +228,10 @@ class PatternOutput:
         """
         # Check if action is WRITE
         if self.action == OutputAction.WRITE:
-            return self.write_to_file is not None and self.write_to_file.strip() != ""
+            return self.write_to_file is not None and bool(self.write_to_file.strip())
             
         # Legacy compatibility
-        return self.write_to_file is not None and self.write_to_file.strip() != ""
+        return self.write_to_file is not None and bool(self.write_to_file.strip())
     
     def should_display(self) -> bool:
         """Check if this output should be displayed to the user.
@@ -301,7 +316,7 @@ class PatternOutput:
         # Execute the command
         print("\n📄 Executing command...\n")
         try:
-            subprocess.run(cleaned_command, shell=True)
+            subprocess.run(cleaned_command, shell=True, check=True)
             print("\n✅ Command executed successfully")
             return True
         except Exception as e:
@@ -362,11 +377,9 @@ class PatternOutput:
             print("\nExecute this command? (y/n): ", end="", flush=True)
             try:
                 # Try to use the Python built-in input function
-                import builtins
                 response = builtins.input()
             except Exception:
                 # Fall back to readline if input fails
-                import sys
                 sys.stdout.flush()
                 response = sys.stdin.readline().strip()
                 
@@ -374,5 +387,5 @@ class PatternOutput:
             return response in ['y', 'yes']
             
         except Exception as e:
-            logger.error(f"Error during input handling: {str(e)}")
+            logger.error("Error during input handling: %s", str(e))
             return False

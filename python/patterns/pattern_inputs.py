@@ -1,11 +1,23 @@
+"""
+Pattern input definitions module for the askai-cli.
+
+This module provides the data structures and validation logic for handling 
+different types of inputs in pattern definitions, including text, numbers, 
+selections, files, and URLs. It supports input validation and grouping.
+"""
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Set
-import yaml
+from typing import Any, Dict, List, Optional
 import re
 import os
 
 class InputType(Enum):
+    """
+    Enumeration of supported input types for pattern definitions.
+    
+    Each input type has specific validation rules and handling logic.
+    """
     TEXT = "text"
     NUMBER = "number"
     SELECT = "select"
@@ -34,15 +46,21 @@ class InputGroup:
 
 @dataclass
 class PatternInput:
+    """
+    Represents an input parameter for a pattern with validation capabilities.
+    
+    Each input has a type, description, and optional validation rules.
+    Inputs can be grouped together and validated according to their type.
+    """
     name: str
     description: str
     input_type: InputType
     required: bool = True
     default: Any = None
-    options: List[str] = None  # For SELECT type
-    min_value: float = None    # For NUMBER type
-    max_value: float = None    # For NUMBER type
-    group: str = None  # Name of the input group this input belongs to
+    options: Optional[List[str]] = None  # For SELECT type
+    min_value: Optional[float] = None    # For NUMBER type
+    max_value: Optional[float] = None    # For NUMBER type
+    group: Optional[str] = None  # Name of the input group this input belongs to
     ignore_undefined: bool = False  # Whether to ignore this input if not provided in non-interactive mode
 
     @classmethod
@@ -79,16 +97,20 @@ class PatternInput:
                 return False, "Value must be a number"
 
         elif self.input_type == InputType.SELECT:
-            if value not in self.options:
-                return False, f"Value must be one of: {', '.join(self.options)}"
+            if value not in (self.options or []):
+                return False, f"Value must be one of: {', '.join(self.options or [])}"
 
         elif self.input_type == InputType.FILE:
             try:
                 # Just validate that the file exists and is readable
-                with open(value, 'r') as f:
+                with open(value, 'r', encoding='utf-8') as f:
                     f.read(1)  # Try to read one byte to verify access
-            except Exception as e:
-                return False, f"File error: {str(e)}"
+            except FileNotFoundError:
+                return False, f"File not found: {value}"
+            except PermissionError:
+                return False, f"Permission denied when accessing file: {value}"
+            except IOError as e:
+                return False, f"I/O error when accessing file: {str(e)}"
         
         elif self.input_type == InputType.IMAGE_FILE:
             try:
@@ -100,8 +122,13 @@ class PatternInput:
                 image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
                 file_ext = os.path.splitext(value)[1].lower()
                 if file_ext not in image_extensions:
-                    return False, f"File does not appear to be an image. Supported formats: {', '.join(image_extensions)}"
-            except Exception as e:
+                    formats = ', '.join(image_extensions)
+                    return False, f"File does not appear to be an image. Supported formats: {formats}"
+            except FileNotFoundError:
+                return False, f"Image file not found: {value}"
+            except PermissionError:
+                return False, f"Permission denied when accessing image file: {value}" 
+            except (IOError, OSError) as e:
                 return False, f"Image file error: {str(e)}"
                 
         elif self.input_type == InputType.PDF_FILE:
@@ -114,7 +141,11 @@ class PatternInput:
                 file_ext = os.path.splitext(value)[1].lower()
                 if file_ext != '.pdf':
                     return False, "File does not appear to be a PDF. Only .pdf extension is supported."
-            except Exception as e:
+            except FileNotFoundError:
+                return False, f"PDF file not found: {value}"
+            except PermissionError:
+                return False, f"Permission denied when accessing PDF file: {value}"
+            except (IOError, OSError) as e:
                 return False, f"PDF file error: {str(e)}"
 
         elif self.input_type == InputType.URL:

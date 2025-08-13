@@ -3,8 +3,6 @@ Markdown formatter for formatting content for markdown output.
 """
 
 import re
-from typing import Dict, Any, Optional, List
-import logging
 
 from .base_formatter import BaseFormatter
 
@@ -45,7 +43,7 @@ class MarkdownFormatter(BaseFormatter):
             if key.startswith('format_') and callable(value):
                 formatted = value(formatted)
         
-        return formatted
+        return str(formatted)
     
     def _format_as_code_block(self, code: str, language_tag: str = '') -> str:
         """Format content as markdown code block.
@@ -84,7 +82,7 @@ class MarkdownFormatter(BaseFormatter):
         if open_markers > close_markers:
             markdown = markdown + '\n```'
             if self.logger:
-                self.logger.info(f"Added missing closing code block marker")
+                self.logger.info("Added missing closing code block marker")
         
         # Ensure headers have space after #
         markdown = re.sub(r'^(#+)([^ #])', r'\1 \2', markdown, flags=re.MULTILINE)

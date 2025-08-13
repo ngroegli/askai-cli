@@ -1,9 +1,21 @@
-import requests
+"""
+OpenRouter API client implementation.
+
+This module provides a client for interacting with the OpenRouter API,
+which serves as a unified interface to multiple AI models.
+Features include:
+- Support for multimodal inputs (text, images, PDFs)
+- Web search capabilities
+- Plugin system for extending functionality
+- Credit balance tracking
+"""
+
 import json
 from typing import List, Dict, Any, Optional, Callable
-from config import load_config
 from logger import setup_logger
 from utils import print_error_or_warnings
+import requests
+from config import load_config
 
 
 class OpenRouterClient:
@@ -157,7 +169,9 @@ class OpenRouterClient:
         self._add_plugin_to_payload(payload, pdf_plugin)
         return payload
         
-    def _add_plugin_to_payload(self, payload: Dict[str, Any], plugin: Dict[str, Any]) -> Dict[str, Any]:
+    def _add_plugin_to_payload(
+        self, payload: Dict[str, Any], plugin: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Add a plugin to the payload, handling any existing plugins.
         
         Args:
@@ -204,7 +218,9 @@ class OpenRouterClient:
             
         return payload
         
-    def _configure_web_search(self, payload: Dict[str, Any], web_search_options: Dict[str, Any]) -> Dict[str, Any]:
+    def _configure_web_search(
+        self, payload: Dict[str, Any], web_search_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Configure payload for web search (non-plugin approach).
         
         Args:
@@ -217,7 +233,9 @@ class OpenRouterClient:
         payload["web_search_options"] = web_search_options
         return payload
         
-    def _configure_web_plugin(self, payload: Dict[str, Any], web_plugin_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _configure_web_plugin(
+        self, payload: Dict[str, Any], web_plugin_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Configure payload with web plugin.
         
         Args:
@@ -245,7 +263,7 @@ class OpenRouterClient:
     
     def _handle_api_response(
         self, 
-        response: requests.Response, 
+        response: requests.Response,
         logger: Any, 
         content_info: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -277,7 +295,9 @@ class OpenRouterClient:
                 "full_response": response_data
             }
         else:
-            logger.critical(json.dumps({"log_message": f"API Error {response.status_code}: {response.text}"}))
+            logger.critical(
+                json.dumps({"log_message": "API Error %d: %s"}) % (response.status_code, response.text)
+            )
             
             # Special handling for PDF parsing errors
             if response.status_code == 422:
@@ -299,7 +319,7 @@ class OpenRouterClient:
                     
                     # Return a user-friendly error instead of failing
                     return {
-                        "content": "I'm sorry, but I couldn't parse the PDF file you provided. This might be because:\n\n"
+                        "content": "I couldn't parse the PDF file you provided. This might be because:\n\n"
                                   "1. The PDF has a format that's not supported\n"
                                   "2. The PDF might be password-protected or encrypted\n"
                                   "3. The PDF might be corrupted or too large\n\n"
@@ -416,7 +436,7 @@ class OpenRouterClient:
         
         # Step 9: Make the API request and handle response
         try:
-            response = requests.post(f"{self.base_url}chat/completions", headers=headers, json=payload)
+            response = requests.post(f"{self.base_url}chat/completions", headers=headers, json=payload, timeout=30)
             return self._handle_api_response(response, logger, content_info)
         except requests.exceptions.ConnectionError as e:
             logger.critical(json.dumps({
@@ -484,9 +504,9 @@ class OpenRouterClient:
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=headers, timeout=30)
             elif method.upper() == "POST":
-                response = requests.post(url, headers=headers, json=data)
+                response = requests.post(url, headers=headers, json=data, timeout=30)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
                 

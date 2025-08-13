@@ -45,7 +45,7 @@ def unescape_string(text: str) -> str:
             try:
                 # Try python's built-in string_escape decoding first
                 # This is the safest way to handle escape sequences
-                result = codecs.escape_decode(bytes(text, "utf-8"))[0].decode("utf-8")
+                result = codecs.escape_decode(bytes(text, "utf-8"))[0]
                 
                 # Only use this result if it successfully unescaped something
                 if '\n' in result and result != text:
@@ -106,9 +106,18 @@ def looks_like_command(text: str) -> bool:
     # Common shell command patterns
     command_indicators = [
         # Common Linux commands
-        text.startswith(('ls ', 'cd ', 'mkdir ', 'rm ', 'cp ', 'mv ', 'cat ', 'grep ', 'find ', 'ps ', 'kill ', 'pkill ')),
-        text.startswith(('sudo ', 'chmod ', 'chown ', 'tar ', 'zip ', 'unzip ', 'wget ', 'curl ', 'ssh ', 'scp ')),
-        text.startswith(('git ', 'docker ', 'systemctl ', 'service ', 'mount ', 'umount ', 'df ', 'du ', 'top ', 'htop ')),
+        text.startswith((
+            'ls ', 'cd ', 'mkdir ', 'rm ', 'cp ', 'mv ', 
+            'cat ', 'grep ', 'find ', 'ps ', 'kill ', 'pkill '
+        )),
+        text.startswith((
+            'sudo ', 'chmod ', 'chown ', 'tar ', 'zip ', 'unzip ', 
+            'wget ', 'curl ', 'ssh ', 'scp '
+        )),
+        text.startswith((
+            'git ', 'docker ', 'systemctl ', 'service ', 
+            'mount ', 'umount ', 'df ', 'du ', 'top ', 'htop '
+        )),
         # Pipe operations
         ' | ' in text,
         # Redirection

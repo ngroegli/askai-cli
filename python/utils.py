@@ -38,7 +38,7 @@ def get_piped_input():
 def get_file_input(file_path):
     """Reads content from a file if it exists."""
     if os.path.exists(file_path):
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     print_error_or_warnings(f"File {file_path} does not exist.", warning_only=True)
     return None
@@ -64,7 +64,7 @@ def encode_file_to_base64(file_path):
                 
             # Get file size to verify it's not empty
             file_size = os.path.getsize(file_path)
-            if file_size == 0:
+            if not file_size:
                 print_error_or_warnings(f"File is empty: {file_path}", warning_only=True)
                 return None
                 
@@ -72,9 +72,15 @@ def encode_file_to_base64(file_path):
             with open(file_path, "rb") as file:
                 file_content = file.read()
                 
-                # Ensure it's actually binary data
+                # When reading in binary mode, file_content should always be bytes already
+                # but in case it's not, convert it properly
                 if not isinstance(file_content, bytes):
-                    file_content = file_content.encode('utf-8')
+                    # For string-like objects with encode method (str)
+                    if isinstance(file_content, str):
+                        file_content = file_content.encode('utf-8')
+                    # For bytes-like objects (bytearray, memoryview)
+                    else:
+                        file_content = bytes(file_content)
                 
                 # Encode the file content to base64
                 encoded_string = base64.b64encode(file_content).decode('utf-8')
@@ -91,18 +97,21 @@ def encode_file_to_base64(file_path):
                         # Make sure we can encode it back to the same string
                         test_reencode = base64.b64encode(test_decode).decode('utf-8')
                         if test_reencode != encoded_string:
-                            print_error_or_warnings(f"Base64 re-encode test failed, may be an encoding issue", warning_only=True)
+                            print_error_or_warnings(
+                                "Base64 re-encode test failed, may be an encoding issue",
+                                warning_only=True
+                            )
                         return encoded_string
-                    except Exception as e:
+                    except (ValueError, TypeError) as e:
                         print_error_or_warnings(f"Generated invalid base64 string: {str(e)}")
                         return None
                 else:
                     print_error_or_warnings(f"Failed to encode file to base64: {file_path}")
                     return None
-        except PermissionError as e:
+        except PermissionError:
             print_error_or_warnings(f"Permission denied when reading file: {file_path}")
             return None
-        except Exception as e:
+        except (IOError, OSError, ValueError) as e:
             print_error_or_warnings(f"Error encoding file: {file_path} - {str(e)}")
             return None
     else:
@@ -151,13 +160,20 @@ def generate_output_format_template(pattern_outputs):
             if output.output_type.value == "text":
                 example_value = f"sample text for {output.name}"
             elif output.output_type.value == "markdown":
-                example_value = f"# Sample markdown for {output.name}\n\nThis is an example of markdown content."
+                example_value = (
+                    f"# Sample markdown for {output.name}\n\n"
+                    "This is an example of markdown content."
+                )
             elif output.output_type.value == "json":
                 example_value = {"key": f"sample value for {output.name}"}
             elif output.output_type.value == "html":
                 example_value = f"<div>Sample HTML for {output.name}</div>"
             elif output.output_type.value == "code":
-                example_value = f"# Sample code for {output.name}\ndef example():\n    return 'example'"
+                example_value = (
+                    f"# Sample code for {output.name}\n"
+                    "def example():\n"
+                    "    return 'example'"
+                )
             else:
                 example_value = f"Sample content for {output.name}"
         
@@ -203,9 +219,9 @@ IMPORTANT NOTES:
 
 def capture_command_output(command):
     """Run a shell command and capture output, return stdout as string."""
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise Exception(f"Command failed: {result.stderr}")
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+    if result.returncode:
+        raise subprocess.SubprocessError(f"Command failed: {result.stderr}")
     return result.stdout
 
 
@@ -223,4 +239,3 @@ def print_error_or_warnings(text, warning_only=False):
     else:
         # Red background for errors
         cprint(f"ERROR: {text}", "white", "on_red")
-    

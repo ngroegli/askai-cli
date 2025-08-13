@@ -7,7 +7,6 @@ Includes functionality for chat repair and management.
 import os
 import json
 import uuid
-import re
 import sys
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -51,7 +50,7 @@ class ChatManager:
             "conversations": []
         }
         
-        with open(chat_file, 'w') as f:
+        with open(chat_file, 'w', encoding='utf-8') as f:
             json.dump(chat_data, f, indent=2)
             
         return chat_id
@@ -71,7 +70,7 @@ class ChatManager:
             if not valid:
                 raise ValueError(f"Invalid outputs: {error}")
 
-        with open(chat_file, 'r') as f:
+        with open(chat_file, 'r', encoding='utf-8') as f:
             chat_data = json.load(f)
 
         # Extract only the new messages (not from history)
@@ -119,11 +118,11 @@ class ChatManager:
                 conversation["system_config"] = make_json_serializable(system_config)
             except Exception as e:
                 if self.logger:
-                    self.logger.warning(f"Could not serialize system config: {e}")
+                    self.logger.warning("Could not serialize system config: %s", e)
 
         chat_data['conversations'].append(conversation)
 
-        with open(chat_file, 'w') as f:
+        with open(chat_file, 'w', encoding='utf-8') as f:
             json.dump(chat_data, f, indent=2)
 
     def get_chat_history(self, chat_id: str, 
@@ -134,14 +133,14 @@ class ChatManager:
             raise ValueError(f"Chat {chat_id} does not exist")
 
         try:
-            with open(chat_file, 'r') as f:
+            with open(chat_file, 'r', encoding='utf-8') as f:
                 try:
                     chat_data = json.load(f)
                 except json.JSONDecodeError as e:
                     error_msg = f"Chat file {chat_id} is corrupted: {str(e)}"
                     if self.logger:
                         self.logger.error(error_msg)
-                    raise ValueError(error_msg)
+                    raise ValueError(error_msg) from e
 
             conversations = chat_data['conversations']
             if max_conversations:
@@ -150,8 +149,8 @@ class ChatManager:
             return conversations
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error reading chat history for {chat_id}: {str(e)}")
-            raise ValueError(f"Failed to read chat history: {str(e)}")
+                self.logger.error("Error reading chat history for %s: %s", chat_id, str(e))
+            raise ValueError(f"Failed to read chat history: {str(e)}") from e
             
     def repair_chat_file(self, chat_id: str) -> bool:
         """Attempt to repair a corrupted chat file.
@@ -169,17 +168,14 @@ class ChatManager:
         try:
             # First, make a backup
             backup_file = f"{chat_file}.bak"
-            with open(chat_file, 'r') as f:
+            with open(chat_file, 'r', encoding='utf-8') as f:
                 content = f.read()
                 
-            with open(backup_file, 'w') as f:
+            with open(backup_file, 'w', encoding='utf-8') as f:
                 f.write(content)
                 
             # Try to parse and fix JSON content
-            try:
-                with open(chat_file, 'r') as f:
-                    lines = f.readlines()
-                
+            try:            
                 # Find last valid JSON object
                 valid_content = "{\n"
                 valid_content += '  "chat_id": "' + chat_id + '",\n'
@@ -188,32 +184,32 @@ class ChatManager:
                 valid_content += "}\n"
                 
                 # Create new file with valid JSON
-                with open(chat_file, 'w') as f:
+                with open(chat_file, 'w', encoding='utf-8') as f:
                     f.write(valid_content)
                     
                 # Verify it's valid
-                with open(chat_file, 'r') as f:
+                with open(chat_file, 'r', encoding='utf-8') as f:
                     json.load(f)
                     
                 if self.logger:
-                    self.logger.info(f"Successfully repaired chat file {chat_id}")
+                    self.logger.info("Successfully repaired chat file %s", chat_id)
                 return True
                 
             except Exception as e:
                 # Restore backup if repair failed
-                with open(backup_file, 'r') as f:
+                with open(backup_file, 'r', encoding='utf-8') as f:
                     content = f.read()
                     
-                with open(chat_file, 'w') as f:
+                with open(chat_file, 'w', encoding='utf-8') as f:
                     f.write(content)
                     
                 if self.logger:
-                    self.logger.error(f"Failed to repair chat file {chat_id}: {str(e)}")
+                    self.logger.error("Failed to repair chat file %s: %s", chat_id, str(e))
                 return False
                 
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error during chat file repair for {chat_id}: {str(e)}")
+                self.logger.error("Error during chat file repair for %s: %s", chat_id, str(e))
             return False
 
     def list_chats(self) -> List[Dict[str, Any]]:
@@ -225,7 +221,7 @@ class ChatManager:
             if filename.endswith('.json'):
                 file_path = os.path.join(self.storage_path, filename)
                 try:
-                    with open(file_path, 'r') as f:
+                    with open(file_path, 'r', encoding='utf-8') as f:
                         try:
                             chat_data = json.load(f)
                             chats.append({
@@ -236,16 +232,16 @@ class ChatManager:
                         except json.JSONDecodeError as e:
                             corrupted_files.append((filename, str(e)))
                             if self.logger:
-                                self.logger.error(f"Corrupted chat file {filename}: {str(e)}")
+                                self.logger.error("Corrupted chat file %s: %s", filename, str(e))
                             continue
                 except Exception as e:
                     if self.logger:
-                        self.logger.error(f"Error reading chat file {filename}: {str(e)}")
+                        self.logger.error("Error reading chat file %s: %s", filename, str(e))
                     continue
                     
         # Report corrupted files if any
         if corrupted_files and self.logger:
-            self.logger.warning(f"Found {len(corrupted_files)} corrupted chat files")
+            self.logger.warning("Found %d corrupted chat files", len(corrupted_files))
             
         return sorted(chats, key=lambda x: x['created_at'], reverse=True)
 
@@ -283,7 +279,7 @@ class ChatManager:
         print("\nOptions:")
         if allow_new:
             print("0. Create new chat")
-        print("1-{0}. Select existing chat".format(len(chats)))
+        print(f"1-{len(chats)}. Select existing chat")
         print("q. Quit")
         
         while True:
@@ -296,7 +292,7 @@ class ChatManager:
             
             try:
                 choice_num = int(choice)
-                if allow_new and choice_num == 0:
+                if allow_new and not choice_num:  # 0 evaluates to False in boolean context
                     return 'new'
                 elif 1 <= choice_num <= len(chats):
                     return chats[choice_num - 1]['chat_id']
@@ -332,7 +328,7 @@ class ChatManager:
         if not os.path.exists(chat_file):
             raise ValueError(f"Chat {chat_id} does not exist")
 
-        with open(chat_file, 'r') as f:
+        with open(chat_file, 'r', encoding='utf-8') as f:
             chat_data = json.load(f)
 
         print(f"\nChat ID: {chat_data['chat_id']}")
@@ -414,7 +410,7 @@ class ChatManager:
                 
                 # Just record output metadata without parsing response
                 if system_outputs:
-                    structured_outputs = self._parse_structured_outputs(response_content, system_outputs)
+                    structured_outputs = self._parse_structured_outputs(system_outputs)
         
         self.add_conversation(
             chat_id=chat_id,
@@ -427,11 +423,10 @@ class ChatManager:
 
 
     
-    def _parse_structured_outputs(self, response, system_outputs):
+    def _parse_structured_outputs(self, system_outputs):
         """Store basic output metadata without complex parsing.
         
-        This simplified version just records the output definitions without 
-        attempting to parse content from the response.
+        This simplified version just records the output definitions.
         """
         try:
             outputs = []
@@ -449,7 +444,7 @@ class ChatManager:
             return outputs if outputs else None
         except Exception as e:
             if self.logger:
-                self.logger.warning(f"Could not record output metadata: {str(e)}")
+                self.logger.warning("Could not record output metadata: %s", str(e))
             return None
             
 
@@ -493,7 +488,7 @@ class ChatManager:
                 chat_id = filename[:-5]  # Remove .json extension
                 file_path = os.path.join(self.storage_path, filename)
                 try:
-                    with open(file_path, 'r') as f:
+                    with open(file_path, 'r', encoding='utf-8') as f:
                         try:
                             json.load(f)
                         except json.JSONDecodeError:
@@ -521,5 +516,5 @@ class ChatManager:
             return True
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Failed to delete chat file {chat_id}: {str(e)}")
+                self.logger.error("Failed to delete chat file %s: %s", chat_id, str(e))
             return False
