@@ -34,10 +34,13 @@ jobs:
       - name: Enforce critical errors
         run: |
           # Check for critical errors (error category) - fail if any are found
-          ! PYTHONPATH=python pylint --rcfile=pylintrc --disable=C,W,R --enable=E --fail-under=10.0 $(find ./python -name "*.py" | xargs)
+          # FIXED: Removed the "!" operator that was inverting the logic
+          PYTHONPATH=python pylint --rcfile=pylintrc --disable=C,W,R --enable=E --fail-under=10.0 $(find ./python -name "*.py" | xargs)
           if [ $? -ne 0 ]; then
             echo "Critical errors found. Failing the build."
             exit 1
+          else
+            echo "No critical errors found. Proceeding with the build."
           fi
 
           # Check for warnings - these are important but we'll just report them for now
