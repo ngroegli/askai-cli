@@ -6,7 +6,7 @@ Handles all command-line argument setup, parsing, and validation logic.
 import sys
 import json
 from utils import print_error_or_warnings
-from .banner_argument_parser import BannerArgumentParser
+from python.cli.banner_argument_parser import BannerArgumentParser
 
 
 class CLIParser:

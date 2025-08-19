@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any, Union
 
 from patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
-from .formatters.console_formatter import ConsoleFormatter
-from .formatters.markdown_formatter import MarkdownFormatter
-from .file_writer import FileWriter
+from python.output.formatters.console_formatter import ConsoleFormatter
+from python.output.formatters.markdown_formatter import MarkdownFormatter
+from python.output.file_writer import FileWriter
 
 logger = logging.getLogger(__name__)
 

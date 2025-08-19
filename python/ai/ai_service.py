@@ -8,7 +8,7 @@ import threading
 from utils import tqdm_spinner
 from config import load_config
 from patterns.pattern_configuration import ModelConfiguration, ModelProvider
-from .openrouter_client import OpenRouterClient
+from python.ai.openrouter_client import OpenRouterClient
 
 
 

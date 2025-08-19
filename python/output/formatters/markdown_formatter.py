@@ -4,7 +4,7 @@ Markdown formatter for formatting content for markdown output.
 
 import re
 
-from .base_formatter import BaseFormatter
+from python.output.formatters.base_formatter import BaseFormatter
 
 
 class MarkdownFormatter(BaseFormatter):

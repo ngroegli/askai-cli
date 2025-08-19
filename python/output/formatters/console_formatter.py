@@ -10,7 +10,7 @@ import io
 from rich.console import Console
 from rich.markdown import Markdown
 
-from .base_formatter import BaseFormatter
+from python.output.formatters.base_formatter import BaseFormatter
 
 
 class ConsoleFormatter(BaseFormatter):

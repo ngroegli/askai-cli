@@ -1,0 +1,15 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.analysis.extraPaths": ["python"],
+        "python.analysis.autoImportCompletions": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "python.linting.pylintEnabled": true,
+        "python.linting.enabled": true,
+        "python.linting.pylintArgs": ["--rcfile=pylintrc"]
+    }
+}
