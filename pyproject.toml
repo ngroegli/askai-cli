@@ -4,9 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "python"}
+packages = ["python"]
 
 [tool.pylint.MASTER]
-init-hook = "import sys; sys.path.append('python')"
+init-hook = "import sys; sys.path.append('.')"
+ignore-patterns = ["venv/*"]
+disable = ["import-error"]
 
 [tool.pytest.ini_options]
-pythonpath = "python"
+pythonpath = [".", "python"]
