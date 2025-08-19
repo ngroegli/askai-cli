@@ -106,14 +106,17 @@ class ChatManager:
                         for key, value in obj.__dict__.items():
                             result[key] = make_json_serializable(value)
                         return result
-                    elif isinstance(obj, list):
+                    
+                    if isinstance(obj, list):
                         return [make_json_serializable(item) for item in obj]
-                    elif isinstance(obj, dict):
+                    
+                    if isinstance(obj, dict):
                         return {k: make_json_serializable(v) for k, v in obj.items()}
-                    elif hasattr(obj, 'value'):  # Handle Enum objects
+                    
+                    if hasattr(obj, 'value'):  # Handle Enum objects
                         return obj.value
-                    else:
-                        return obj
+                    
+                    return obj
                         
                 conversation["system_config"] = make_json_serializable(system_config)
             except Exception as e:
