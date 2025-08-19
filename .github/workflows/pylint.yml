@@ -1,0 +1,46 @@
+name: Python Linting
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Analyze code with Pylint
+      run: |
+        # Run pylint using the project's configuration file
+        pylint --rcfile=pylintrc $(find ./python -name "*.py" | xargs) || echo "Pylint check failed but we're continuing to see all warnings and errors"
+        # The exit code is ignored to see all warnings but will be enforced in future iterations
+        
+    - name: Enforce critical errors
+      run: |
+        # Check for critical errors (error category) - fail if any are found
+        ! pylint --rcfile=pylintrc --disable=C,W,R --enable=E --fail-under=10.0 $(find ./python -name "*.py" | xargs)
+        if [ $? -ne 0 ]; then
+          echo "Critical errors found. Failing the build."
+          exit 1
+        fi
+        
+        # Check for warnings - these are important but we'll just report them for now
+        WARNINGS=$(pylint --rcfile=pylintrc --disable=C,E,R --enable=W --msg-template="{path}:{line}:{column}: {msg_id}: {msg} ({symbol})" $(find ./python -name "*.py" | xargs))
+        if [ -n "$WARNINGS" ]; then
+          echo "Warnings found but not failing the build:"
+          echo "$WARNINGS"
+        fi

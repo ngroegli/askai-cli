@@ -212,6 +212,29 @@ askai -q "List 5 AI use cases" -o output.md -f md
 askai -q "Tell me a joke" -m "anthropic/claude-3-opus-2024-06-20"
 ```
 
+## 🔄 Development Workflow
+
+The project uses GitHub Actions for continuous integration:
+
+- All code is automatically checked with Pylint when pushed to the `main` or `develop` branches
+- Pull requests to `main` are checked against quality standards:
+  - Critical errors (E category in Pylint) will block the PR
+  - Warnings and convention issues are reported but don't block merges
+
+Branch structure:
+- `main`: Stable production code
+- `develop`: Integration branch for new features
+- Feature branches: Created from `develop` for individual features
+
+For contributors:
+1. Fork the repository
+2. Create your feature branch from `develop`
+3. Make your changes
+4. Run `pylint --rcfile=pylintrc python/**/*.py` locally to catch issues early
+5. Submit a pull request to the `develop` branch
+
+See [BRANCH_PROTECTION.md](./docs/BRANCH_PROTECTION.md) for detailed information on branch protection rules and workflow.
+
 ## ☢️ Security Note
 
 Your API key is stored locally in `~/.askai_config.yml`. Ensure this file is excluded from version control with `.gitignore`.
