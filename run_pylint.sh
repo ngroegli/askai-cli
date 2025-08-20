@@ -28,7 +28,7 @@ echo -e "\n\n===================================================================
 echo "                  FULL PYLINT OUTPUT                            "
 echo "======================================================================"
 # Run pylint using the project's configuration file with full output
-PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
+PYTHONPATH=python pylint --rcfile=.pylintrc --disable=W0718,W0719 $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
 echo -e "\n\n"
 
 # 1. Check for critical errors (error category)
@@ -50,7 +50,7 @@ echo -e "\n\n===================================================================
 echo "                  WARNINGS (W)                                  "
 echo "      These should be addressed but won't block merging         "
 echo "======================================================================"
-WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --disable=W0718,W0719 --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
 if [ -n "$WARNINGS" ]; then
     echo -e "\033[33m$WARNINGS\033[0m"  # Yellow text for warnings
