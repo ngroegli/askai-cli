@@ -1,8 +1,8 @@
 """
 Pattern input definitions module for the askai-cli.
 
-This module provides the data structures and validation logic for handling 
-different types of inputs in pattern definitions, including text, numbers, 
+This module provides the data structures and validation logic for handling
+different types of inputs in pattern definitions, including text, numbers,
 selections, files, and URLs. It supports input validation and grouping.
 """
 
@@ -15,7 +15,7 @@ import os
 class InputType(Enum):
     """
     Enumeration of supported input types for pattern definitions.
-    
+
     Each input type has specific validation rules and handling logic.
     """
     TEXT = "text"
@@ -33,7 +33,7 @@ class InputGroup:
     description: str
     required_inputs: int = 1  # How many inputs from this group must be provided
     input_names: List[str] = field(default_factory=list)  # Names of inputs in this group
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'InputGroup':
         """Create an InputGroup instance from a dictionary."""
@@ -48,7 +48,7 @@ class InputGroup:
 class PatternInput:
     """
     Represents an input parameter for a pattern with validation capabilities.
-    
+
     Each input has a type, description, and optional validation rules.
     Inputs can be grouped together and validated according to their type.
     """
@@ -111,7 +111,7 @@ class PatternInput:
                 return False, f"Permission denied when accessing file: {value}"
             except IOError as e:
                 return False, f"I/O error when accessing file: {str(e)}"
-        
+
         elif self.input_type == InputType.IMAGE_FILE:
             try:
                 # Validate that the image file exists and is readable
@@ -127,10 +127,10 @@ class PatternInput:
             except FileNotFoundError:
                 return False, f"Image file not found: {value}"
             except PermissionError:
-                return False, f"Permission denied when accessing image file: {value}" 
+                return False, f"Permission denied when accessing image file: {value}"
             except (IOError, OSError) as e:
                 return False, f"Image file error: {str(e)}"
-                
+
         elif self.input_type == InputType.PDF_FILE:
             try:
                 # Validate that the PDF file exists and is readable
@@ -157,7 +157,7 @@ class PatternInput:
                 r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
                 r'(?::\d+)?'  # optional port
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-            
+
             if not url_pattern.match(value):
                 return False, "Value must be a valid URL (http:// or https://)"
 

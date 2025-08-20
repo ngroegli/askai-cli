@@ -1,7 +1,7 @@
 from python.patterns.pattern_configuration import (
-    PatternConfiguration, 
-    PatternPurpose, 
-    PatternFunctionality, 
+    PatternConfiguration,
+    PatternPurpose,
+    PatternFunctionality,
     ModelConfiguration
 )
 from python.patterns.pattern_inputs import PatternInput, InputType

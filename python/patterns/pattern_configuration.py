@@ -14,7 +14,7 @@ from utils import print_error_or_warnings
 class ModelProvider(Enum):
     """
     Enumeration of supported AI model providers.
-    
+
     Defines the different AI service providers that can be used
     for generating responses and processing queries.
     """
@@ -27,7 +27,7 @@ class ModelProvider(Enum):
 class ModelConfiguration:
     """
     Configuration for an AI model with customizable parameters.
-    
+
     This class holds the complete configuration for an AI model, including
     the provider, model name, and various generation parameters that control
     the behavior of the AI responses.
@@ -99,7 +99,7 @@ class ModelConfiguration:
 class PatternPurpose:
     """
     Defines the purpose and intent of an interaction pattern.
-    
+
     Contains a name and description that explain what the pattern
     is intended to accomplish and what problem it solves.
     """
@@ -118,17 +118,17 @@ class PatternPurpose:
 class PatternFunctionality:
     """
     Describes the specific capabilities of an interaction pattern.
-    
+
     Contains a list of features that the pattern provides, allowing users
     to understand the full range of its functionality.
     """
     features: List[str]
-    
+
     @classmethod
     def from_text(cls, content: str) -> 'PatternFunctionality':
         """Create a PatternFunctionality instance from markdown bullet points."""
         # Extract bullet points, removing empty lines and stripping whitespace
-        features = [line.strip('* ').strip() for line in content.split('\n') 
+        features = [line.strip('* ').strip() for line in content.split('\n')
                    if line.strip().startswith('*')]
         return cls(features=features)
 
@@ -136,7 +136,7 @@ class PatternFunctionality:
 class PatternConfiguration:
     """
     Complete configuration for an AI interaction pattern.
-    
+
     Combines purpose, functionality, model configuration, and additional
     parameters to define how the AI should behave for a specific
     interaction pattern. This is the main configuration class that brings
@@ -150,7 +150,7 @@ class PatternConfiguration:
     max_context_length: Optional[int] = None  # Maximum context length to maintain
 
     @classmethod
-    def from_components(cls, purpose: PatternPurpose, functionality: PatternFunctionality, 
+    def from_components(cls, purpose: PatternPurpose, functionality: PatternFunctionality,
                        model_config: Optional[Dict[str, Any]] = None,
                        format_instructions: Optional[str] = None,
                        example_conversation: Optional[List[Dict[str, str]]] = None,
@@ -162,7 +162,7 @@ class PatternConfiguration:
                 model = ModelConfiguration.from_dict(model_config['model'])
             except Exception as e:
                 print_error_or_warnings(f"Error creating model configuration: {str(e)}")
-                
+
         return cls(
             purpose=purpose,
             functionality=functionality,

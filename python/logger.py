@@ -16,10 +16,10 @@ JSON_LOG_FORMAT = '{"timestamp": "%(asctime)s", "log_level": "%(levelname)s", "l
 
 def get_log_level(level_name: str) -> int:
     """Convert string log level to logging constant.
-    
+
     Args:
         level_name: String representation of log level (e.g., 'INFO', 'DEBUG')
-        
+
     Returns:
         int: Logging level constant
     """
@@ -28,7 +28,7 @@ def get_log_level(level_name: str) -> int:
 
 def create_log_directory(log_path: str) -> None:
     """Create directory for log file if it doesn't exist.
-    
+
     Args:
         log_path: Path where log file will be stored
     """
@@ -38,14 +38,14 @@ def create_log_directory(log_path: str) -> None:
 
 def setup_logger(config: Dict[str, Any], debug: bool = False) -> logging.Logger:
     """Set up and configure the application logger.
-    
+
     Args:
         config: Configuration dictionary containing logging settings
         debug: Flag to enable debug mode (overrides config log level)
-        
+
     Returns:
         logging.Logger: Configured logger instance
-        
+
     Configuration options:
         - enable_logging: bool (default: True)
         - log_path: str (default: ~/.askai/askai.log)
@@ -79,7 +79,7 @@ def setup_logger(config: Dict[str, Any], debug: bool = False) -> logging.Logger:
         maxBytes=MAX_LOG_SIZE_BYTES,
         backupCount=log_rotation
     )
-    
+
     # Set up JSON formatter
     formatter = logging.Formatter(JSON_LOG_FORMAT)
     handler.setFormatter(formatter)

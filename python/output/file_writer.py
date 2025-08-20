@@ -41,7 +41,7 @@ class FileWriter:
         return self._clean_content(content, extension)
 
     def process_and_write_for_testing(
-        self, content: str, file_path: str, extension: str, 
+        self, content: str, file_path: str, extension: str,
         additional_params: Optional[Dict] = None
     ) -> bool:
         """Public wrapper for _process_and_write_file for testing purposes.
@@ -330,7 +330,7 @@ class FileWriter:
         # CSS specific selectors that commonly follow 'n' when incorrectly processed
         css_selectors = [
             'html', 'body', 'div', 'span', 'a', 'p', 'ul', 'ol', 'li',
-            'header', 'footer', 'nav', 'section', 'article', 'aside', 
+            'header', 'footer', 'nav', 'section', 'article', 'aside',
             'main', 'form', 'input', 'button', 'img', 'table', 'tr', 'td', 'th'
         ]
 
@@ -755,11 +755,11 @@ class FileWriter:
 
         # Ensure document.addEventListener for DOMContentLoaded if interacting with DOM
         has_dom_methods = re.search(
-            r'document\.getElementById|document\.querySelector|document\.getElement', 
+            r'document\.getElementById|document\.querySelector|document\.getElement',
             js_content, re.IGNORECASE
         )
         has_dom_loaded = re.search(r'DOMContentLoaded', js_content, re.IGNORECASE)
-        
+
         if has_dom_methods and not has_dom_loaded:
             # Check if the content is already wrapped in a function or event listener
             if not re.search(r'^\s*\(\s*function|window\.onload|addEventListener', js_content.lstrip()):
