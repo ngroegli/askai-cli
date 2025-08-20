@@ -4,7 +4,6 @@ Handles all CLI commands like listing, viewing systems and chats.
 """
 
 import json
-import sys
 from ai import OpenRouterClient
 from utils import print_error_or_warnings
 
