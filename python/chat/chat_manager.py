@@ -358,6 +358,10 @@ class ChatManager:
         """Handle persistent chat setup and context loading."""
         chat_id = None
         
+        # Check if we're using a pattern - chat persistence isn't compatible with patterns
+        if hasattr(args, 'use_pattern') and args.use_pattern is not None:
+            return None, messages  # Don't use chat with patterns
+        
         if args.persistent_chat is not None:
             if args.persistent_chat == 'n':
                 chat_id = self.create_chat()
