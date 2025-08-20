@@ -1,3 +1,9 @@
+"""
+Patterns package for AskAI CLI.
+
+This package implements the pattern system for configuring AI prompts, 
+managing inputs and outputs, and specialized use cases through predefined templates.
+"""
 from python.patterns.pattern_configuration import (
     PatternConfiguration,
     PatternPurpose,

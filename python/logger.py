@@ -1,3 +1,9 @@
+"""
+Logger module for AskAI CLI application.
+
+Configures application-wide logging with JSON formatting, 
+log rotation, and configurable log levels.
+"""
 import logging
 import os
 import json
