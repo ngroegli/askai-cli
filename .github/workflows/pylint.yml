@@ -39,7 +39,7 @@ jobs:
 
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
-          PYTHONPATH=python pylint --rcfile=pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
           echo "::endgroup::"
 
       - name: Check issues by severity
@@ -55,7 +55,7 @@ jobs:
 
           # 1. Check for critical errors (error category) - fail if any are found
           echo "::group::CRITICAL ERRORS (E) - These will block merging"
-          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
           CRITICAL_EXIT_CODE=${PIPESTATUS[0]}
 
           if [ -n "$CRITICAL_ERRORS" ]; then
@@ -72,7 +72,7 @@ jobs:
 
           # 2. Check for warnings - these are important but we'll just report them
           echo -e "\n::group::WARNINGS (W) - These should be addressed but won't block merging"
-          WARNINGS=$(PYTHONPATH=python pylint --rcfile=pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$WARNINGS" ]; then
             echo "$WARNINGS"
@@ -88,7 +88,7 @@ jobs:
 
           # 3. Check for refactoring suggestions - just for information
           echo -e "\n::group::REFACTORING SUGGESTIONS (R) - Recommendations to improve code quality"
-          REFACTORING=$(PYTHONPATH=python pylint --rcfile=pylintrc --disable=C,E,W,I --enable=R --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          REFACTORING=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,W,I --enable=R --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$REFACTORING" ]; then
             echo "$REFACTORING"
@@ -104,7 +104,7 @@ jobs:
 
           # 4. Check for convention violations - just for information
           echo -e "\n::group::CONVENTION ISSUES (C) - Style suggestions"
-          CONVENTIONS=$(PYTHONPATH=python pylint --rcfile=pylintrc --disable=E,W,R,I --enable=C --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CONVENTIONS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,I --enable=C --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$CONVENTIONS" ]; then
             echo "$CONVENTIONS"
@@ -120,7 +120,7 @@ jobs:
 
           # 5. Check for info messages - just for information
           echo -e "\n::group::INFORMATION (I) - Additional info"
-          INFORMATION=$(PYTHONPATH=python pylint --rcfile=pylintrc --disable=E,W,R,C --enable=I --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          INFORMATION=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,C --enable=I --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$INFORMATION" ]; then
             echo "$INFORMATION"

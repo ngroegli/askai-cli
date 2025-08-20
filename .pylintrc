@@ -1,6 +1,9 @@
 [MESSAGES CONTROL]
 # Disable specific errors and import-error to fix the GitHub validation issues
-disable=C0303,W0718,W0719,E0401
+# C0303: trailing-whitespace
+# W0718: broad-exception-caught
+# W0719: broad-exception-raised
+disable=C0303,W0718,W0719
 
 [FORMAT]
 # Allow any line length
