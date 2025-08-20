@@ -5,7 +5,16 @@ Extends the standard argparse.ArgumentParser with banner display functionality.
 
 import sys
 import argparse
-from termcolor import colored
+
+# Only import colored when needed, using lazy loading
+def get_colored_function():
+    """Import and return the colored function from termcolor only when needed."""
+    try:
+        from termcolor import colored
+        return colored
+    except ImportError:
+        # Fallback if termcolor is not available
+        return lambda text, color: text
 
 def print_ascii_banner():
     """Print a stylized ASCII art banner for the application in cyan color."""
@@ -23,7 +32,7 @@ def print_ascii_banner():
      /:/  /     \::/  /     |:|  |       /:/  /    \/__/    
      \/__/       \/__/       \|__|       \/__/              
 '''
-
+    colored = get_colored_function()
     print(colored(banner, banner_color))
 
 
@@ -41,6 +50,7 @@ class BannerArgumentParser(argparse.ArgumentParser):
         Args:
             message: The error message to display
         """
+        colored = get_colored_function()
         print(colored(f"ERROR: {message}", "red"))
         sys.exit(2)
 

@@ -54,6 +54,17 @@ class CommandHandler:
 
     def handle_chat_commands(self, args):
         """Handle chat-related commands."""
+        # Check for incompatible combinations
+        using_pattern = args.use_pattern is not None
+        using_pattern_commands = args.list_patterns or args.view_pattern is not None or using_pattern
+        using_chat = args.persistent_chat is not None or args.list_chats or args.view_chat is not None or args.manage_chats
+        
+        # If pattern commands are present, they always take precedence over chat commands
+        if using_pattern_commands and using_chat:
+            self.logger.warning(json.dumps({"log_message": "User attempted to use chat functionality with patterns"}))
+            print_error_or_warnings("Pattern commands take precedence over chat commands. Chat functionality will be ignored.", warning_only=True)
+            return False
+        
         if args.list_chats:
             self.logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
             chats = self.chat_manager.list_chats()

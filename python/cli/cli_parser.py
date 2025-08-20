@@ -5,8 +5,13 @@ Handles all command-line argument setup, parsing, and validation logic.
 
 import sys
 import json
-from utils import print_error_or_warnings
 from python.cli.banner_argument_parser import BannerArgumentParser
+
+# Import print_error_or_warnings only when needed
+def get_print_error_or_warnings():
+    """Import print_error_or_warnings function only when needed."""
+    from utils import print_error_or_warnings
+    return print_error_or_warnings
 
 
 class CLIParser:
@@ -41,13 +46,33 @@ class CLIParser:
                            help='If used with -f md, outputs raw markdown as plain text instead of rendering')
         question_group.add_argument('-m', '--model', help='Override default AI model')
         
+        # Chat persistence options as a subgroup under Question logic
+        chat_group = parser.add_argument_group('  Chat persistence (subgroup of Question logic, not compatible with patterns)')
+        chat_group.add_argument('-pc', '--persistent-chat',
+                            nargs='?', 
+                            const='new',
+                            metavar='CHAT_ID',
+                            help='Enable persistent chat. Use without value to create new chat, '
+                                 'or provide chat ID to continue existing chat (incompatible with patterns)')
+        chat_group.add_argument('-lc', '--list-chats',
+                            action='store_true',
+                            help='List all available chat files (can be used with patterns, but chat will be ignored)')
+        chat_group.add_argument('-vc', '--view-chat',
+                            nargs='?',
+                            const='',  # When -vc is used without value
+                            metavar='CHAT_ID',
+                            help='View chat history. Use without ID to select from available chats (incompatible with patterns)')
+        chat_group.add_argument('--manage-chats',
+                            action='store_true',
+                            help='Manage chat files (repair or delete corrupted files) (incompatible with patterns)')
+        
         # Pattern options
-        pattern_group = parser.add_argument_group('Pattern logic')
+        pattern_group = parser.add_argument_group('Pattern logic (not compatible with chat persistence)')
         pattern_group.add_argument('-up', '--use-pattern',
                            nargs='?',
                            const='new',  # When -p is used without value
                            metavar='PATTERN_ID',
-                           help='Add pattern-specific context. Use without ID to select from available patterns')
+                           help='Use a predefined pattern. Without ID, select from available patterns (incompatible with chat)')
         pattern_group.add_argument('-lp', '--list-patterns', 
                            action='store_true', 
                            help='List all available pattern files')
@@ -57,33 +82,7 @@ class CLIParser:
                            help='View pattern content. Use without ID to select from available patterns')
         pattern_group.add_argument('-pi', '--pattern-input',
                            type=json.loads,
-                           help='Provide pattern inputs as JSON object')
-        
-        # Debug options
-        debug_group = parser.add_argument_group('Debug options')
-        debug_group.add_argument('--debug', 
-                           action='store_true', 
-                           help='Enable debug logging for this session')
-        
-        # Chat persistence options
-        chat_group = parser.add_argument_group('Chat persistence')
-        chat_group.add_argument('-pc', '--persistent-chat',
-                            nargs='?', 
-                            const='new',
-                            metavar='CHAT_ID',
-                            help='Enable persistent chat. Use without value to create new chat, '
-                                 'or provide chat ID to continue existing chat')
-        chat_group.add_argument('-lc', '--list-chats',
-                            action='store_true',
-                            help='List all available chat files')
-        chat_group.add_argument('-vc', '--view-chat',
-                            nargs='?',
-                            const='',  # When -vc is used without value
-                            metavar='CHAT_ID',
-                            help='View chat history. Use without ID to select from available chats')
-        chat_group.add_argument('--manage-chats',
-                            action='store_true',
-                            help='Manage chat files (repair or delete corrupted files)')
+                           help='Provide pattern inputs as JSON object (used with --use-pattern)')
         
         # Provider-specific options
         provider_group = parser.add_argument_group('Provider internals')
@@ -97,6 +96,12 @@ class CLIParser:
         #                     metavar='COMMAND',
         #                     help='Azure OpenAI API commands: check-quota, list-deployments [FILTER...]')
         
+        # Debug options (moved to the end)
+        debug_group = parser.add_argument_group('Debug options')
+        debug_group.add_argument('--debug', 
+                           action='store_true', 
+                           help='Enable debug logging for this session')
+        
         return parser
 
     def parse_arguments(self):
@@ -104,11 +109,15 @@ class CLIParser:
         # Show help if no arguments provided
         if len(sys.argv) == 1:
             sys.argv.append('--help')
-            
+        
+        # Parse arguments - argparse will automatically handle help flags
         return self.parser.parse_args()
 
     def validate_arguments(self, args, logger):
         """Validate command line arguments and log warnings/errors."""
+        # Import the error/warning function only when needed
+        print_error_or_warnings = get_print_error_or_warnings()
+        
         # Check if user is using any command that doesn't require a question
         has_command = (args.list_patterns or args.view_pattern is not None or 
                       args.list_chats or args.view_chat is not None or 
@@ -123,6 +132,22 @@ class CLIParser:
         
         # Check if pattern is being used
         using_pattern = args.use_pattern is not None
+        
+        # Check if chat persistence is being used
+        using_chat = args.persistent_chat is not None or args.view_chat is not None
+        
+        # Check for incompatible combinations of pattern and chat
+        if using_pattern and using_chat:
+            logger.warning(json.dumps({
+                "log_message": "User attempting to use chat persistence features with pattern; these are incompatible"
+            }))
+            print_error_or_warnings(
+                text=(
+                    "Chat persistence features (-pc/--persistent-chat, -vc/--view-chat) are not compatible "
+                    "with patterns (-up/--use-pattern). Chat options will be ignored."
+                ),
+                warning_only=True
+            )
         
         # Check if question-related parameters are used with a pattern
         if using_pattern and any([
