@@ -148,7 +148,7 @@ askai -q "What is the capital of Japan?"
 ### Interpret Previous Terminal Output
 
 ```bash
-ls -la | askai -q "Explain this folder output."
+ls -la | askai -q "Explain this folder content output."
 ```
 
 ### Use Pattern Files as Additional Context
