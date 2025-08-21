@@ -8,11 +8,14 @@
   - [⚡ Usage Examples](#-usage-examples)
     - [General Question](#general-question)
     - [Interpret Previous Terminal Output](#interpret-previous-terminal-output)
-    - [Use System Files as Additional Context](#use-system-files-as-additional-context)
-    - [List Available System Files](#list-available-system-files)
+    - [Use Pattern Files as Additional Context](#use-pattern-files-as-additional-context)
+    - [Analyze an Image](#analyze-an-image)
+    - [Analyze a PDF Document](#analyze-a-pdf-document)
+    - [List Available Pattern Files](#list-available-pattern-files)
     - [Error Analysis with Previous Output](#error-analysis-with-previous-output)
     - [Save Response to File (Markdown)](#save-response-to-file-markdown)
     - [Override Default Model](#override-default-model)
+  - [🔄 Development Workflow](#-development-workflow)
   - [☢️ Security Note](#️-security-note)
   - [🧩 Requirements](#-requirements)
   - [📄 License](#-license)
@@ -145,7 +148,7 @@ askai -q "What is the capital of Japan?"
 ### Interpret Previous Terminal Output
 
 ```bash
-ls -la | askai -q "Explain this output."
+ls -la | askai -q "Explain this folder output."
 ```
 
 ### Use Pattern Files as Additional Context
