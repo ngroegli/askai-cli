@@ -41,7 +41,7 @@ class FileWriter:
         return self._clean_content(content, extension)
 
     def process_and_write_for_testing(
-        self, content: str, file_path: str, extension: str, 
+        self, content: str, file_path: str, extension: str,
         additional_params: Optional[Dict] = None
     ) -> bool:
         """Public wrapper for _process_and_write_file for testing purposes.
@@ -99,10 +99,9 @@ class FileWriter:
                 if self.logger:
                     self.logger.info("Content written to %s (%s chars, %s bytes)", file_path, content_size, file_size)
                 return True
-            else:
-                if self.logger:
-                    self.logger.error("File %s was not created", file_path)
-                return False
+            if self.logger:
+                self.logger.error("File %s was not created", file_path)
+            return False
 
         except UnicodeEncodeError as ue:
             # Special handling for Unicode errors
@@ -330,7 +329,7 @@ class FileWriter:
         # CSS specific selectors that commonly follow 'n' when incorrectly processed
         css_selectors = [
             'html', 'body', 'div', 'span', 'a', 'p', 'ul', 'ol', 'li',
-            'header', 'footer', 'nav', 'section', 'article', 'aside', 
+            'header', 'footer', 'nav', 'section', 'article', 'aside',
             'main', 'form', 'input', 'button', 'img', 'table', 'tr', 'td', 'th'
         ]
 
@@ -413,29 +412,27 @@ class FileWriter:
         if directory_path.exists():
             if directory_path.is_dir():
                 return str(directory_path.resolve())
-            else:
-                print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
-                return str(Path(".").resolve())
-        else:
-            # Directory doesn't exist, ask to create
-            print(f"📂 Directory '{directory}' does not exist.")
-            try:
-                create = input("Create this directory? (y/n): ").strip().lower()
-            except (KeyboardInterrupt, EOFError):
-                return str(Path(".").resolve())
+            print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
+            return str(Path(".").resolve())
+        # Directory doesn't exist, ask to create
+        print(f"📂 Directory '{directory}' does not exist.")
+        try:
+            create = input("Create this directory? (y/n): ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            return str(Path(".").resolve())
 
-            if create in ['y', 'yes', '']:  # Default to yes if empty
-                try:
-                    directory_path.mkdir(parents=True, exist_ok=True)
-                    print(f"✅ Created directory: {directory_path.resolve()}")
-                    return str(directory_path.resolve())
-                except (IOError, OSError, PermissionError) as e:
-                    print(f"❌ Error creating directory: {str(e)}")
-                    print("Using current directory instead.")
-                    return str(Path(".").resolve())
-            else:
+        if create in ['y', 'yes', '']:  # Default to yes if empty
+            try:
+                directory_path.mkdir(parents=True, exist_ok=True)
+                print(f"✅ Created directory: {directory_path.resolve()}")
+                return str(directory_path.resolve())
+            except (IOError, OSError, PermissionError) as e:
+                print(f"❌ Error creating directory: {str(e)}")
                 print("Using current directory instead.")
                 return str(Path(".").resolve())
+
+        print("Using current directory instead.")
+        return str(Path(".").resolve())
 
     # Private helper methods for formatting content
 
@@ -755,11 +752,11 @@ class FileWriter:
 
         # Ensure document.addEventListener for DOMContentLoaded if interacting with DOM
         has_dom_methods = re.search(
-            r'document\.getElementById|document\.querySelector|document\.getElement', 
+            r'document\.getElementById|document\.querySelector|document\.getElement',
             js_content, re.IGNORECASE
         )
         has_dom_loaded = re.search(r'DOMContentLoaded', js_content, re.IGNORECASE)
-        
+
         if has_dom_methods and not has_dom_loaded:
             # Check if the content is already wrapped in a function or event listener
             if not re.search(r'^\s*\(\s*function|window\.onload|addEventListener', js_content.lstrip()):

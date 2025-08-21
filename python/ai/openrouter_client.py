@@ -20,10 +20,10 @@ from config import load_config
 
 class OpenRouterClient:
     """Client for interacting with the OpenRouter API."""
-    
+
     def __init__(self, config=None, logger=None):
         """Initialize the OpenRouter client.
-        
+
         Args:
             config: Optional configuration dict. If not provided, will load from config.
             logger: Optional logger instance. If not provided, will create one.
@@ -31,31 +31,31 @@ class OpenRouterClient:
         self.config = config or load_config()
         self.logger = logger
         self.base_url = self.config["base_url"]
-        
+
         # Ensure base_url ends with a slash
         if not self.base_url.endswith('/'):
             self.base_url += '/'
-        
+
     def _get_headers(self):
         """Get the common headers for API requests."""
         return {
             "Authorization": f"Bearer {self.config['api_key']}",
             "Content-Type": "application/json"
         }
-    
+
     def _setup_logger(self, debug=False):
         """Setup logger if not already provided."""
         if not self.logger:
             self.logger = setup_logger(self.config, debug)
         return self.logger
-    
+
     def _configure_model_settings(self, payload, model_config):
         """Configure model settings in the payload based on the model configuration.
-        
+
         Args:
             payload: The API payload to update
             model_config: ModelConfiguration instance with model settings
-            
+
         Returns:
             Updated payload with model settings
         """
@@ -67,13 +67,13 @@ class OpenRouterClient:
         if model_config.stop_sequences:
             payload["stop"] = model_config.stop_sequences
         return payload
-    
+
     def _detect_content_types(self, messages):
         """Detect special content types in messages.
-        
+
         Args:
             messages: List of message dictionaries
-            
+
         Returns:
             dict: Contains flags for detected content types
         """
@@ -83,16 +83,16 @@ class OpenRouterClient:
             "has_pdf_url": False,
             "pdf_details": []
         }
-        
+
         for msg in messages:
             if not isinstance(msg.get("content"), list):
                 continue
-                
+
             content_list = msg.get("content", [])
             for item in content_list:
                 if not isinstance(item, dict):
                     continue
-                    
+
                 # Check for images
                 if item.get("type") == "image_url":
                     result["has_multimodal"] = True
@@ -104,24 +104,24 @@ class OpenRouterClient:
                             "source": "application/pdf in URL",
                             "url": image_url
                         })
-                
+
                 # Check for file attachments
                 elif item.get("type") == "file":
                     file_data = item.get("file", {}).get("file_data", "")
                     filename = item.get("file", {}).get("filename", "document.pdf")
-                    
+
                     if file_data and isinstance(file_data, str):
                         # Check for PDF URLs
-                        is_pdf_url = (file_data.startswith("http") and 
+                        is_pdf_url = (file_data.startswith("http") and
                                       file_data.lower().endswith(".pdf"))
-                                      
+
                         # Check for base64 PDFs
                         is_pdf_base64 = "application/pdf" in file_data
-                        
+
                         if is_pdf_url or is_pdf_base64:
                             result["has_multimodal"] = True
                             result["has_pdf"] = True
-                            
+
                             if is_pdf_url:
                                 result["has_pdf_url"] = True
                                 result["pdf_details"].append({
@@ -132,24 +132,24 @@ class OpenRouterClient:
                                 })
                             else:
                                 result["pdf_details"].append({
-                                    "type": "file", 
+                                    "type": "file",
                                     "source": "base64",
                                     "filename": filename
                                 })
-            
+
             # No need to check further if we've already found multimodal content
             if result["has_multimodal"]:
                 break
-                
+
         return result
-    
+
 
     def _configure_pdf_handling(self, payload):
         """Configure the payload for PDF handling.
-        
+
         Args:
             payload: The API payload to update
-            
+
         Returns:
             Updated payload with PDF handling configuration
         """
@@ -158,7 +158,7 @@ class OpenRouterClient:
             payload["model"] = self.config["default_pdf_model"]
         else:
             payload["model"] = "anthropic/claude-sonnet-4"  # Default PDF-capable model
-        
+
         # Add the PDF processing plugin (preserving any existing plugins if possible)
         pdf_plugin = {
             "id": "file-parser",
@@ -168,46 +168,46 @@ class OpenRouterClient:
         }
         self._add_plugin_to_payload(payload, pdf_plugin)
         return payload
-        
+
     def _add_plugin_to_payload(
         self, payload: Dict[str, Any], plugin: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Add a plugin to the payload, handling any existing plugins.
-        
+
         Args:
             payload: The API payload to update
             plugin: The plugin configuration to add
-            
+
         Returns:
             Updated payload with the plugin added
         """
         if "plugins" not in payload:
             payload["plugins"] = []
-            
+
         # Check if plugin with same ID already exists
         plugin_id = plugin.get("id")
         existing_plugin_index = None
-        
+
         for i, existing_plugin in enumerate(payload["plugins"]):
             if existing_plugin.get("id") == plugin_id:
                 existing_plugin_index = i
                 break
-                
+
         if existing_plugin_index is not None:
             # Update existing plugin
             payload["plugins"][existing_plugin_index] = plugin
         else:
             # Add new plugin
             payload["plugins"].append(plugin)
-            
+
         return payload
-        
+
     def _configure_multimodal_handling(self, payload):
         """Configure the payload for multimodal content handling.
-        
+
         Args:
             payload: The API payload to update
-            
+
         Returns:
             Updated payload with multimodal configuration
         """
@@ -215,43 +215,43 @@ class OpenRouterClient:
             payload["model"] = self.config["default_vision_model"]
         else:
             payload["model"] = "anthropic/claude-3-opus:latest"  # Default vision model
-            
+
         return payload
-        
+
     def _configure_web_search(
         self, payload: Dict[str, Any], web_search_options: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Configure payload for web search (non-plugin approach).
-        
+
         Args:
             payload: The API payload to update
             web_search_options: Web search configuration options
-            
+
         Returns:
             Updated payload with web search configuration
         """
         payload["web_search_options"] = web_search_options
         return payload
-        
+
     def _configure_web_plugin(
         self, payload: Dict[str, Any], web_plugin_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Configure payload with web plugin.
-        
+
         Args:
             payload: The API payload to update
             web_plugin_config: Web plugin configuration options
-            
+
         Returns:
             Updated payload with web plugin added
         """
         web_plugin = {"id": "web", **web_plugin_config}
         self._add_plugin_to_payload(payload, web_plugin)
         return payload
-        
+
     def _log_warning(self, logger, message: str, warning_only: bool = True):
         """Log a warning message both to logger and possibly to console.
-        
+
         Args:
             logger: The logger instance to use
             message: The warning message
@@ -260,20 +260,20 @@ class OpenRouterClient:
         logger.warning(json.dumps({"log_message": message}))
         if warning_only:
             print_error_or_warnings(text=message, warning_only=warning_only)
-    
+
     def _handle_api_response(
-        self, 
+        self,
         response: requests.Response,
-        logger: Any, 
+        logger: Any,
         content_info: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Handle the API response and extract the relevant data.
-        
+
         Args:
             response: The API response object
             logger: Logger instance
             content_info: Content type information
-            
+
         Returns:
             dict: The extracted data or error response
         """
@@ -281,59 +281,63 @@ class OpenRouterClient:
             response_data = response.json()
             choice = response_data["choices"][0]
             message = choice["message"]
-            
+
             # Log web search annotations if present
             if "annotations" in message:
                 logger.debug(json.dumps({
                     "log_message": "Received web search annotations",
                     "annotation_count": len(message["annotations"])
                 }))
-            
+
             return {
                 "content": message["content"],
                 "annotations": message.get("annotations", []),
                 "full_response": response_data
             }
-        else:
-            logger.critical(
-                json.dumps({"log_message": "API Error %d: %s"}) % (response.status_code, response.text)
-            )
-            
-            # Special handling for PDF parsing errors
-            if response.status_code == 422:
-                error_text = response.text.lower() if isinstance(response.text, str) else ""
-                
-                # Check for PDF-related error messages
-                pdf_error_phrases = [
-                    "failed to parse", "pdf", ".pdf", 
-                    "cannot read", "file format", "document format"
-                ]
-                
-                is_pdf_error = any(phrase in error_text for phrase in pdf_error_phrases)
-                
-                if is_pdf_error and content_info["has_pdf"]:
-                    logger.warning(json.dumps({
-                        "log_message": "PDF parsing error detected, returning friendly error message",
-                        "error_text": response.text
-                    }))
-                    
-                    # Return a user-friendly error instead of failing
-                    return {
-                        "content": "I couldn't parse the PDF file you provided. This might be because:\n\n"
-                                  "1. The PDF has a format that's not supported\n"
-                                  "2. The PDF might be password-protected or encrypted\n"
-                                  "3. The PDF might be corrupted or too large\n\n"
-                                  "Please try with a different PDF file, or consider extracting the text manually "
-                                  "and sending it as a regular message.",
-                        "annotations": [],
-                        "full_response": {"error": response.text}
-                    }
-            
-            # For other errors, raise an exception
-            raise Exception(f"OpenRouter API Error ({response.status_code}): {response.text}")
-    
+
+        logger.critical(
+            json.dumps({"log_message": "API Error %d: %s"}) % (response.status_code, response.text)
+        )
+
+        # Special handling for PDF parsing errors
+        if response.status_code == 422:
+            error_text = response.text.lower() if isinstance(response.text, str) else ""
+
+            # Check for PDF-related error messages
+            pdf_error_phrases = [
+                "failed to parse", "pdf", ".pdf",
+                "cannot read", "file format", "document format"
+            ]
+
+            is_pdf_error = any(phrase in error_text for phrase in pdf_error_phrases)
+
+            if is_pdf_error and content_info["has_pdf"]:
+                logger.warning(json.dumps({
+                    "log_message": "PDF parsing error detected, returning friendly error message",
+                    "error_text": response.text
+                }))
+
+                # Return a user-friendly error instead of failing
+                return {
+                    "content": "I couldn't parse the PDF file you provided. This might be because:\n\n"
+                              "1. The PDF has a format that's not supported\n"
+                              "2. The PDF might be password-protected or encrypted\n"
+                              "3. The PDF might be corrupted or too large\n\n"
+                              "Please try with a different PDF file, or consider extracting the text manually "
+                              "and sending it as a regular message.",
+                    "annotations": [],
+                    "full_response": {"error": response.text}
+                }
+
+        # For other errors, return error message
+        return {
+            "content": f"Error: {response.text}",
+            "annotations": [],
+            "full_response": {"error": f"OpenRouter API Error ({response.status_code}): {response.text}"}
+        }
+
     def request_completion(
-        self, 
+        self,
         messages: List[Dict[str, Any]],
         model_config: Optional[Any] = None,
         debug: bool = False,
@@ -341,14 +345,14 @@ class OpenRouterClient:
         web_plugin_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Send a request to the OpenRouter API for chat completion.
-        
+
         Args:
             messages: List of message dictionaries to send
             model_config: Optional ModelConfiguration instance to override defaults
             debug: Whether to enable debug logging
             web_search_options: Optional dict with web search configuration for non-plugin search
             web_plugin_config: Optional dict with web plugin configuration
-        
+
         Returns:
             dict: The full API response including message content and annotations
         """
@@ -361,19 +365,19 @@ class OpenRouterClient:
             self._configure_model_settings(payload, model_config)
         else:
             payload["model"] = self.config["default_model"]
-            
+
         # Step 2: Detect content types in messages
         content_info = self._detect_content_types(messages)
-        
+
         # Step 3: Configure payload based on content types (if no explicit model_config provided)
         if content_info["has_multimodal"] and not model_config:
             if content_info["has_pdf"]:
                 self._configure_pdf_handling(payload)
-                
+
                 # Add detailed logging for PDF handling
-                file_format_desc = ("an external PDF URL" if content_info["has_pdf_url"] 
+                file_format_desc = ("an external PDF URL" if content_info["has_pdf_url"]
                                    else "a base64-encoded PDF")
-                
+
                 log_message = {
                     "log_message": "Detected PDF content, using PDF-capable model with file-parser plugin",
                     "selected_model": payload["model"],
@@ -384,14 +388,14 @@ class OpenRouterClient:
                 logger.debug(json.dumps(log_message))
             else:
                 self._configure_multimodal_handling(payload)
-                
+
                 # Log warning if using default vision model
                 if "default_vision_model" not in self.config:
                     self._log_warning(
-                        logger, 
+                        logger,
                         "Using default visual model as no specific model configured"
                     )
-                
+
                 logger.debug(json.dumps({
                     "log_message": "Detected image content, using vision-capable model",
                     "selected_model": payload["model"],
@@ -416,7 +420,7 @@ class OpenRouterClient:
 
         # Step 6: Add messages to payload
         payload["messages"] = messages
-        
+
         # Step 7: Special handling for PDF URLs (this overrides any previous plugin configuration)
         if content_info["has_pdf_url"]:
             self._configure_pdf_handling(payload)
@@ -425,7 +429,7 @@ class OpenRouterClient:
                 "model": payload["model"],
                 "plugins": payload["plugins"]
             }))
-            
+
         # Step 8: Log final payload configuration
         logger.debug(json.dumps({
             "log_message": "Final OpenRouter API payload",
@@ -433,7 +437,7 @@ class OpenRouterClient:
             "model": payload.get("model", "unknown"),
             "has_pdf_elements": content_info["has_pdf"]
         }))
-        
+
         # Step 9: Make the API request and handle response
         try:
             response = requests.post(f"{self.base_url}chat/completions", headers=headers, json=payload, timeout=30)
@@ -450,23 +454,23 @@ class OpenRouterClient:
                 "error": str(e)
             }))
             raise Exception(f"Error communicating with OpenRouter API: {str(e)}") from e
-    
+
     def get_credit_balance(self, debug: bool = False) -> Dict[str, Any]:
         """Get the current credit balance from OpenRouter.
-        
+
         Args:
             debug: Whether to enable debug logging
-            
+
         Returns:
             dict: Credit balance information containing total_credits and total_usage
         """
         logger = self._setup_logger(debug)
         headers = self._get_headers()
-        
+
         logger.debug(json.dumps({
             "log_message": "Requesting credit balance from OpenRouter API"
         }))
-        
+
         return self._make_api_request(
             endpoint="credits",
             headers=headers,
@@ -475,7 +479,7 @@ class OpenRouterClient:
             error_message="API Error getting credit balance",
             logger=logger
         )
-    
+
     def _make_api_request(
         self,
         endpoint: str,
@@ -487,7 +491,7 @@ class OpenRouterClient:
         logger: Optional[Any] = None
     ) -> Any:
         """Make an API request to OpenRouter.
-        
+
         Args:
             endpoint: API endpoint to call (without base URL)
             headers: Headers to send with the request
@@ -496,12 +500,12 @@ class OpenRouterClient:
             success_handler: Function to handle successful response
             error_message: Error message prefix for failed requests
             logger: Logger instance
-            
+
         Returns:
             The processed API response
         """
         url = f"{self.base_url}{endpoint}"
-        
+
         try:
             if method.upper() == "GET":
                 response = requests.get(url, headers=headers, timeout=30)
@@ -509,7 +513,7 @@ class OpenRouterClient:
                 response = requests.post(url, headers=headers, json=data, timeout=30)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-                
+
             if response.ok:
                 if success_handler:
                     result = success_handler(response)
@@ -519,12 +523,12 @@ class OpenRouterClient:
                         }))
                     return result
                 return response.json()
-            else:
-                if logger:
-                    logger.critical(json.dumps({
-                        "log_message": f"{error_message} {response.status_code}: {response.text}"
-                    }))
-                raise Exception(f"{error_message}: {response.text}")
+
+            if logger:
+                logger.critical(json.dumps({
+                    "log_message": f"{error_message} {response.status_code}: {response.text}"
+                }))
+            raise Exception(f"{error_message}: {response.text}")
         except requests.exceptions.ConnectionError as e:
             if logger:
                 logger.critical(json.dumps({
@@ -539,23 +543,23 @@ class OpenRouterClient:
                     "error": str(e)
                 }))
             raise Exception(f"Error communicating with OpenRouter API: {str(e)}") from e
-    
+
     def get_available_models(self, debug: bool = False) -> List[Dict[str, Any]]:
         """Get the list of available models from OpenRouter.
-        
+
         Args:
             debug: Whether to enable debug logging
-            
+
         Returns:
             list: List of available models with their information
         """
         logger = self._setup_logger(debug)
         headers = self._get_headers()
-        
+
         logger.debug(json.dumps({
             "log_message": "Requesting available models from OpenRouter API"
         }))
-        
+
         def handle_models_response(response):
             models_data = response.json()
             logger.debug(json.dumps({
@@ -563,7 +567,7 @@ class OpenRouterClient:
                 "model_count": len(models_data.get("data", []))
             }))
             return models_data.get("data", [])
-        
+
         return self._make_api_request(
             endpoint="models",
             headers=headers,

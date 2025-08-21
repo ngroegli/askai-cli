@@ -41,7 +41,7 @@ class OutputAction(Enum):
 @dataclass
 class PatternOutput:
     """Defines the expected output from a pattern.
-    
+
     This class represents the contract for how an AI should structure its output
     for a specific field in the pattern response. The key concept is that each output
     has a specific action associated with it (display, write, execute).
@@ -50,27 +50,27 @@ class PatternOutput:
     name: str
     description: str
     output_type: OutputType
-    
+
     # Example data
     example: Optional[str] = None  # Example of the expected output
-    
+
     # Behavior flags
     required: bool = True  # Whether this output must be present in the response
     action: OutputAction = OutputAction.DISPLAY  # Default action is to display
     write_to_file: Optional[str] = None  # Filename to write this output to (if action is WRITE)
     group: Optional[str] = None  # Group name for organizing related outputs
-    
+
     # Legacy compatibility flags
     auto_run: bool = False  # Whether CODE outputs should prompt for execution (legacy)
     is_system_field: bool = False  # Whether this is a special system field (visual_output or result)
-    
+
     # Internal content storage
     content: Optional[Any] = field(default=None, repr=False)
-    
+
     # File extension mapping (class variable)
     EXTENSION_MAP: ClassVar[Dict[OutputType, str]] = {
         OutputType.HTML: ".html",
-        OutputType.CSS: ".css", 
+        OutputType.CSS: ".css",
         OutputType.JS: ".js",
         OutputType.JSON: ".json",
         OutputType.MARKDOWN: ".md",
@@ -79,40 +79,40 @@ class PatternOutput:
         OutputType.TABLE: ".csv",  # Tables could be CSV
         OutputType.LIST: ".txt"
     }
-    
+
     # Common Linux commands for basic validation
     COMMON_COMMANDS: ClassVar[List[str]] = [
-        'ls', 'cd', 'pwd', 'mkdir', 'cp', 'mv', 'rm', 'grep', 
-        'find', 'cat', 'echo', 'ps', 'kill', 'df', 'du', 'tar', 
+        'ls', 'cd', 'pwd', 'mkdir', 'cp', 'mv', 'rm', 'grep',
+        'find', 'cat', 'echo', 'ps', 'kill', 'df', 'du', 'tar',
         'chmod', 'chown', 'wget', 'curl'
     ]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'PatternOutput':
         """Create a PatternOutput instance from a dictionary.
-        
+
         Args:
             data: Dictionary containing output definition
-            
+
         Returns:
             PatternOutput: Instantiated pattern output object
         """
         name = data['name']
         # Mark result and visual_output as special system fields
         is_system_field = name in ["result", "visual_output"] or name.startswith("result_")
-        
+
         # Get auto_run value for backwards compatibility - ensure it's a boolean
         auto_run = bool(data.get('auto_run', False))
-        
+
         # Determine the output type
         output_type = OutputType(data['type'])
-        
+
         # Extract group if present
         group = data.get('group')
-        
+
         # Determine action based on configuration and field name
         action_str = data.get('action')
-        
+
         # If no explicit action is specified, infer it:
         if not action_str:
             # For results, infer action
@@ -132,14 +132,14 @@ class PatternOutput:
             # Default action is display
             else:
                 action_str = "display"
-        
+
         # Convert string action to enum
         try:
             action = OutputAction(action_str)
         except (ValueError, TypeError):
             logger.warning("Invalid action '%s' for output '%s', defaulting to DISPLAY", action_str, name)
             action = OutputAction.DISPLAY
-        
+
         output_obj = cls(
             name=name,
             description=data['description'],
@@ -153,15 +153,15 @@ class PatternOutput:
             is_system_field=is_system_field,
             content=None
         )
-        
+
         return output_obj
 
     def validate_value(self, value: Any) -> tuple[bool, Optional[str]]:
         """Validate an output value against this output's specifications.
-        
+
         Args:
             value: The value to validate
-            
+
         Returns:
             tuple: (is_valid, error_message)
         """
@@ -181,7 +181,7 @@ class PatternOutput:
 
         elif self.output_type == OutputType.TABLE:
             is_list_of_lists = (
-                isinstance(value, (list, tuple)) and 
+                isinstance(value, (list, tuple)) and
                 all(isinstance(row, (list, tuple)) for row in value)
             )
             if not is_list_of_lists:
@@ -203,97 +203,97 @@ class PatternOutput:
 
     def should_prompt_for_execution(self) -> bool:
         """Check if this output should prompt for execution.
-        
+
         Returns:
             bool: True if execution prompt should be shown
         """
         # Check if action is EXECUTE
         if self.action == OutputAction.EXECUTE:
             return True
-            
+
         # Legacy compatibility checks
         if self.output_type == OutputType.CODE and self.auto_run:
             return True
-            
+
         if self.name == "result" and self.is_system_field and self.output_type == OutputType.CODE:
             return True
-        
+
         return False
 
     def should_write_to_file(self) -> bool:
         """Check if this output should be written to a file.
-        
+
         Returns:
             bool: True if output should be written to file
         """
         # Check if action is WRITE
         if self.action == OutputAction.WRITE:
             return self.write_to_file is not None and bool(self.write_to_file.strip())
-            
+
         # Legacy compatibility
         return self.write_to_file is not None and bool(self.write_to_file.strip())
-    
+
     def should_display(self) -> bool:
         """Check if this output should be displayed to the user.
-        
+
         Returns:
             bool: True if output should be displayed
         """
         return self.action == OutputAction.DISPLAY or self.name == "visual_output"
-    
+
     def get_file_extension(self) -> str:
         """Get the expected file extension based on output type.
-        
+
         Returns:
             str: The file extension including the dot
         """
         return self.EXTENSION_MAP.get(self.output_type, ".txt")
-    
+
     def get_content(self) -> Optional[Any]:
         """Get the content associated with this output.
-        
+
         Returns:
             Any: The output content
         """
         return self.content
-    
+
     def set_content(self, content: Any) -> None:
         """Set the content for this output.
-        
+
         Args:
             content: The content to set
         """
         self.content = content
-        
+
     @staticmethod
     def is_linux_command(text: str) -> bool:
         """Check if a string appears to be a Linux command.
-        
+
         Args:
             text: The text to check
-            
+
         Returns:
             bool: True if the text appears to be a Linux command
         """
         if not isinstance(text, str) or not text.strip():
             return False
-        
+
         # For simple detection, check if the first word is a common command
         command_first_word = text.strip().split()[0] if text.strip() else ""
         if command_first_word in PatternOutput.COMMON_COMMANDS:
             return True
-            
+
         # Default to True for most text in a command context
         return True
 
     @staticmethod
     def execute_command(command: str, output_name: str = "command") -> bool:
         """Display a warning, prompt for execution, and execute the command if confirmed.
-        
+
         Args:
             command: The command to execute
             output_name: The name of the output field
-            
+
         Returns:
             bool: True if the command was executed successfully
         """
@@ -301,18 +301,18 @@ class PatternOutput:
         if not isinstance(command, str) or not command.strip():
             print("\n❌ Error: Empty or invalid command")
             return False
-        
+
         # Clean up command - remove any markdown formatting
         cleaned_command = PatternOutput._clean_command(command)
-        
+
         # Show warning and prompt for confirmation
         PatternOutput._display_execution_warning(cleaned_command, output_name)
-        
+
         # Get user confirmation
         if not PatternOutput._get_user_confirmation():
             print("\n⏭️ Command execution skipped")
             return False
-        
+
         # Execute the command
         print("\n📄 Executing command...\n")
         try:
@@ -322,14 +322,14 @@ class PatternOutput:
         except Exception as e:
             print(f"\n❌ Error executing command: {str(e)}")
             return False
-    
+
     @staticmethod
     def _clean_command(command: str) -> str:
         """Clean a command string, removing markdown formatting.
-        
+
         Args:
             command: Raw command string
-            
+
         Returns:
             str: Cleaned command string
         """
@@ -338,38 +338,38 @@ class PatternOutput:
             lines = command.split("\n")
             start_idx = 1  # Skip the opening ```
             end_idx = len(lines) - 1
-            
+
             # Find the closing ```
             for i, line in enumerate(lines[1:], 1):
                 if line.strip() == "```":
                     end_idx = i
                     break
-                    
+
             # Extract the command lines
             command_lines = lines[start_idx:end_idx]
             return "\n".join(command_lines).strip()
-        
+
         return command.strip()
-    
+
     @staticmethod
     def _display_execution_warning(command: str, output_name: str) -> None:
         """Display a warning banner before prompting for execution.
-        
+
         Args:
             command: The command to execute
             output_name: The name of the output field
         """
         border = "=" * 80
-        
+
         print("\n" + border)
         print(f"⚠️  SECURITY WARNING: About to execute command from '{output_name}'")
         print(f"Command: {command}")
         print(border)
-    
+
     @staticmethod
     def _get_user_confirmation() -> bool:
         """Get user confirmation for command execution.
-        
+
         Returns:
             bool: True if user confirmed execution
         """
@@ -382,10 +382,10 @@ class PatternOutput:
                 # Fall back to readline if input fails
                 sys.stdout.flush()
                 response = sys.stdin.readline().strip()
-                
+
             response = response.strip().lower() if response else "n"
             return response in ['y', 'yes']
-            
+
         except Exception as e:
             logger.error("Error during input handling: %s", str(e))
             return False

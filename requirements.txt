@@ -4,3 +4,4 @@ tqdm
 rich
 termcolor
 jsonschema
+setuptools

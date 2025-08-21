@@ -47,10 +47,10 @@ def get_file_input(file_path):
 def encode_file_to_base64(file_path):
     """
     Reads any file and encodes it to base64.
-    
+
     Args:
         file_path: Path to the file
-        
+
     Returns:
         str: Base64 encoded string or None if file doesn't exist
     """
@@ -61,17 +61,17 @@ def encode_file_to_base64(file_path):
             if not os.access(file_path, os.R_OK):
                 print_error_or_warnings(f"No read permissions for file: {file_path}")
                 return None
-                
+
             # Get file size to verify it's not empty
             file_size = os.path.getsize(file_path)
             if not file_size:
                 print_error_or_warnings(f"File is empty: {file_path}", warning_only=True)
                 return None
-                
+
             # Open and read the file in binary mode
             with open(file_path, "rb") as file:
                 file_content = file.read()
-                
+
                 # When reading in binary mode, file_content should always be bytes already
                 # but in case it's not, convert it properly
                 if not isinstance(file_content, bytes):
@@ -81,13 +81,13 @@ def encode_file_to_base64(file_path):
                     # For bytes-like objects (bytearray, memoryview)
                     else:
                         file_content = bytes(file_content)
-                
+
                 # Encode the file content to base64
                 encoded_string = base64.b64encode(file_content).decode('utf-8')
-                
+
                 # Ensure there are no whitespace, newlines or invalid chars
                 encoded_string = ''.join(c for c in encoded_string if c.isalnum() or c in '+/=')
-                
+
                 # Verify we actually got an encoded string and it's valid
                 if encoded_string:
                     # Validate that it's a proper base64 string
@@ -132,23 +132,23 @@ def build_format_instruction(format_type):
         "md": "Please format the response as GitHub-flavored Markdown.",
         "json": "Please respond with a valid JSON structure containing your answer."
     }.get(format_type, "Please provide your response as plain text.")
-    
-    
+
+
 def generate_output_format_template(pattern_outputs):
     """Generates a dynamic output format template based on pattern output definitions.
-    
+
     Args:
         pattern_outputs: List of PatternOutput objects
-        
+
     Returns:
         str: JSON format instruction template
     """
     if not pattern_outputs:
         return None
-        
+
     # Create a template that matches the defined outputs
     result_fields = {}
-    
+
     # Add each output to the result fields
     for output in pattern_outputs:
         # Get a sample value based on the output type
@@ -176,21 +176,21 @@ def generate_output_format_template(pattern_outputs):
                 )
             else:
                 example_value = f"Sample content for {output.name}"
-        
+
         # Add to result fields - ensure it's included no matter what the output action is
         result_fields[output.name] = example_value
-    
+
     # Create the full template structure
     template = {
         "results": result_fields
     }
-    
+
     # Convert to formatted JSON string with consistent indentation
     template_json = json.dumps(template, indent=2, ensure_ascii=False)
-    
+
     # Build a comprehensive instruction with the template
     instruction = f"""**CRITICAL FORMATTING REQUIREMENT**
-    
+
 Your response MUST follow this exact JSON format without any deviations or additional text:
 
 
@@ -199,11 +199,11 @@ Your response MUST follow this exact JSON format without any deviations or addit
 
 Where:
 """
-    
+
     # Add detailed descriptions for each field
     for output in pattern_outputs:
         instruction += f"- `{output.name}`: {output.description}\n"
-    
+
     # Add additional formatting requirements
     instruction += """
 IMPORTANT NOTES:
@@ -213,7 +213,7 @@ IMPORTANT NOTES:
 4. Include all required fields exactly as shown
 5. Ensure the JSON is properly formatted and valid
 """
-    
+
     return instruction
 
 
@@ -228,7 +228,7 @@ def capture_command_output(command):
 def print_error_or_warnings(text, warning_only=False):
     """
     Print error or warning messages with appropriate background colors.
-    
+
     Args:
         text: The message to print
         warning_only: If True, print a warning (yellow background), otherwise print an error (red background)

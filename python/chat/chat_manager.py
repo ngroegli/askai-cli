@@ -15,10 +15,10 @@ from utils import print_error_or_warnings
 
 class ChatManager:
     """Unified chat manager handling chat persistence and context building in a simple logbook format."""
-    
+
     def __init__(self, config: Dict[str, Any], logger=None):
         """Initialize the chat manager.
-        
+
         Args:
             config: Application configuration dictionary
             logger: Optional logger instance
@@ -43,19 +43,19 @@ class ChatManager:
         """Create a new chat file with a unique ID."""
         chat_id = self._generate_chat_id()
         chat_file = self._get_chat_file_path(chat_id)
-        
+
         chat_data = {
             "chat_id": chat_id,
             "created_at": datetime.now().isoformat(),
             "conversations": []
         }
-        
+
         with open(chat_file, 'w', encoding='utf-8') as f:
             json.dump(chat_data, f, indent=2)
-            
+
         return chat_id
 
-    def add_conversation(self, chat_id: str, messages: List[Dict[str, str]], 
+    def add_conversation(self, chat_id: str, messages: List[Dict[str, str]],
                         response: str, outputs: Optional[List[Dict[str, Any]]] = None,
                         system_outputs: Optional[List] = None,
                         system_config: Optional[Any] = None) -> None:
@@ -75,12 +75,12 @@ class ChatManager:
 
         # Extract only the new messages (not from history)
         current_messages = []
-        
+
         # Add system messages if present
         system_messages = [msg for msg in messages if msg['role'] == 'system']
         if system_messages:
             current_messages.extend(system_messages)
-        
+
         # Add only the last user message
         user_messages = [msg for msg in messages if msg['role'] == 'user']
         if user_messages:
@@ -91,11 +91,11 @@ class ChatManager:
             "messages": current_messages,
             "response": response,
         }
-        
+
         # Add structured outputs if provided
         if outputs:
             conversation["outputs"] = outputs
-            
+
         # Add system configuration if provided (proper JSON serialization)
         if system_config:
             try:
@@ -106,15 +106,18 @@ class ChatManager:
                         for key, value in obj.__dict__.items():
                             result[key] = make_json_serializable(value)
                         return result
-                    elif isinstance(obj, list):
+
+                    if isinstance(obj, list):
                         return [make_json_serializable(item) for item in obj]
-                    elif isinstance(obj, dict):
+
+                    if isinstance(obj, dict):
                         return {k: make_json_serializable(v) for k, v in obj.items()}
-                    elif hasattr(obj, 'value'):  # Handle Enum objects
+
+                    if hasattr(obj, 'value'):  # Handle Enum objects
                         return obj.value
-                    else:
-                        return obj
-                        
+
+                    return obj
+
                 conversation["system_config"] = make_json_serializable(system_config)
             except Exception as e:
                 if self.logger:
@@ -125,7 +128,7 @@ class ChatManager:
         with open(chat_file, 'w', encoding='utf-8') as f:
             json.dump(chat_data, f, indent=2)
 
-    def get_chat_history(self, chat_id: str, 
+    def get_chat_history(self, chat_id: str,
                         max_conversations: Optional[int] = None) -> List[Dict[str, Any]]:
         """Get the conversation history for a chat."""
         chat_file = self._get_chat_file_path(chat_id)
@@ -151,62 +154,62 @@ class ChatManager:
             if self.logger:
                 self.logger.error("Error reading chat history for %s: %s", chat_id, str(e))
             raise ValueError(f"Failed to read chat history: {str(e)}") from e
-            
+
     def repair_chat_file(self, chat_id: str) -> bool:
         """Attempt to repair a corrupted chat file.
-        
+
         Args:
             chat_id: The ID of the chat to repair
-            
+
         Returns:
             bool: True if repair was successful, False otherwise
         """
         chat_file = self._get_chat_file_path(chat_id)
         if not os.path.exists(chat_file):
             return False
-            
+
         try:
             # First, make a backup
             backup_file = f"{chat_file}.bak"
             with open(chat_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-                
+
             with open(backup_file, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
+
             # Try to parse and fix JSON content
-            try:            
+            try:
                 # Find last valid JSON object
                 valid_content = "{\n"
                 valid_content += '  "chat_id": "' + chat_id + '",\n'
                 valid_content += '  "created_at": "' + datetime.now().isoformat() + '",\n'
                 valid_content += '  "conversations": []\n'
                 valid_content += "}\n"
-                
+
                 # Create new file with valid JSON
                 with open(chat_file, 'w', encoding='utf-8') as f:
                     f.write(valid_content)
-                    
+
                 # Verify it's valid
                 with open(chat_file, 'r', encoding='utf-8') as f:
                     json.load(f)
-                    
+
                 if self.logger:
                     self.logger.info("Successfully repaired chat file %s", chat_id)
                 return True
-                
+
             except Exception as e:
                 # Restore backup if repair failed
                 with open(backup_file, 'r', encoding='utf-8') as f:
                     content = f.read()
-                    
+
                 with open(chat_file, 'w', encoding='utf-8') as f:
                     f.write(content)
-                    
+
                 if self.logger:
                     self.logger.error("Failed to repair chat file %s: %s", chat_id, str(e))
                 return False
-                
+
         except Exception as e:
             if self.logger:
                 self.logger.error("Error during chat file repair for %s: %s", chat_id, str(e))
@@ -216,7 +219,7 @@ class ChatManager:
         """List all available chat files."""
         chats = []
         corrupted_files = []
-        
+
         for filename in os.listdir(self.storage_path):
             if filename.endswith('.json'):
                 file_path = os.path.join(self.storage_path, filename)
@@ -238,20 +241,20 @@ class ChatManager:
                     if self.logger:
                         self.logger.error("Error reading chat file %s: %s", filename, str(e))
                     continue
-                    
+
         # Report corrupted files if any
         if corrupted_files and self.logger:
             self.logger.warning("Found %d corrupted chat files", len(corrupted_files))
-            
+
         return sorted(chats, key=lambda x: x['created_at'], reverse=True)
 
     def select_chat(self, allow_new: bool = True) -> Optional[str]:
         """Display an interactive chat selection menu."""
         chats = self.list_chats()
-        
+
         if not chats:
             print("\nNo valid chat files found.")
-            
+
             # Check if there might be corrupted files
             try:
                 all_files = [f for f in os.listdir(self.storage_path) if f.endswith('.json')]
@@ -261,43 +264,42 @@ class ChatManager:
                     print(f"  {self.storage_path}")
             except Exception:
                 pass
-                
+
             if allow_new:
                 print("\nUse -pc to create a new chat.")
             return None
-            
+
         print("\nAvailable chats:")
         print("-" * 60)
-        
+
         # Display chats with index
         for i, chat in enumerate(chats, 1):
             print(f"{i}. Chat ID: {chat['chat_id']}")
             print(f"   Created: {chat['created_at']}")
             print(f"   Messages: {chat['conversation_count']}")
             print("-" * 60)
-        
+
         print("\nOptions:")
         if allow_new:
             print("0. Create new chat")
         print(f"1-{len(chats)}. Select existing chat")
         print("q. Quit")
-        
+
         while True:
             max_choice = len(chats)
             min_choice = 0 if allow_new else 1
             choice = input(f"\nEnter your choice ({min_choice}-{max_choice} or q): ").lower()
-            
+
             if choice == 'q':
                 return None
-            
+
             try:
                 choice_num = int(choice)
                 if allow_new and not choice_num:  # 0 evaluates to False in boolean context
                     return 'new'
-                elif 1 <= choice_num <= len(chats):
+                if 1 <= choice_num <= len(chats):
                     return chats[choice_num - 1]['chat_id']
-                else:
-                    print(f"Please enter a number between {min_choice} and {max_choice}")
+                print(f"Please enter a number between {min_choice} and {max_choice}")
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
 
@@ -305,21 +307,21 @@ class ChatManager:
         """Build context messages from chat history."""
         context_messages = []
         conversations = self.get_chat_history(chat_id, self.max_history)
-        
+
         for conv in conversations:
             # Only include the user question and AI response for context
             user_message = None
             for msg in conv['messages']:
                 if msg['role'] == 'user':
                     user_message = msg
-            
+
             if user_message:
                 context_messages.append(user_message)
                 context_messages.append({
                     "role": "assistant",
                     "content": conv['response']
                 })
-            
+
         return context_messages
 
     def display_chat(self, chat_id: str) -> None:
@@ -333,11 +335,11 @@ class ChatManager:
 
         print(f"\nChat ID: {chat_data['chat_id']}")
         print(f"Created: {chat_data['created_at']}\n")
-        
+
         for i, conv in enumerate(chat_data['conversations'], 1):
             print(f"\nConversation {i} - {conv['timestamp']}")
             print("-" * 50)
-            
+
             # Print conversations
             for msg in conv['messages']:
                 if msg['role'] == 'user':
@@ -345,7 +347,7 @@ class ChatManager:
                 if msg['role'] == 'assistant':
                     print(f"\nAssistant: {msg['content']}")
                     print("-" * 25)
-                    
+
             # Print AI response
             print(f"\nAssistant: {conv['response']}\n")
             print("=" * 50)
@@ -354,14 +356,18 @@ class ChatManager:
     def handle_persistent_chat(self, args, messages):
         """Handle persistent chat setup and context loading."""
         chat_id = None
-        
+
+        # Check if we're using a pattern - chat persistence isn't compatible with patterns
+        if hasattr(args, 'use_pattern') and args.use_pattern is not None:
+            return None, messages  # Don't use chat with patterns
+
         if args.persistent_chat is not None:
             if args.persistent_chat == 'n':
                 chat_id = self.create_chat()
                 print(f"\nCreated new chat with ID: {chat_id}")
             elif args.persistent_chat == 'new':
                 selected_chat = self.select_chat(allow_new=True)
-                
+
                 if selected_chat is None:
                     print("Chat selection cancelled.")
                     sys.exit(0)
@@ -372,7 +378,7 @@ class ChatManager:
                     chat_id = selected_chat
             else:
                 chat_id = args.persistent_chat
-                
+
             # If we have a chat_id, load its context
             if chat_id:
                 try:
@@ -384,34 +390,34 @@ class ChatManager:
                 except ValueError as e:
                     print_error_or_warnings(str(e))
                     sys.exit(1)
-        
+
         return chat_id, messages
 
     def store_chat_conversation(self, chat_id, messages, response, resolved_system_id, system_manager):
         """Store conversation in chat history as a simple logbook."""
         if not chat_id:
             return
-            
+
         # Extract content from response (handle both string and dict formats)
         response_content = response
         if isinstance(response, dict):
             response_content = response.get("content", str(response))
-            
+
         # Store system metadata without parsing content
         system_outputs = None
         system_config = None
         structured_outputs = None
-        
+
         if resolved_system_id:
             system_data = system_manager.get_system_content(resolved_system_id)
             if system_data:
                 system_outputs = system_data.get('outputs', [])
                 system_config = system_data.get('configuration')
-                
+
                 # Just record output metadata without parsing response
                 if system_outputs:
                     structured_outputs = self._parse_structured_outputs(system_outputs)
-        
+
         self.add_conversation(
             chat_id=chat_id,
             messages=messages,
@@ -422,10 +428,10 @@ class ChatManager:
         )
 
 
-    
+
     def _parse_structured_outputs(self, system_outputs):
         """Store basic output metadata without complex parsing.
-        
+
         This simplified version just records the output definitions.
         """
         try:
@@ -433,56 +439,56 @@ class ChatManager:
             for output_def in system_outputs:
                 if not hasattr(output_def, 'output_type'):
                     continue
-                    
+
                 # Just record basic metadata about outputs
                 outputs.append({
                     'name': output_def.name,
                     'type': output_def.output_type.value,
                     'definition': output_def.description if hasattr(output_def, 'description') else None,
                 })
-                        
+
             return outputs if outputs else None
         except Exception as e:
             if self.logger:
                 self.logger.warning("Could not record output metadata: %s", str(e))
             return None
-            
 
 
-    def _validate_outputs(self, outputs: List[Dict[str, Any]], 
+
+    def _validate_outputs(self, outputs: List[Dict[str, Any]],
                          system_outputs: List) -> tuple[bool, Optional[str]]:
         """Validate AI outputs against the system's output definitions."""
         try:
             required_outputs = {output.name: output for output in system_outputs if output.required}
-            
+
             # Check all required outputs are present
             for name, output_def in required_outputs.items():
                 if not any(o['name'] == name for o in outputs):
                     return False, f"Missing required output '{name}'"
-                    
+
             # Validate each provided output
             for output in outputs:
                 output_def = next((o for o in system_outputs if o.name == output['name']), None)
                 if not output_def:
                     return False, f"Unknown output '{output['name']}'"
-                    
+
                 if hasattr(output_def, 'validate_value'):
                     valid, error = output_def.validate_value(output['value'])
                     if not valid:
                         return False, f"Invalid output '{output['name']}': {error}"
-                        
+
             return True, None
         except Exception as e:
             return False, f"Validation error: {str(e)}"
-            
+
     def scan_corrupted_chat_files(self) -> List[str]:
         """Scan for corrupted chat files.
-        
+
         Returns:
             List[str]: List of corrupted chat file IDs
         """
         corrupted_files = []
-        
+
         for filename in os.listdir(self.storage_path):
             if filename.endswith('.json'):
                 chat_id = filename[:-5]  # Remove .json extension
@@ -495,22 +501,22 @@ class ChatManager:
                             corrupted_files.append(chat_id)
                 except Exception:
                     corrupted_files.append(chat_id)
-                    
+
         return corrupted_files
-        
+
     def delete_chat(self, chat_id: str) -> bool:
         """Delete a chat file.
-        
+
         Args:
             chat_id: The ID of the chat to delete
-            
+
         Returns:
             bool: True if deletion was successful, False otherwise
         """
         chat_file = self._get_chat_file_path(chat_id)
         if not os.path.exists(chat_file):
             return False
-            
+
         try:
             os.remove(chat_file)
             return True

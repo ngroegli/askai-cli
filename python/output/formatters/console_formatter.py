@@ -10,7 +10,7 @@ import io
 from rich.console import Console
 from rich.markdown import Markdown
 
-from .base_formatter import BaseFormatter
+from python.output.formatters.base_formatter import BaseFormatter
 
 
 class ConsoleFormatter(BaseFormatter):
@@ -101,15 +101,14 @@ class ConsoleFormatter(BaseFormatter):
         # Basic syntax highlighting using regex patterns
         if language == 'json':
             return self._highlight_json(code)
-        elif language in ('js', 'javascript'):
+        if language in ('js', 'javascript'):
             return self._highlight_js(code)
-        elif language == 'html':
+        if language == 'html':
             return self._highlight_html(code)
-        elif language == 'css':
+        if language == 'css':
             return self._highlight_css(code)
-        else:
-            # Generic code highlighting
-            return self._highlight_generic_code(code)
+        # Generic code highlighting
+        return self._highlight_generic_code(code)
 
     def _add_code_frame(self, code: str) -> str:
         """Add a frame around code blocks.
@@ -251,10 +250,10 @@ class ConsoleFormatter(BaseFormatter):
         """
         if value in ('true', 'false', 'null'):
             return f"{self.COLORS['magenta']}{value}{self.COLORS['reset']}"
-        elif value.startswith('"'):
+        if value.startswith('"'):
             return f"{self.COLORS['green']}{value}{self.COLORS['reset']}"
-        else:  # numbers
-            return f"{self.COLORS['cyan']}{value}{self.COLORS['reset']}"
+        # numbers
+        return f"{self.COLORS['cyan']}{value}{self.COLORS['reset']}"
 
     def _highlight_js(self, code: str) -> str:
         """Highlight JavaScript syntax.

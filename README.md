@@ -230,7 +230,7 @@ For contributors:
 1. Fork the repository
 2. Create your feature branch from `develop`
 3. Make your changes
-4. Run `pylint --rcfile=pylintrc python/**/*.py` locally to catch issues early
+4. Run `pylint --rcfile=.pylintrc python/**/*.py` locally to catch issues early
 5. Submit a pull request to the `develop` branch
 
 See [BRANCH_PROTECTION.md](./docs/BRANCH_PROTECTION.md) for detailed information on branch protection rules and workflow.
