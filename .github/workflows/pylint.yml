@@ -24,6 +24,7 @@ jobs:
           echo "PYTHONPATH=.:$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
       - name: Analyze code with Pylint
+        id: pylint_run
         run: |
           # Make sure there are Python files to analyze
           PYTHON_FILES=$(find ./python -name "*.py" | xargs)
@@ -37,8 +38,8 @@ jobs:
 
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
-          # No need to modify this command, as it already uses --rcfile=.pylintrc
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
+          # Run pylint but don't fail the build based on this run
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues but we'll only fail on critical errors"
           echo "::endgroup::"
 
       - name: Check issues by severity
@@ -139,10 +140,10 @@ jobs:
           echo "::endgroup::"
 
           # Determine if the build should fail (only critical errors cause failure)
-          if [ $CRITICAL_EXIT_CODE -eq 4 ]; then
+          if [ "$CRITICAL_EXIT_CODE" = "4" ]; then
             echo "Exit code 4 detected (no files found or config issue). This is not a critical error."
             exit 0  # Don't fail the build for this
-          elif [ $CRITICAL_EXIT_CODE -ne 0 ]; then
+          elif [ "$CRITICAL_EXIT_CODE" != "0" ]; then
             echo "::error::Critical errors found. Failing the build."
             exit 1
           else
