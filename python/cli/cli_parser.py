@@ -12,12 +12,7 @@ Ha        chat_group.add_argument(
 import sys
 import json
 from python.cli.banner_argument_parser import BannerArgumentParser
-
-# Import print_error_or_warnings only when needed
-def get_print_error_or_warnings():
-    """Import print_error_or_warnings function only when needed."""
-    from utils import print_error_or_warnings
-    return print_error_or_warnings
+from python.utils import print_error_or_warnings
 
 
 class CLIParser:
@@ -127,8 +122,7 @@ class CLIParser:
 
     def validate_arguments(self, args, logger):
         """Validate command line arguments and log warnings/errors."""
-        # Import the error/warning function only when needed
-        print_error_or_warnings = get_print_error_or_warnings()
+        # Function already imported at the top of the file
 
         # Check if user is using any command that doesn't require a question
         has_command = (args.list_patterns or args.view_pattern is not None or

@@ -284,7 +284,7 @@ class PatternManager:
                 if stripped == '```yaml':
                     in_yaml_block = True
                     continue
-                elif stripped == '```':
+                if stripped == '```':
                     if in_yaml_block:  # Only break if we were in a YAML block
                         break
                 if in_yaml_block:
@@ -669,8 +669,7 @@ class PatternManager:
                 choice_num = int(choice)
                 if 1 <= choice_num <= len(patterns):
                     return patterns[choice_num - 1]['pattern_id']
-                else:
-                    print(f"Please enter a number between 1 and {len(patterns)}")
+                print(f"Please enter a number between 1 and {len(patterns)}")
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
 

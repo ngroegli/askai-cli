@@ -57,7 +57,7 @@ class CommandHandler:
         # Check for incompatible combinations
         using_pattern = args.use_pattern is not None
         using_pattern_commands = args.list_patterns or args.view_pattern is not None or using_pattern
-        using_chat = (args.persistent_chat is not None or args.list_chats or 
+        using_chat = (args.persistent_chat is not None or args.list_chats or
                      args.view_chat is not None or args.manage_chats)
 
         # If pattern commands are present, they always take precedence over chat commands
@@ -296,7 +296,7 @@ class CommandHandler:
                     # Display header with filter info
                     if command_args:
                         print(
-                            f"\nFiltered OpenRouter Models ({len(filtered_models)} of {len(models)} total, " + 
+                            f"\nFiltered OpenRouter Models ({len(filtered_models)} of {len(models)} total, " +
                             f"filter: {', '.join(command_args)}):"
                         )
                     else:
@@ -359,13 +359,13 @@ class CommandHandler:
 
                         print(f"Description: {description_display}")
                         print(
-                            f"Context Length: {context_length:,}" 
-                            if isinstance(context_length, int) 
+                            f"Context Length: {context_length:,}"
+                            if isinstance(context_length, int)
                             else f"Context Length: {context_length}"
                         )
                         print(
-                            f"Max Completion Tokens: {max_completion_tokens:,}" 
-                            if isinstance(max_completion_tokens, int) 
+                            f"Max Completion Tokens: {max_completion_tokens:,}"
+                            if isinstance(max_completion_tokens, int)
                             else f"Max Completion Tokens: {max_completion_tokens}"
                         )
                         print(f"Pricing: {pricing_display}")

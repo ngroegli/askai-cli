@@ -414,26 +414,25 @@ class FileWriter:
                 return str(directory_path.resolve())
             print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
             return str(Path(".").resolve())
-        else:
-            # Directory doesn't exist, ask to create
-            print(f"📂 Directory '{directory}' does not exist.")
-            try:
-                create = input("Create this directory? (y/n): ").strip().lower()
-            except (KeyboardInterrupt, EOFError):
-                return str(Path(".").resolve())
+        # Directory doesn't exist, ask to create
+        print(f"📂 Directory '{directory}' does not exist.")
+        try:
+            create = input("Create this directory? (y/n): ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            return str(Path(".").resolve())
 
-            if create in ['y', 'yes', '']:  # Default to yes if empty
-                try:
-                    directory_path.mkdir(parents=True, exist_ok=True)
-                    print(f"✅ Created directory: {directory_path.resolve()}")
-                    return str(directory_path.resolve())
-                except (IOError, OSError, PermissionError) as e:
-                    print(f"❌ Error creating directory: {str(e)}")
-                    print("Using current directory instead.")
-                    return str(Path(".").resolve())
-            else:
+        if create in ['y', 'yes', '']:  # Default to yes if empty
+            try:
+                directory_path.mkdir(parents=True, exist_ok=True)
+                print(f"✅ Created directory: {directory_path.resolve()}")
+                return str(directory_path.resolve())
+            except (IOError, OSError, PermissionError) as e:
+                print(f"❌ Error creating directory: {str(e)}")
                 print("Using current directory instead.")
                 return str(Path(".").resolve())
+
+        print("Using current directory instead.")
+        return str(Path(".").resolve())
 
     # Private helper methods for formatting content
 

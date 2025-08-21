@@ -294,43 +294,47 @@ class OpenRouterClient:
                 "annotations": message.get("annotations", []),
                 "full_response": response_data
             }
-        else:
-            logger.critical(
-                json.dumps({"log_message": "API Error %d: %s"}) % (response.status_code, response.text)
-            )
 
-            # Special handling for PDF parsing errors
-            if response.status_code == 422:
-                error_text = response.text.lower() if isinstance(response.text, str) else ""
+        logger.critical(
+            json.dumps({"log_message": "API Error %d: %s"}) % (response.status_code, response.text)
+        )
 
-                # Check for PDF-related error messages
-                pdf_error_phrases = [
-                    "failed to parse", "pdf", ".pdf",
-                    "cannot read", "file format", "document format"
-                ]
+        # Special handling for PDF parsing errors
+        if response.status_code == 422:
+            error_text = response.text.lower() if isinstance(response.text, str) else ""
 
-                is_pdf_error = any(phrase in error_text for phrase in pdf_error_phrases)
+            # Check for PDF-related error messages
+            pdf_error_phrases = [
+                "failed to parse", "pdf", ".pdf",
+                "cannot read", "file format", "document format"
+            ]
 
-                if is_pdf_error and content_info["has_pdf"]:
-                    logger.warning(json.dumps({
-                        "log_message": "PDF parsing error detected, returning friendly error message",
-                        "error_text": response.text
-                    }))
+            is_pdf_error = any(phrase in error_text for phrase in pdf_error_phrases)
 
-                    # Return a user-friendly error instead of failing
-                    return {
-                        "content": "I couldn't parse the PDF file you provided. This might be because:\n\n"
-                                  "1. The PDF has a format that's not supported\n"
-                                  "2. The PDF might be password-protected or encrypted\n"
-                                  "3. The PDF might be corrupted or too large\n\n"
-                                  "Please try with a different PDF file, or consider extracting the text manually "
-                                  "and sending it as a regular message.",
-                        "annotations": [],
-                        "full_response": {"error": response.text}
-                    }
+            if is_pdf_error and content_info["has_pdf"]:
+                logger.warning(json.dumps({
+                    "log_message": "PDF parsing error detected, returning friendly error message",
+                    "error_text": response.text
+                }))
 
-            # For other errors, raise an exception
-            raise Exception(f"OpenRouter API Error ({response.status_code}): {response.text}")
+                # Return a user-friendly error instead of failing
+                return {
+                    "content": "I couldn't parse the PDF file you provided. This might be because:\n\n"
+                              "1. The PDF has a format that's not supported\n"
+                              "2. The PDF might be password-protected or encrypted\n"
+                              "3. The PDF might be corrupted or too large\n\n"
+                              "Please try with a different PDF file, or consider extracting the text manually "
+                              "and sending it as a regular message.",
+                    "annotations": [],
+                    "full_response": {"error": response.text}
+                }
+
+        # For other errors, return error message
+        return {
+            "content": f"Error: {response.text}",
+            "annotations": [],
+            "full_response": {"error": f"OpenRouter API Error ({response.status_code}): {response.text}"}
+        }
 
     def request_completion(
         self,
@@ -519,12 +523,12 @@ class OpenRouterClient:
                         }))
                     return result
                 return response.json()
-            else:
-                if logger:
-                    logger.critical(json.dumps({
-                        "log_message": f"{error_message} {response.status_code}: {response.text}"
-                    }))
-                raise Exception(f"{error_message}: {response.text}")
+
+            if logger:
+                logger.critical(json.dumps({
+                    "log_message": f"{error_message} {response.status_code}: {response.text}"
+                }))
+            raise Exception(f"{error_message}: {response.text}")
         except requests.exceptions.ConnectionError as e:
             if logger:
                 logger.critical(json.dumps({

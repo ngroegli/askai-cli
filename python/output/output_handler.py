@@ -118,7 +118,7 @@ class OutputHandler:
             if 'message' in response:
                 return response['message']
             # API formats with nested choices
-            elif ('choices' in response and
+            if ('choices' in response and
                   isinstance(response['choices'], list) and
                   response['choices']):
                 for choice in response['choices']:
@@ -1472,19 +1472,18 @@ class OutputHandler:
             if directory_path.exists():
                 if directory_path.is_dir():
                     return str(directory_path.resolve())
-                else:
-                    print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
-                    return str(Path(".").resolve())
-            else:
-                # Confirm directory creation
-                print(f"📂 Directory '{directory}' does not exist.")
-                create = input("Create this directory? (y/n): ").strip().lower()
-                if create in ['y', 'yes', '']:
-                    os.makedirs(directory_path, exist_ok=True)
-                    return str(directory_path.resolve())
-                else:
-                    print("Using current directory instead.")
-                    return str(Path(".").resolve())
+                print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
+                return str(Path(".").resolve())
+
+            # Confirm directory creation
+            print(f"📂 Directory '{directory}' does not exist.")
+            create = input("Create this directory? (y/n): ").strip().lower()
+            if create in ['y', 'yes', '']:
+                os.makedirs(directory_path, exist_ok=True)
+                return str(directory_path.resolve())
+
+            print("Using current directory instead.")
+            return str(Path(".").resolve())
 
         except (KeyboardInterrupt, EOFError) as e:
             logger.warning("Input interrupted: %s", str(e))

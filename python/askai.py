@@ -58,8 +58,8 @@ def main():
     # Initialize only the components we need based on the command
     # Check for simple command options that don't need all managers
     simple_commands = (
-        args.list_patterns or args.view_pattern is not None or 
-        args.list_chats or args.view_chat is not None or 
+        args.list_patterns or args.view_pattern is not None or
+        args.list_chats or args.view_chat is not None or
         args.openrouter is not None
     )
 
