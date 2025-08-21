@@ -3,6 +3,8 @@ name: Python Linting
 on:
   pull_request:
     branches: ["main", "develop"]
+  workflow_dispatch:
+    # Allows manual triggering
 
 jobs:
   lint:
@@ -24,6 +26,7 @@ jobs:
           echo "PYTHONPATH=.:$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
       - name: Analyze code with Pylint
+        id: pylint_run
         run: |
           # Make sure there are Python files to analyze
           PYTHON_FILES=$(find ./python -name "*.py" | xargs)
@@ -37,8 +40,11 @@ jobs:
 
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
-          # No need to modify this command, as it already uses --rcfile=.pylintrc
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
+          # Store the exit code to use it later
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES
+          PYLINT_EXIT_CODE=$?
+          echo "pylint_exit_code=$PYLINT_EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "Pylint exit code: $PYLINT_EXIT_CODE"
           echo "::endgroup::"
 
       - name: Check issues by severity
@@ -148,3 +154,6 @@ jobs:
           else
             echo "No critical errors found that would block merging."
           fi
+          
+          # Just for GitHub status, log the overall pylint result too
+          echo "Overall Pylint exit code: ${{ steps.pylint_run.outputs.pylint_exit_code }}"
