@@ -57,7 +57,11 @@ def main():
 
     # Initialize only the components we need based on the command
     # Check for simple command options that don't need all managers
-    simple_commands = args.list_patterns or args.view_pattern is not None or args.list_chats or args.view_chat is not None or args.openrouter is not None
+    simple_commands = (
+        args.list_patterns or args.view_pattern is not None or 
+        args.list_chats or args.view_chat is not None or 
+        args.openrouter is not None
+    )
 
     if simple_commands:
         # For simple commands, we only need specific managers
@@ -105,7 +109,10 @@ def main():
         logger.warning(json.dumps({
             "log_message": "User attempted to use chat functionality with patterns"
         }))
-        print_error_or_warnings("Chat functionality is not compatible with patterns. Chat options will be ignored.", warning_only=True)
+        print_error_or_warnings(
+            "Chat functionality is not compatible with patterns. Chat options will be ignored.", 
+            warning_only=True
+        )
         # Force chat features to be disabled
         args.persistent_chat = None
         args.view_chat = None

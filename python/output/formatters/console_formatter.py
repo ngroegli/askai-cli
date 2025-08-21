@@ -101,11 +101,11 @@ class ConsoleFormatter(BaseFormatter):
         # Basic syntax highlighting using regex patterns
         if language == 'json':
             return self._highlight_json(code)
-        elif language in ('js', 'javascript'):
+        if language in ('js', 'javascript'):
             return self._highlight_js(code)
-        elif language == 'html':
+        if language == 'html':
             return self._highlight_html(code)
-        elif language == 'css':
+        if language == 'css':
             return self._highlight_css(code)
         else:
             # Generic code highlighting
@@ -251,7 +251,7 @@ class ConsoleFormatter(BaseFormatter):
         """
         if value in ('true', 'false', 'null'):
             return f"{self.COLORS['magenta']}{value}{self.COLORS['reset']}"
-        elif value.startswith('"'):
+        if value.startswith('"'):
             return f"{self.COLORS['green']}{value}{self.COLORS['reset']}"
         else:  # numbers
             return f"{self.COLORS['cyan']}{value}{self.COLORS['reset']}"

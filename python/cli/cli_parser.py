@@ -1,6 +1,12 @@
 """
 CLI argument parsing and validation module.
-Handles all command-line argument setup, parsing, and validation logic.
+Ha        chat_group.add_argument(
+            '-pc', '--persistent-chat',
+            nargs='?',
+            const='new',
+            metavar='CHAT_ID',
+            help='Enable persistent chat. Use without value to create new chat, '
+        ) all command-line argument setup, parsing, and validation logic.
 """
 
 import sys
@@ -47,7 +53,9 @@ class CLIParser:
         question_group.add_argument('-m', '--model', help='Override default AI model')
 
         # Chat persistence options as a subgroup under Question logic
-        chat_group = parser.add_argument_group('  Chat persistence (subgroup of Question logic, not compatible with patterns)')
+        chat_group = parser.add_argument_group(
+            '  Chat persistence (subgroup of Question logic, not compatible with patterns)'
+        )
         chat_group.add_argument('-pc', '--persistent-chat',
                             nargs='?',
                             const='new',
@@ -57,22 +65,26 @@ class CLIParser:
         chat_group.add_argument('-lc', '--list-chats',
                             action='store_true',
                             help='List all available chat files (can be used with patterns, but chat will be ignored)')
-        chat_group.add_argument('-vc', '--view-chat',
-                            nargs='?',
-                            const='',  # When -vc is used without value
-                            metavar='CHAT_ID',
-                            help='View chat history. Use without ID to select from available chats (incompatible with patterns)')
+        chat_group.add_argument(
+            '-vc', '--view-chat',
+            nargs='?',
+            const='',  # When -vc is used without value
+            metavar='CHAT_ID',
+            help='View chat history. Use without ID to select from available chats (incompatible with patterns)'
+        )
         chat_group.add_argument('--manage-chats',
                             action='store_true',
                             help='Manage chat files (repair or delete corrupted files) (incompatible with patterns)')
 
         # Pattern options
         pattern_group = parser.add_argument_group('Pattern logic (not compatible with chat persistence)')
-        pattern_group.add_argument('-up', '--use-pattern',
-                           nargs='?',
-                           const='new',  # When -p is used without value
-                           metavar='PATTERN_ID',
-                           help='Use a predefined pattern. Without ID, select from available patterns (incompatible with chat)')
+        pattern_group.add_argument(
+            '-up', '--use-pattern',
+            nargs='?',
+            const='new',  # When -p is used without value
+            metavar='PATTERN_ID',
+            help='Use a predefined pattern. Without ID, select from available patterns (incompatible with chat)'
+        )
         pattern_group.add_argument('-lp', '--list-patterns',
                            action='store_true',
                            help='List all available pattern files')

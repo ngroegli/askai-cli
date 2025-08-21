@@ -287,7 +287,7 @@ class PatternManager:
                 elif stripped == '```':
                     if in_yaml_block:  # Only break if we were in a YAML block
                         break
-                elif in_yaml_block:
+                if in_yaml_block:
                     yaml_lines.append(line)
 
             if not yaml_lines:

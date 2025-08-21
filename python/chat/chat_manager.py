@@ -297,10 +297,9 @@ class ChatManager:
                 choice_num = int(choice)
                 if allow_new and not choice_num:  # 0 evaluates to False in boolean context
                     return 'new'
-                elif 1 <= choice_num <= len(chats):
+                if 1 <= choice_num <= len(chats):
                     return chats[choice_num - 1]['chat_id']
-                else:
-                    print(f"Please enter a number between {min_choice} and {max_choice}")
+                print(f"Please enter a number between {min_choice} and {max_choice}")
             except ValueError:
                 print("Please enter a valid number or 'q' to quit")
 

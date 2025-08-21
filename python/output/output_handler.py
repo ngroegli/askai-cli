@@ -113,9 +113,9 @@ class OutputHandler:
             # Common response formats from various APIs
             if 'content' in response:
                 return response['content']
-            elif 'text' in response:
+            if 'text' in response:
                 return response['text']
-            elif 'message' in response:
+            if 'message' in response:
                 return response['message']
             # API formats with nested choices
             elif ('choices' in response and
@@ -125,7 +125,7 @@ class OutputHandler:
                     if isinstance(choice, dict):
                         if 'message' in choice and 'content' in choice['message']:
                             return choice['message']['content']
-                        elif 'text' in choice:
+                        if 'text' in choice:
                             return choice['text']
 
             # Fallback to JSON serialization
@@ -1092,21 +1092,20 @@ class OutputHandler:
                 return potential_output_keys
 
             # Case 3: API response with nested content field
-            elif 'content' in response and isinstance(response['content'], str):
+            if 'content' in response and isinstance(response['content'], str):
                 # Try to extract JSON from content
                 content_data = self._extract_json_from_text(response['content'])
                 if content_data and isinstance(content_data, dict):
                     if 'results' in content_data and isinstance(content_data['results'], dict):
                         return content_data['results']
-                    else:
-                        # Check if content_data directly contains output fields
-                        # (AI might have forgotten to use 'results' wrapper)
-                        potential_output_keys = {k: v for k, v in content_data.items()
-                                             if k not in common_api_keys and not k.startswith('_')}
-                        if len(potential_output_keys) > 0:
-                            logger.debug("Found potential output fields in content: %s",
-                                       list(potential_output_keys.keys()))
-                            return potential_output_keys
+                    # Check if content_data directly contains output fields
+                    # (AI might have forgotten to use 'results' wrapper)
+                    potential_output_keys = {k: v for k, v in content_data.items()
+                                         if k not in common_api_keys and not k.startswith('_')}
+                    if len(potential_output_keys) > 0:
+                        logger.debug("Found potential output fields in content: %s",
+                                   list(potential_output_keys.keys()))
+                        return potential_output_keys
 
             # Case 4: API response format with choices
             elif 'choices' in response and isinstance(response['choices'], list) and response['choices']:
@@ -1116,12 +1115,11 @@ class OutputHandler:
                         if content_data and isinstance(content_data, dict):
                             if 'results' in content_data and isinstance(content_data['results'], dict):
                                 return content_data['results']
-                            else:
-                                # Check for direct output fields
-                                potential_output_keys = {k: v for k, v in content_data.items()
-                                                      if k not in common_api_keys and not k.startswith('_')}
-                                if len(potential_output_keys) > 0:
-                                    return potential_output_keys
+                            # Check for direct output fields
+                            potential_output_keys = {k: v for k, v in content_data.items()
+                                                  if k not in common_api_keys and not k.startswith('_')}
+                            if len(potential_output_keys) > 0:
+                                return potential_output_keys
 
         # Handle string response
         elif isinstance(response, str):
@@ -1129,15 +1127,14 @@ class OutputHandler:
             if content_data and isinstance(content_data, dict):
                 if 'results' in content_data and isinstance(content_data['results'], dict):
                     return content_data['results']
-                else:
-                    # Check for direct output fields
-                    common_api_keys = {'content', 'choices', 'message', 'model', 'id'}
-                    potential_output_keys = {k: v for k, v in content_data.items()
-                                          if k not in common_api_keys and not k.startswith('_')}
-                    if len(potential_output_keys) > 0:
-                        logger.debug("Found potential output fields in JSON string: %s",
-                                   list(potential_output_keys.keys()))
-                        return potential_output_keys
+                # Check for direct output fields
+                common_api_keys = {'content', 'choices', 'message', 'model', 'id'}
+                potential_output_keys = {k: v for k, v in content_data.items()
+                                      if k not in common_api_keys and not k.startswith('_')}
+                if len(potential_output_keys) > 0:
+                    logger.debug("Found potential output fields in JSON string: %s",
+                               list(potential_output_keys.keys()))
+                    return potential_output_keys
 
         # If we couldn't find a properly structured 'results' object, return empty dict
         logger.debug("No 'results' object found in response, returning empty dict")
@@ -1211,12 +1208,11 @@ class OutputHandler:
                         if 'results' in parsed_json:
                             logger.debug("Found JSON-like structure with 'results' key in text")
                             return parsed_json
-                        else:
-                            # Even if there's no 'results' key, the JSON might be directly usable
-                            logger.debug("Found JSON-like structure, but no 'results' key")
-                            if any(key in parsed_json for key in ['command', 'explanation', 'output']):
-                                logger.debug("JSON has useful keys, using directly")
-                                return {'results': parsed_json}
+                        # Even if there's no 'results' key, the JSON might be directly usable
+                        logger.debug("Found JSON-like structure, but no 'results' key")
+                        if any(key in parsed_json for key in ['command', 'explanation', 'output']):
+                            logger.debug("JSON has useful keys, using directly")
+                            return {'results': parsed_json}
                 except json.JSONDecodeError:
                     logger.debug("Failed to parse potential JSON: %s...", potential_json[:50])
                     continue
@@ -1431,11 +1427,11 @@ class OutputHandler:
         # Special cases for web files
         if output_type == "html" and filename == "index.html":
             return os.path.join(output_dir, filename)
-        elif output_type == "css":
+        if output_type == "css":
             css_dir = os.path.join(output_dir, "css")
             os.makedirs(css_dir, exist_ok=True)
             return os.path.join(css_dir, filename)
-        elif output_type == "js":
+        if output_type == "js":
             js_dir = os.path.join(output_dir, "js")
             os.makedirs(js_dir, exist_ok=True)
             return os.path.join(js_dir, filename)

@@ -45,7 +45,7 @@ class AIService:
                         "provider": model_config.provider.value if model_config.provider else 'openrouter'
                     }))
                     return model_config
-                elif isinstance(pattern_config, dict) and 'model' in pattern_config:
+                if isinstance(pattern_config, dict) and 'model' in pattern_config:
                     # Handle dictionary format
                     self.logger.info("Creating model configuration from dict: %s", pattern_config)
                     try:

@@ -99,10 +99,9 @@ class FileWriter:
                 if self.logger:
                     self.logger.info("Content written to %s (%s chars, %s bytes)", file_path, content_size, file_size)
                 return True
-            else:
-                if self.logger:
-                    self.logger.error("File %s was not created", file_path)
-                return False
+            if self.logger:
+                self.logger.error("File %s was not created", file_path)
+            return False
 
         except UnicodeEncodeError as ue:
             # Special handling for Unicode errors
@@ -413,9 +412,8 @@ class FileWriter:
         if directory_path.exists():
             if directory_path.is_dir():
                 return str(directory_path.resolve())
-            else:
-                print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
-                return str(Path(".").resolve())
+            print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
+            return str(Path(".").resolve())
         else:
             # Directory doesn't exist, ask to create
             print(f"📂 Directory '{directory}' does not exist.")

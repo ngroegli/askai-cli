@@ -57,12 +57,16 @@ class CommandHandler:
         # Check for incompatible combinations
         using_pattern = args.use_pattern is not None
         using_pattern_commands = args.list_patterns or args.view_pattern is not None or using_pattern
-        using_chat = args.persistent_chat is not None or args.list_chats or args.view_chat is not None or args.manage_chats
+        using_chat = (args.persistent_chat is not None or args.list_chats or 
+                     args.view_chat is not None or args.manage_chats)
 
         # If pattern commands are present, they always take precedence over chat commands
         if using_pattern_commands and using_chat:
             self.logger.warning(json.dumps({"log_message": "User attempted to use chat functionality with patterns"}))
-            print_error_or_warnings("Pattern commands take precedence over chat commands. Chat functionality will be ignored.", warning_only=True)
+            print_error_or_warnings(
+                "Pattern commands take precedence over chat commands. Chat functionality will be ignored.",
+                warning_only=True
+            )
             return False
 
         if args.list_chats:
@@ -154,7 +158,9 @@ class CommandHandler:
 
         elif choice == '2':
             # Confirm deletion
-            confirm = input(f"Are you sure you want to delete all {len(corrupted_files)} corrupted chat files? (y/n): ").lower()
+            confirm = input(
+                f"Are you sure you want to delete all {len(corrupted_files)} corrupted chat files? (y/n): "
+            ).lower()
             if confirm != 'y':
                 print("Deletion cancelled.")
                 return
@@ -257,7 +263,7 @@ class CommandHandler:
                 print_error_or_warnings(f"Error retrieving credit balance: {str(e)}")
             return True
 
-        elif command == 'list-models':
+        if command == 'list-models':
             self.logger.info(json.dumps({"log_message": "User requested OpenRouter available models"}))
             try:
                 client = OpenRouterClient(logger=self.logger)
@@ -289,7 +295,10 @@ class CommandHandler:
 
                     # Display header with filter info
                     if command_args:
-                        print(f"\nFiltered OpenRouter Models ({len(filtered_models)} of {len(models)} total, filter: {', '.join(command_args)}):")
+                        print(
+                            f"\nFiltered OpenRouter Models ({len(filtered_models)} of {len(models)} total, " + 
+                            f"filter: {', '.join(command_args)}):"
+                        )
                     else:
                         print(f"\nAvailable OpenRouter Models ({len(filtered_models)} total):")
                     print("=" * 100)
@@ -314,11 +323,20 @@ class CommandHandler:
                             try:
                                 prompt_float = float(prompt_price)
                                 completion_float = float(completion_price)
-                                pricing_display = f"${prompt_float:.8f}/token (prompt), ${completion_float:.8f}/token (completion)"
+                                pricing_display = (
+                                    f"${prompt_float:.8f}/token (prompt), "
+                                    f"${completion_float:.8f}/token (completion)"
+                                )
                             except (ValueError, TypeError):
-                                pricing_display = f"${prompt_price}/token (prompt), ${completion_price}/token (completion)"
+                                pricing_display = (
+                                    f"${prompt_price}/token (prompt), "
+                                    f"${completion_price}/token (completion)"
+                                )
                         else:
-                            pricing_display = f"${prompt_price}/token (prompt), ${completion_price}/token (completion)"
+                            pricing_display = (
+                                f"${prompt_price}/token (prompt), "
+                                f"${completion_price}/token (completion)"
+                            )
 
                         print(f"ID: {model_id}")
                         print(f"Name: {name}")
@@ -340,8 +358,16 @@ class CommandHandler:
                             description_display = description
 
                         print(f"Description: {description_display}")
-                        print(f"Context Length: {context_length:,}" if isinstance(context_length, int) else f"Context Length: {context_length}")
-                        print(f"Max Completion Tokens: {max_completion_tokens:,}" if isinstance(max_completion_tokens, int) else f"Max Completion Tokens: {max_completion_tokens}")
+                        print(
+                            f"Context Length: {context_length:,}" 
+                            if isinstance(context_length, int) 
+                            else f"Context Length: {context_length}"
+                        )
+                        print(
+                            f"Max Completion Tokens: {max_completion_tokens:,}" 
+                            if isinstance(max_completion_tokens, int) 
+                            else f"Max Completion Tokens: {max_completion_tokens}"
+                        )
                         print(f"Pricing: {pricing_display}")
                         print("-" * 100)
 
