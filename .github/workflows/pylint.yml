@@ -3,6 +3,8 @@ name: Python Linting
 on:
   pull_request:
     branches: ["main", "develop"]
+  workflow_dispatch:
+    # Allows manual triggering
 
 jobs:
   lint:
@@ -38,8 +40,11 @@ jobs:
 
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
-          # Run pylint but don't fail the build based on this run
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues but we'll only fail on critical errors"
+          # Store the exit code to use it later
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES
+          PYLINT_EXIT_CODE=$?
+          echo "pylint_exit_code=$PYLINT_EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "Pylint exit code: $PYLINT_EXIT_CODE"
           echo "::endgroup::"
 
       - name: Check issues by severity
@@ -140,12 +145,15 @@ jobs:
           echo "::endgroup::"
 
           # Determine if the build should fail (only critical errors cause failure)
-          if [ "$CRITICAL_EXIT_CODE" = "4" ]; then
+          if [ $CRITICAL_EXIT_CODE -eq 4 ]; then
             echo "Exit code 4 detected (no files found or config issue). This is not a critical error."
             exit 0  # Don't fail the build for this
-          elif [ "$CRITICAL_EXIT_CODE" != "0" ]; then
+          elif [ $CRITICAL_EXIT_CODE -ne 0 ]; then
             echo "::error::Critical errors found. Failing the build."
             exit 1
           else
             echo "No critical errors found that would block merging."
           fi
+          
+          # Just for GitHub status, log the overall pylint result too
+          echo "Overall Pylint exit code: ${{ steps.pylint_run.outputs.pylint_exit_code }}"
