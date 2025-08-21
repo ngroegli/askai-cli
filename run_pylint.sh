@@ -17,6 +17,10 @@ fi
 export PYTHONPATH=python:$SCRIPT_DIR
 echo "Using PYTHONPATH: $PYTHONPATH"
 
+# Extract disabled warnings from .pylintrc to apply consistently
+DISABLED_CHECKS=$(grep -oP '^disable=\K.*' .pylintrc)
+echo "Applying disabled warnings from .pylintrc: $DISABLED_CHECKS"
+
 # Make sure there are Python files to analyze
 PYTHON_FILES=$(find ./python -name "*.py" | xargs)
 if [ -z "$PYTHON_FILES" ]; then
@@ -28,7 +32,8 @@ echo -e "\n\n===================================================================
 echo "                  FULL PYLINT OUTPUT                            "
 echo "======================================================================"
 # Run pylint using the project's configuration file with full output
-PYTHONPATH=python pylint --rcfile=.pylintrc --disable=W0718,W0719 $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
+# No need for extra --disable flags, as .pylintrc is already used
+PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check failed but we're continuing to see all errors categorized by severity"
 echo -e "\n\n"
 
 # 1. Check for critical errors (error category)
@@ -36,7 +41,7 @@ echo -e "======================================================================"
 echo "                  CRITICAL ERRORS (E)                            "
 echo "                These will block merging                         "
 echo "======================================================================"
-CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I,$DISABLED_CHECKS --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 CRITICAL_EXIT_CODE=${PIPESTATUS[0]}
 
 if [ -n "$CRITICAL_ERRORS" ]; then
@@ -50,7 +55,7 @@ echo -e "\n\n===================================================================
 echo "                  WARNINGS (W)                                  "
 echo "      These should be addressed but won't block merging         "
 echo "======================================================================"
-WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --disable=W0718,W0719 --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I,$DISABLED_CHECKS --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
 if [ -n "$WARNINGS" ]; then
     echo -e "\033[33m$WARNINGS\033[0m"  # Yellow text for warnings
@@ -63,7 +68,7 @@ echo -e "\n\n===================================================================
 echo "                  REFACTORING SUGGESTIONS (R)                    "
 echo "           Recommendations to improve code quality               "
 echo "======================================================================"
-REFACTORING=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,W,I --enable=R --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+REFACTORING=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,W,I,$DISABLED_CHECKS --enable=R --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
 if [ -n "$REFACTORING" ]; then
     echo -e "\033[36m$REFACTORING\033[0m"  # Cyan text for refactoring
@@ -76,7 +81,7 @@ echo -e "\n\n===================================================================
 echo "                  CONVENTION ISSUES (C)                         "
 echo "                      Style suggestions                         "
 echo "======================================================================"
-CONVENTIONS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,I --enable=C --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+CONVENTIONS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,I,$DISABLED_CHECKS --enable=C --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
 if [ -n "$CONVENTIONS" ]; then
     echo -e "\033[35m$CONVENTIONS\033[0m"  # Magenta text for conventions
@@ -89,7 +94,7 @@ echo -e "\n\n===================================================================
 echo "                  INFORMATION (I)                               "
 echo "                    Additional info                             "
 echo "======================================================================"
-INFORMATION=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,C --enable=I --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+INFORMATION=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,C,$DISABLED_CHECKS --enable=I --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
 if [ -n "$INFORMATION" ]; then
     echo -e "\033[34m$INFORMATION\033[0m"  # Blue text for info
