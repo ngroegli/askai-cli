@@ -254,6 +254,10 @@ def main():
     # Add format to output_config so the handler knows what format to use
     # But only use the user's format if not using a pattern
     output_config['format'] = "rawtext" if using_pattern else args.format
+    
+    # Add plain_md flag to output_config if it's set and we're using markdown format
+    if hasattr(args, 'plain_md') and args.plain_md and args.format == 'md':
+        output_config['plain_md'] = True
 
     # Don't override file_output if it was already set by pattern outputs
     # And don't use args.output if we're using a pattern

@@ -167,7 +167,14 @@ class OutputHandler:
         if console_output:
             output_format = output_config.get('format', 'rawtext')
             if output_format == 'md':
-                formatted_output = self.formatters['markdown'].format(response_text, content_type='markdown')
+                # Check if we should render the markdown or output it as plain text
+                plain_md = output_config.get('plain_md', False)
+                if plain_md:
+                    # Just use the raw text for plain markdown output
+                    formatted_output = response_text
+                else:
+                    # Render the markdown for display in the console
+                    formatted_output = self.formatters['console'].format(response_text, content_type='markdown')
             else:
                 formatted_output = self.formatters['console'].format(response_text)
 
