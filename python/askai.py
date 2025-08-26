@@ -110,7 +110,7 @@ def main():
             "log_message": "User attempted to use chat functionality with patterns"
         }))
         print_error_or_warnings(
-            "Chat functionality is not compatible with patterns. Chat options will be ignored.", 
+            "Patterns and chat features are not compatible. Chat options (-pc, -vc) will be ignored.", 
             warning_only=True
         )
         # Force chat features to be disabled
