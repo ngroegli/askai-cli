@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    name: Run Pylint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -41,10 +42,26 @@ jobs:
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
           # Store the exit code to use it later
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
           PYLINT_EXIT_CODE=$?
+
+          # Interpret the exit code - only 0, 1, and 2 are meaningful for workflow success/failure
+          # 0 = Success, 1 = Fatal Error, 2 = Error
+          # Other codes (4, 8, 16, 32) or combinations are not fatal errors
+          if [ $PYLINT_EXIT_CODE -eq 0 ]; then
+            echo "Pylint found no issues"
+            SIMPLIFIED_CODE=0
+          elif [ $PYLINT_EXIT_CODE -eq 1 ] || [ $PYLINT_EXIT_CODE -eq 2 ]; then
+            echo "Pylint found fatal errors or errors"
+            SIMPLIFIED_CODE=1
+          else
+            echo "Pylint found non-fatal issues (warnings, conventions, etc.)"
+            SIMPLIFIED_CODE=0
+          fi
+
           echo "pylint_exit_code=$PYLINT_EXIT_CODE" >> $GITHUB_OUTPUT
-          echo "Pylint exit code: $PYLINT_EXIT_CODE"
+          echo "simplified_code=$SIMPLIFIED_CODE" >> $GITHUB_OUTPUT
+          echo "Pylint exit code: $PYLINT_EXIT_CODE (simplified to: $SIMPLIFIED_CODE)"
           echo "::endgroup::"
 
       - name: Check issues by severity
@@ -154,6 +171,18 @@ jobs:
           else
             echo "No critical errors found that would block merging."
           fi
-          
+
           # Just for GitHub status, log the overall pylint result too
           echo "Overall Pylint exit code: ${{ steps.pylint_run.outputs.pylint_exit_code }}"
+          echo "Simplified exit code: ${{ steps.pylint_run.outputs.simplified_code }}"
+
+          # Explanation of pylint exit codes:
+          echo "::notice::Pylint Exit Code Legend:"
+          echo "::notice::0 = No issues"
+          echo "::notice::1 = Fatal message"
+          echo "::notice::2 = Error"
+          echo "::notice::4 = Warning"
+          echo "::notice::8 = Refactor"
+          echo "::notice::16 = Convention"
+          echo "::notice::32 = Usage error"
+          echo "::notice::Combinations like 24 (4+4+16) mean multiple issue types"
