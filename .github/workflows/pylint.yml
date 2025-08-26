@@ -81,18 +81,23 @@ jobs:
 
           # 1. Check for critical errors (error category) - fail if any are found
           echo "::group::CRITICAL ERRORS (E) - These will block merging"
-          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || true)
           CRITICAL_EXIT_CODE=${PIPESTATUS[0]}
 
-          if [ -n "$CRITICAL_ERRORS" ]; then
+          echo "Critical errors exit code: $CRITICAL_EXIT_CODE"
+
+          if [ -n "$CRITICAL_ERRORS" ] && [ "$CRITICAL_EXIT_CODE" -ne 0 ]; then
             echo "$CRITICAL_ERRORS"
             echo "### ❌ CRITICAL ERRORS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$CRITICAL_ERRORS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::error::Critical Python errors were found! See details in the log."
+            HAS_CRITICAL_ERRORS=1
           else
             echo "No critical errors found."
             echo "### ✅ No critical errors found" >> $GITHUB_STEP_SUMMARY
+            HAS_CRITICAL_ERRORS=0
           fi
           echo "::endgroup::"
 
@@ -162,10 +167,10 @@ jobs:
           echo "::endgroup::"
 
           # Determine if the build should fail (only critical errors cause failure)
-          if [ $CRITICAL_EXIT_CODE -eq 4 ]; then
+          if [ $CRITICAL_EXIT_CODE -eq 4 ] && [ -z "$CRITICAL_ERRORS" ]; then
             echo "Exit code 4 detected (no files found or config issue). This is not a critical error."
             exit 0  # Don't fail the build for this
-          elif [ $CRITICAL_EXIT_CODE -ne 0 ]; then
+          elif [ $HAS_CRITICAL_ERRORS -eq 1 ] || ([ $CRITICAL_EXIT_CODE -ne 0 ] && [ $CRITICAL_EXIT_CODE -ne 4 ]); then
             echo "::error::Critical errors found. Failing the build."
             exit 1
           else
