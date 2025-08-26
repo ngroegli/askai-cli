@@ -81,12 +81,13 @@ jobs:
 
           # 1. Check for critical errors (error category) - fail if any are found
           echo "::group::CRITICAL ERRORS (E) - These will block merging"
-          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || true)
-          CRITICAL_EXIT_CODE=${PIPESTATUS[0]}
+          # Don't use --disable=... here so we get all errors regardless of .pylintrc settings
+          CRITICAL_ERRORS=$(PYTHONPATH=. pylint --errors-only --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1)
+          CRITICAL_EXIT_CODE=$?
 
           echo "Critical errors exit code: $CRITICAL_EXIT_CODE"
 
-          if [ -n "$CRITICAL_ERRORS" ] && [ "$CRITICAL_EXIT_CODE" -ne 0 ]; then
+          if [ -n "$CRITICAL_ERRORS" ] || [ $CRITICAL_EXIT_CODE -eq 1 ] || [ $CRITICAL_EXIT_CODE -eq 2 ]; then
             echo "$CRITICAL_ERRORS"
             echo "### ❌ CRITICAL ERRORS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -167,11 +168,11 @@ jobs:
           echo "::endgroup::"
 
           # Determine if the build should fail (only critical errors cause failure)
-          if [ $CRITICAL_EXIT_CODE -eq 4 ] && [ -z "$CRITICAL_ERRORS" ]; then
-            echo "Exit code 4 detected (no files found or config issue). This is not a critical error."
-            exit 0  # Don't fail the build for this
-          elif [ $HAS_CRITICAL_ERRORS -eq 1 ] || ([ $CRITICAL_EXIT_CODE -ne 0 ] && [ $CRITICAL_EXIT_CODE -ne 4 ]); then
+          if [ $HAS_CRITICAL_ERRORS -eq 1 ]; then
             echo "::error::Critical errors found. Failing the build."
+            exit 1
+          elif [ $CRITICAL_EXIT_CODE -eq 1 ] || [ $CRITICAL_EXIT_CODE -eq 2 ]; then
+            echo "::error::Critical errors found (exit code $CRITICAL_EXIT_CODE). Failing the build."
             exit 1
           else
             echo "No critical errors found that would block merging."
