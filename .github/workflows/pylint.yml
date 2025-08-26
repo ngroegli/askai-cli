@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    name: Run Pylint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -154,6 +155,6 @@ jobs:
           else
             echo "No critical errors found that would block merging."
           fi
-          
+
           # Just for GitHub status, log the overall pylint result too
           echo "Overall Pylint exit code: ${{ steps.pylint_run.outputs.pylint_exit_code }}"
