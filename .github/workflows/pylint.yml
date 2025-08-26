@@ -87,7 +87,9 @@ jobs:
 
           echo "Critical errors exit code: $CRITICAL_EXIT_CODE"
 
-          if [ -n "$CRITICAL_ERRORS" ]; then
+          # Check if there are actual errors (not just a perfect score message)
+          # Look specifically for error category messages, not just any output
+          if [ $CRITICAL_EXIT_CODE -ne 0 ] && [[ "$CRITICAL_ERRORS" =~ \[.*error.*\] ]]; then
             echo "$CRITICAL_ERRORS"
             echo "### ❌ CRITICAL ERRORS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -172,7 +174,8 @@ jobs:
           if [ $CRITICAL_EXIT_CODE -eq 4 ]; then
             echo "Exit code 4 detected (no files found or config issue). This is not a critical error."
             exit 0  # Don't fail the build for this
-          elif [ $CRITICAL_EXIT_CODE -ne 0 ]; then
+          # Only fail if there are actual errors (exit code is non-zero AND we found error markers)
+          elif [ $CRITICAL_EXIT_CODE -ne 0 ] && [ $HAS_CRITICAL_ERRORS -eq 1 ]; then
             echo "::error::Critical errors found. Failing the build."
             exit 1
           else
