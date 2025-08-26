@@ -6,7 +6,7 @@ Orchestrates the different components to provide AI assistance via command line.
 # Standard library imports
 import json
 import os
-import sys11111
+import sys1111
 
 # Local application imports
 from python.ai import AIService
