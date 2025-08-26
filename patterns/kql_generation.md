@@ -40,13 +40,7 @@ inputs:
 
 ```yaml
 results:
-  - name: kql_query
-    description: Primary KQL query (the best solution)
-    type: text
-    required: true
-    example: "SigninLogs | where TimeGenerated > ago(1h) | where ResultType != 0 | summarize count() by UserPrincipalName | order by count_ desc"
-
-  - name: explanation
+  - name: explanation_and_queries
     description: Formatted output with all KQL queries, explanations, and visualizations
     type: markdown
     required: true

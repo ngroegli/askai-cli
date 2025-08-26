@@ -18,7 +18,7 @@ The purpose of `image_interpretation` is to analyze and provide detailed descrip
 ```yaml
 inputs:
   - name: image_url
-    description: URL to an image on the web
+    description: URL to an image on the web (JPG)
     type: text
     required: true
     group: image_source
