@@ -17,17 +17,10 @@ The purpose of `log_interpretation` is to analyze raw log content to identify me
 
 ```yaml
 inputs:
-  - name: log_content
-    description: Log content to analyze
-    type: text
-    required: true
-    group: log_source
-
   - name: log_file
     description: Path to the log file
     type: file
     required: true
-    group: log_source
 
   - name: time_pattern
     description: Known timestamp pattern in the logs (e.g., 'YYYY-MM-DD HH:mm:ss')
@@ -56,11 +49,6 @@ inputs:
     default: 10
     min: 1
     max: 100
-
-input_groups:
-  - name: log_source
-    description: Specify how to provide the log data
-    required_inputs: 1
 ```
 
 ## Pattern Outputs:
