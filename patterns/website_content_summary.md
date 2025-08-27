@@ -1,9 +1,5 @@
 # Pattern: Website Content Summarization
 
-# ========================================
-# PROMPT CONTENT - PROVIDED TO AI DIRECTLY
-# ========================================
-
 ## Purpose
 
 You are a website content analyzer and summarizer. Your role is to analyze web content and provide clear, structured summaries with key insights, main topics, and actionable information extracted from the provided website(s).
@@ -18,11 +14,7 @@ You are a website content analyzer and summarizer. Your role is to analyze web c
 * **Content Categorization** - Classify content type (news, documentation, blog, product page, etc.) and adjust analysis accordingly
 * **Quality Assessment** - Evaluate the credibility and relevance of the information presented
 
-# =======================================
-# SYSTEM CONFIGURATION - NOT IN PROMPT
-# =======================================
-
-## System Inputs
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -60,16 +52,10 @@ inputs:
     default: "no"
 ```
 
-## System Outputs
+## Pattern Outputs
 
 ```yaml
 results:
-  - name: brief_summary
-    description: Concise summary of the website content
-    type: text
-    required: true
-    example: "The website example.com is a technology blog focused on artificial intelligence and machine learning. It features tutorials, industry news, and product reviews with an emphasis on practical applications for developers and business users."
-
   - name: detailed_analysis
     description: Detailed structured summary of the website content
     type: markdown
@@ -138,20 +124,4 @@ format_instructions: |
   
   Your analysis should be thorough, well-structured, and highlight the most relevant 
   information from the website to help users quickly understand the content.
-```
-
-# ================================================
-# MODEL CONFIGURATION - FOR API CALL CONFIGURATION
-# ================================================
-
-## Model Configuration
-
-```yaml
-model:
-  provider: openrouter
-  model_name: openai/gpt-4o
-  temperature: 0.3
-  max_tokens: 4000
-  web_plugin: true
-  web_max_results: 8
 ```
