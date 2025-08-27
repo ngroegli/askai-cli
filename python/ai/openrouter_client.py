@@ -144,20 +144,24 @@ class OpenRouterClient:
         return result
 
 
-    def _configure_pdf_handling(self, payload):
+    def _configure_pdf_handling(self, payload, respect_existing_model=False):
         """Configure the payload for PDF handling.
 
         Args:
             payload: The API payload to update
+            respect_existing_model: Whether to respect an existing model in the payload
 
         Returns:
             Updated payload with PDF handling configuration
         """
-        # Set the appropriate model for PDF processing
-        if "default_pdf_model" in self.config:
-            payload["model"] = self.config["default_pdf_model"]
-        else:
-            payload["model"] = "anthropic/claude-sonnet-4"  # Default PDF-capable model
+        # Only set the model if we're not told to respect an existing one
+        # or if there is no model in the payload yet
+        if not respect_existing_model or "model" not in payload:
+            # Set the appropriate model for PDF processing
+            if "default_pdf_model" in self.config:
+                payload["model"] = self.config["default_pdf_model"]
+            else:
+                payload["model"] = "anthropic/claude-sonnet-4"  # Default PDF-capable model
 
         # Add the PDF processing plugin (preserving any existing plugins if possible)
         pdf_plugin = {
@@ -421,11 +425,14 @@ class OpenRouterClient:
         # Step 6: Add messages to payload
         payload["messages"] = messages
 
-        # Step 7: Special handling for PDF URLs (this overrides any previous plugin configuration)
+        # Step 7: Special handling for PDF URLs (add plugins but respect model config from patterns)
         if content_info["has_pdf_url"]:
-            self._configure_pdf_handling(payload)
+            # If model_config is provided, respect the model that was specified
+            respect_model = model_config is not None
+            self._configure_pdf_handling(payload, respect_existing_model=respect_model)
             logger.debug(json.dumps({
-                "log_message": "Configured for PDF URL processing",
+                "log_message": "Configured for PDF URL processing" + 
+                              (" (keeping pattern-specified model)" if respect_model else ""),
                 "model": payload["model"],
                 "plugins": payload["plugins"]
             }))
