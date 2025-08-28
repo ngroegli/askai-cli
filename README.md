@@ -16,6 +16,7 @@
     - [Save Response to File (Markdown)](#save-response-to-file-markdown)
     - [Override Default Model](#override-default-model)
   - [🔄 Development Workflow](#-development-workflow)
+    - [Integration Tests](#integration-tests)
   - [☢️ Security Note](#️-security-note)
   - [🧩 Requirements](#-requirements)
   - [📄 License](#-license)
@@ -234,7 +235,35 @@ For contributors:
 2. Create your feature branch from `develop`
 3. Make your changes
 4. Run `pylint --rcfile=.pylintrc python/**/*.py` locally to catch issues early
-5. Submit a pull request to the `develop` branch
+5. Run the integration tests to verify your changes work correctly (see below)
+6. Submit a pull request to the `develop` branch
+
+### Integration Tests
+
+The project includes a comprehensive test suite to verify the CLI functionality:
+
+```bash
+# Run all tests
+make test-integration
+
+# Run only automated tests (no user interaction)
+make test-integration-automated
+
+# Run tests for a specific category
+make test-integration-general
+make test-integration-question
+make test-integration-pattern
+
+# List all available tests
+make list-tests
+```
+
+Tests are organized into three categories:
+- **General**: Tests for basic CLI functionality (help, error handling, etc.)
+- **Question**: Tests for question-asking functionality
+- **Pattern**: Tests for pattern-related functionality
+
+For more details, see [tests/README.md](./tests/README.md).
 
 See [BRANCH_PROTECTION.md](./docs/BRANCH_PROTECTION.md) for detailed information on branch protection rules and workflow.
 
