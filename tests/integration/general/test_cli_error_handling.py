@@ -78,7 +78,7 @@ class TestCliErrorHandling(AutomatedTest):
             "missing_q_flag",
             success and return_code != 0,  # Should have error message and non-zero return code
             "CLI correctly requires -q flag for queries" if success and return_code != 0
-            else "CLI did not properly handle missing -q flag",
+            else f"CLI did not properly handle missing -q flag. Missing patterns: {missing}",
             {
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),

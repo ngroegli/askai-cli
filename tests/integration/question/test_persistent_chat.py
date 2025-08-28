@@ -1,7 +1,6 @@
 """
 Tests for persistent chat functionality.
 """
-import os
 from tests.integration.test_base import SemiAutomatedTest
 from tests.integration.test_utils import run_cli_command, verify_output_contains, TestResult
 
@@ -11,7 +10,6 @@ class TestPersistentChat(SemiAutomatedTest):
 
     def add_result(self, test_name, success, message, details=None):
         """Add a test result to the results list."""
-        from tests.integration.test_utils import TestResult
         result = TestResult(test_name)
         if success:
             result.set_passed(message)
@@ -68,28 +66,18 @@ class TestPersistentChat(SemiAutomatedTest):
         print("Testing creation of new persistent chat")
         print("=" * 70)
         
-        # Check if we're in a fully automated testing mode
-        import os
-        is_ci = os.environ.get('CI', '').lower() in ('true', '1', 'yes')
-        is_testing = os.environ.get('ASKAI_TESTING', '').lower() in ('true', '1', 'yes')
-        auto_yes = os.environ.get('ASKAI_AUTO_TEST_YES', '').lower() in ('true', '1', 'yes')
+        # Prompt the user to check if prerequisites are met
+        ready = self.prompt_user(
+            "This test will create a new persistent chat.\n"
+            "Make sure you have valid API keys configured.\n"
+            "Are you ready to proceed?",
+            ["y", "n"]
+        )
         
-        # If we're in testing or CI mode, proceed automatically
-        if is_testing or is_ci or auto_yes:
-            print("Running in automated testing mode - proceeding automatically")
-        else:
-            # If we're not in automated mode, prompt the user
-            ready = self.prompt_user(
-                "This test will create a new persistent chat.\n"
-                "In test mode, a mock AI response will be provided.\n"
-                "Are you ready to proceed?",
-                ["y", "n"]
-            )
-            
-            if ready.lower() != "y":
-                result = self.add_manual_result(test_name)
-                result.set_failed("User cancelled the test")
-                return
+        if ready.lower() != "y":
+            result = self.add_manual_result(test_name)
+            result.set_failed("User cancelled the test")
+            return
         
         # Simple test query with persistent chat flag
         query = "Tell me a short fun fact"
@@ -97,8 +85,8 @@ class TestPersistentChat(SemiAutomatedTest):
         print(f"\nCreating new persistent chat with query: '{query}'")
         print("Please wait for the response...\n")
         
-        # Run the command with persistent chat flag and query flag, add -f for format
-        stdout, stderr, return_code = run_cli_command(["-pc", "-q", query, "-f", "rawtext"])
+        # Run the command with persistent chat flag and query flag
+        stdout, stderr, return_code = run_cli_command(["-pc", "-q", query])
         
         # Print the response for the user to verify
         print("\nResponse received:")
@@ -110,86 +98,11 @@ class TestPersistentChat(SemiAutomatedTest):
             print(stderr)
         print(f"Return code: {return_code}")
         
-        # Verify the response automatically
-        success = False
-        expected_patterns = [
-            r"fun fact|Fun fact",  # Should see fun fact in response
-            r"chat",  # Should see reference to chat
-            r"persistent",  # Should see reference to persistent chat
-        ]
+        # Ask the user to verify
+        print("\nPlease verify:")
+        print("1. A new chat was created successfully")
+        print("2. You received a response to your query")
+        print("3. There's an indication of the chat being persistent")
         
-        success, missing = verify_output_contains(stdout, expected_patterns)
-        
-        if success:
-            print("\nTest passed automatically: Found expected content in response")
-            self.add_result(
-                test_name,
-                True,
-                "Persistent chat created successfully",
-                {
-                    "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                    "stderr": stderr if stderr else "No errors",
-                    "return_code": return_code
-                }
-            )
-            return
-            
-        # If automatic verification failed but we're in testing mode, still pass the test
-        # because we're using a mock response which might not contain all expected patterns
-        if is_testing:
-            print("\nTest passed with mock response (not all patterns found)")
-            self.add_result(
-                test_name,
-                True,
-                "Persistent chat created with mock response",
-                {
-                    "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                    "stderr": stderr if stderr else "No errors",
-                    "return_code": return_code,
-                    "note": "Using mock response in test mode"
-                }
-            )
-            return
-        
-        # In manual mode or if automatic verification failed, ask for user verification
-        if not is_ci:
-            print("\nAutomatic verification failed. Missing patterns:", missing)
-            print("\nPlease verify manually:")
-            print("1. A new chat was created successfully")
-            print("2. You received a response to your query")
-            print("3. There's an indication of the chat being persistent")
-            
-            # Record the test result based on user input
-            self.add_manual_result(test_name)
-        else:
-            # In CI mode, mark as failed if automatic verification failed
-            self.add_result(
-                test_name,
-                False,
-                "Persistent chat test failed: Missing expected patterns: " + str(missing),
-                {
-                    "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                    "stderr": stderr if stderr else "No errors",
-                    "return_code": return_code
-                }
-            )
-            
-# Add this to run the test directly
-if __name__ == "__main__":
-    import sys
-    
-    # Set the testing environment variable
-    os.environ['ASKAI_TESTING'] = 'true'
-    
-    # Run the test
-    test = TestPersistentChat()
-    results = test.run()
-    
-    # Print results
-    print("\nTest Results:")
-    for result in results:
-        print(f"{result.name}: {'PASSED' if result.passed else 'FAILED'} - {result.message}")
-    
-    # Set exit code based on all tests passing
-    all_passed = all(result.passed for result in results)
-    sys.exit(0 if all_passed else 1)
+        # Record the test result based on user input
+        self.add_manual_result(test_name)
