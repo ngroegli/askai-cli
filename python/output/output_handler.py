@@ -381,10 +381,12 @@ class OutputHandler:
                 return response['content'], []
             return error_msg, []
 
+        '''
         # Get output directory with user confirmation for file operations
         output_dir = None
         if any(output.action == OutputAction.WRITE for output in pattern_outputs):
             output_dir = self._get_output_directory()
+        '''
 
         # Extract and assign content from response to outputs
         self._extract_output_content_from_response(pattern_outputs, structured_data, response)
@@ -482,6 +484,9 @@ class OutputHandler:
                 output.name, output.output_type, output.action
             )
 
+            # Output directory in case we have to write files
+            output_dir = None
+
             # Process based on action type
             if output.action == OutputAction.DISPLAY:
                 if output.output_type == OutputType.MARKDOWN:
@@ -516,6 +521,10 @@ class OutputHandler:
 
             # Process file writes in order
             elif output.action == OutputAction.WRITE:
+                # Get output directory with user confirmation for file operations
+                if any(output.action == OutputAction.WRITE for output in pattern_outputs) and output_dir == None:
+                    output_dir = self._get_output_directory()
+
                 content = output.get_content()
                 logger.info("Processing write output: %s", output.name)
                 if output.write_to_file and output_dir:
@@ -1236,6 +1245,7 @@ class OutputHandler:
             logger.debug("Text is not valid JSON")
 
         return None
+    
     def _categorize_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
         List[PatternOutput], List[PatternOutput], List[PatternOutput]
     ]:

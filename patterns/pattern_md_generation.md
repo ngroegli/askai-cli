@@ -77,11 +77,11 @@ inputs:
 
 ```yaml
 results:
-  - name: validation_report
-    description: Formatted output with the generated pattern preview and validation information
+  - name: pattern_explanation
+    description: Detailed explanation of the generated pattern with validation results and suggestions
     type: markdown
-    required: true
     action: display
+    required: true
 
   - name: pattern_content
     description: The generated pattern markdown file content as plain text
@@ -107,8 +107,8 @@ format_instructions: |
   
   {
     "results": {
-      "validation_report": "DETAILED_VALIDATION_AND_PREVIEW_WITH_METADATA",
+      "pattern_explanation": "EXPLANATION_OF_THE_PATTERN",
       "pattern_content": "RAW_PATTERN_MARKDOWN_CONTENT"
     }
   }
-  ```
+```
