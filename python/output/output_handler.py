@@ -381,13 +381,6 @@ class OutputHandler:
                 return response['content'], []
             return error_msg, []
 
-        '''
-        # Get output directory with user confirmation for file operations
-        output_dir = None
-        if any(output.action == OutputAction.WRITE for output in pattern_outputs):
-            output_dir = self._get_output_directory()
-        '''
-
         # Extract and assign content from response to outputs
         self._extract_output_content_from_response(pattern_outputs, structured_data, response)
 
@@ -475,6 +468,9 @@ class OutputHandler:
                         js_output.set_content(js_content)
                         logger.info("Emergency JS content extraction successful")
 
+        # Output directory in case we have to write files
+        output_dir = None
+
         # Process each output in the exact order defined in the pattern
         for output in ordered_outputs:
             content = output.get_content()
@@ -483,9 +479,6 @@ class OutputHandler:
                 "Processing output: %s, type: %s, action: %s",
                 output.name, output.output_type, output.action
             )
-
-            # Output directory in case we have to write files
-            output_dir = None
 
             # Process based on action type
             if output.action == OutputAction.DISPLAY:
