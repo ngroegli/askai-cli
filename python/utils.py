@@ -206,12 +206,19 @@ Where:
 
     # Add additional formatting requirements
     instruction += """
-IMPORTANT NOTES:
-1. The response MUST use the exact field names shown above
-2. The 'results' field MUST be the top-level field in the JSON object
-3. Do not add any extra fields or nested objects not shown in the template
-4. Include all required fields exactly as shown
-5. Ensure the JSON is properly formatted and valid
+⚠️ CRITICAL FORMATTING REQUIREMENTS ⚠️
+
+1. Use the EXACT field names specified above in your response.
+2. The JSON object MUST have 'results' as its top-level field.
+3. Do not include any additional fields or nested objects not present in the template.
+4. All required fields MUST be present exactly as shown.
+5. Make sure the JSON is valid and correctly formatted.
+6. DO NOT wrap your response in markdown code blocks or use triple backticks (```).
+7. DO NOT use any markdown formatting around your JSON response.
+8. RETURN ONLY THE RAW JSON OBJECT - nothing else before or after.
+9. DO NOT use \\n```json\\n as start for the response field content.
+
+This is not a suggestion - this is a strict formatting requirement that must be followed exactly.
 """
 
     return instruction

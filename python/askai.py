@@ -110,7 +110,7 @@ def main():
             "log_message": "User attempted to use chat functionality with patterns"
         }))
         print_error_or_warnings(
-            "Chat functionality is not compatible with patterns. Chat options will be ignored.", 
+            "Patterns and chat features are not compatible. Chat options (-pc, -vc) will be ignored.", 
             warning_only=True
         )
         # Force chat features to be disabled
@@ -254,6 +254,10 @@ def main():
     # Add format to output_config so the handler knows what format to use
     # But only use the user's format if not using a pattern
     output_config['format'] = "rawtext" if using_pattern else args.format
+    
+    # Add plain_md flag to output_config if it's set and we're using markdown format
+    if hasattr(args, 'plain_md') and args.plain_md and args.format == 'md':
+        output_config['plain_md'] = True
 
     # Don't override file_output if it was already set by pattern outputs
     # And don't use args.output if we're using a pattern

@@ -167,7 +167,14 @@ class OutputHandler:
         if console_output:
             output_format = output_config.get('format', 'rawtext')
             if output_format == 'md':
-                formatted_output = self.formatters['markdown'].format(response_text, content_type='markdown')
+                # Check if we should render the markdown or output it as plain text
+                plain_md = output_config.get('plain_md', False)
+                if plain_md:
+                    # Just use the raw text for plain markdown output
+                    formatted_output = response_text
+                else:
+                    # Render the markdown for display in the console
+                    formatted_output = self.formatters['console'].format(response_text, content_type='markdown')
             else:
                 formatted_output = self.formatters['console'].format(response_text)
 
@@ -374,11 +381,6 @@ class OutputHandler:
                 return response['content'], []
             return error_msg, []
 
-        # Get output directory with user confirmation for file operations
-        output_dir = None
-        if any(output.action == OutputAction.WRITE for output in pattern_outputs):
-            output_dir = self._get_output_directory()
-
         # Extract and assign content from response to outputs
         self._extract_output_content_from_response(pattern_outputs, structured_data, response)
 
@@ -466,6 +468,9 @@ class OutputHandler:
                         js_output.set_content(js_content)
                         logger.info("Emergency JS content extraction successful")
 
+        # Output directory in case we have to write files
+        output_dir = None
+
         # Process each output in the exact order defined in the pattern
         for output in ordered_outputs:
             content = output.get_content()
@@ -509,6 +514,10 @@ class OutputHandler:
 
             # Process file writes in order
             elif output.action == OutputAction.WRITE:
+                # Get output directory with user confirmation for file operations
+                if any(output.action == OutputAction.WRITE for output in pattern_outputs) and output_dir == None:
+                    output_dir = self._get_output_directory()
+
                 content = output.get_content()
                 logger.info("Processing write output: %s", output.name)
                 if output.write_to_file and output_dir:
@@ -1229,6 +1238,7 @@ class OutputHandler:
             logger.debug("Text is not valid JSON")
 
         return None
+    
     def _categorize_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
         List[PatternOutput], List[PatternOutput], List[PatternOutput]
     ]:

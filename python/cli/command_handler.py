@@ -62,11 +62,8 @@ class CommandHandler:
 
         # If pattern commands are present, they always take precedence over chat commands
         if using_pattern_commands and using_chat:
+            # Only log the issue, don't print a warning (main warning will be in askai.py)
             self.logger.warning(json.dumps({"log_message": "User attempted to use chat functionality with patterns"}))
-            print_error_or_warnings(
-                "Pattern commands take precedence over chat commands. Chat functionality will be ignored.",
-                warning_only=True
-            )
             return False
 
         if args.list_chats:

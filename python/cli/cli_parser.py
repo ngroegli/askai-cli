@@ -144,16 +144,10 @@ class CLIParser:
 
         # Check for incompatible combinations of pattern and chat
         if using_pattern and using_chat:
+            # Only log the issue, don't print a warning (main warning will be in askai.py)
             logger.warning(json.dumps({
                 "log_message": "User attempting to use chat persistence features with pattern; these are incompatible"
             }))
-            print_error_or_warnings(
-                text=(
-                    "Chat persistence features (-pc/--persistent-chat, -vc/--view-chat) are not compatible "
-                    "with patterns (-up/--use-pattern). Chat options will be ignored."
-                ),
-                warning_only=True
-            )
 
         # Check if question-related parameters are used with a pattern
         if using_pattern and any([

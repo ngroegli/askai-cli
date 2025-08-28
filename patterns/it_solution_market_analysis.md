@@ -58,47 +58,12 @@ inputs:
     min: 1
     max: 10
 ```
-  ```
+
 
 ## Pattern Outputs:
 
 ```yaml
 results:
-  - name: market_data
-    description: Structured competitor comparison data in JSON format
-    type: json
-    required: true
-    schema:
-      type: object
-      properties:
-        analyzed_product:
-          type: object
-          properties:
-            name: { type: string }
-            type: { type: string }
-            features: 
-              type: array
-              items: { type: string }
-        competitors:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              features: 
-                type: array
-                items: { type: string }
-              pros: 
-                type: array
-                items: { type: string }
-              cons:
-                type: array
-                items: { type: string }
-              pricing: { type: string }
-              deployment: { type: string }
-              reference_url: { type: string }
-              last_verified: { type: string }
-
   - name: analysis_report
     description: Formatted market analysis report with competitor comparison and trends
     type: markdown
