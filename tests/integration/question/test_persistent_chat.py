@@ -51,6 +51,7 @@ class TestPersistentChat(SemiAutomatedTest):
             "Chat list command recognized" if success 
             else f"Chat list command not recognized: {missing}",
             {
+                "command": "askai.py -lc",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

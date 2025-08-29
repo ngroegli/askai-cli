@@ -38,6 +38,7 @@ class TestCliErrorHandling(AutomatedTest):
             "Error message displayed correctly for invalid option" if success 
             else f"Missing error message in output: {missing}",
             {
+                "command": "askai.py --invalid-option",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -49,12 +50,21 @@ class TestCliErrorHandling(AutomatedTest):
         # Use a valid option but with invalid value
         stdout, stderr, return_code = run_cli_command(["-m", ""])
         
+        # Check for error message that starts with ERROR:
+        expected_patterns = [
+            r"^ERROR:",  # Error message should start with ERROR:
+        ]
+        
+        error_output = stderr if stderr else stdout
+        success, missing = verify_output_contains(error_output, expected_patterns)
+        
         self.add_result(
             "askai_invalid_argument",
-            return_code != 0,  # Should return non-zero exit code for error
-            "CLI correctly rejected invalid argument" if return_code != 0
-            else "CLI incorrectly accepted invalid argument",
+            success and return_code != 0,  # Should have error message and non-zero return code
+            "CLI correctly rejected invalid argument with proper error format" if success and return_code != 0
+            else f"CLI error format incorrect or missing. Missing patterns: {missing}",
             {
+                "command": "askai.py -m \"\"",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -80,6 +90,7 @@ class TestCliErrorHandling(AutomatedTest):
             "CLI correctly requires -q flag for queries" if success and return_code != 0
             else f"CLI did not properly handle missing -q flag. Missing patterns: {missing}",
             {
+                "command": "askai.py \"What's the capital of France?\"",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),
                 "return_code": return_code

@@ -40,6 +40,7 @@ class TestCliHelp(AutomatedTest):
             "Help information displayed correctly when running with no arguments" if success 
             else f"Missing expected content in help output: {missing}",
             {
+                "command": "askai.py",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -66,6 +67,7 @@ class TestCliHelp(AutomatedTest):
             "Help information displayed correctly with -h flag" if success 
             else f"Missing expected content in help output: {missing}",
             {
+                "command": "askai.py -h",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -92,6 +94,7 @@ class TestCliHelp(AutomatedTest):
             "Help information displayed correctly with --help flag" if success 
             else f"Missing expected content in help output: {missing}",
             {
+                "command": "askai.py --help",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

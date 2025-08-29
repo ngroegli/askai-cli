@@ -118,8 +118,7 @@ class TestImageInput(AutomatedTest):
         """Test that the CLI handles image URLs correctly."""
         image_url = "https://www.iana.org/_img/2025.01/iana-logo-header.svg"
         
-        # We'll run with --version to avoid actual API calls but still trigger the URL detection code
-        stdout, stderr, return_code = run_cli_command(["-img-url", image_url, "--version"])
+        stdout, stderr, return_code = run_cli_command(["-img-url", image_url])
         
         # Check if there's an error specifically about the image URL
         url_error = "URL" in (stdout + stderr) and "error" in (stdout + stderr).lower()
@@ -139,6 +138,7 @@ class TestImageInput(AutomatedTest):
             "CLI correctly handles image URLs" if not url_error or url_processing_mentioned
             else "CLI failed to handle the image URL",
             {
+                "command": f"askai.py -img-url {image_url}",
                 "image_url": image_url,
                 "url_processing_mentioned": url_processing_mentioned,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),

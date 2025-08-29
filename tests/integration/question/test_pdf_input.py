@@ -36,8 +36,7 @@ class TestPdfInput(AutomatedTest):
             return
             
         # Verify the CLI recognizes the PDF file format
-        # We'll run with --version to avoid actual API calls but still trigger the PDF detection code
-        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "--version"])
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path])
         
         # Check if there's an error specifically about the PDF format
         pdf_format_error = "not a valid PDF" in (stdout + stderr)
@@ -70,6 +69,7 @@ class TestPdfInput(AutomatedTest):
                 "CLI correctly recognized the PDF file format" if not pdf_format_error 
                 else "CLI failed to recognize the PDF file format",
                 {
+                    "command": f"askai.py -pdf {test_pdf_path}",
                     "pdf_path": test_pdf_path,
                     "pdf_exists": pdf_exists,
                     "processing_mentioned": processing_mentioned,
@@ -83,8 +83,7 @@ class TestPdfInput(AutomatedTest):
         """Test that the CLI handles PDF URLs correctly."""
         pdf_url = "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf"
         
-        # We'll run with --version to avoid actual API calls but still trigger the URL detection code
-        stdout, stderr, return_code = run_cli_command(["-pdf-url", pdf_url, "--version"])
+        stdout, stderr, return_code = run_cli_command(["-pdf-url", pdf_url])
         
         # Check if there's an error specifically about the PDF URL
         url_error = "URL" in (stdout + stderr) and "error" in (stdout + stderr).lower()
@@ -104,6 +103,7 @@ class TestPdfInput(AutomatedTest):
             "CLI correctly handles PDF URLs" if not url_error or url_processing_mentioned
             else "CLI failed to handle the PDF URL",
             {
+                "command": f"askai.py -pdf-url {pdf_url}",
                 "pdf_url": pdf_url,
                 "url_processing_mentioned": url_processing_mentioned,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),

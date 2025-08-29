@@ -36,6 +36,7 @@ class TestPatternList(AutomatedTest):
             "Pattern list displayed correctly with -lp flag" if success 
             else f"Missing expected content in pattern list output: {missing}",
             {
+                "command": "askai.py -lp",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -60,6 +61,7 @@ class TestPatternList(AutomatedTest):
             "Pattern list displayed correctly with --list-patterns flag" if success 
             else f"Missing expected content in pattern list output: {missing}",
             {
+                "command": "askai.py --list-patterns",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

@@ -19,8 +19,7 @@ class TestFileInput(AutomatedTest):
     def _test_file_input_flag(self):
         """Test that file input flag is recognized."""
         # Create a temporary test file
-        test_file_path = os.path.join(os.getcwd(), "temp_test_file.txt")
-        
+        test_file_path = os.path.join(os.getcwd(), "test_file_input.txt") 
         try:
             # Create a simple test file
             with open(test_file_path, "w", encoding="utf-8") as f:
@@ -28,7 +27,7 @@ class TestFileInput(AutomatedTest):
             
             # Run command with file input flag but no question
             # This should result in a structured error about needing a question
-            stdout, stderr, return_code = run_cli_command(["-fi", test_file_path])
+            stdout, stderr, return_code = run_cli_command(["-q", "-fi", test_file_path])
             
             # The command should fail with an error message about needing a question
             expected_patterns = [
@@ -44,6 +43,7 @@ class TestFileInput(AutomatedTest):
                 "File input flag recognized correctly" if success 
                 else f"File input flag not handled correctly: {missing}",
                 {
+                    "command": f"askai.py -q -fi {test_file_path}",
                     "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                     "stderr": stderr if stderr else "No errors",
                     "return_code": return_code

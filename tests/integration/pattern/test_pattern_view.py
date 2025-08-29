@@ -35,6 +35,7 @@ class TestPatternView(AutomatedTest):
             "Pattern details displayed correctly" if success 
             else f"Missing expected content in pattern view: {missing}",
             {
+                "command": "askai.py -vp data_visualization",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

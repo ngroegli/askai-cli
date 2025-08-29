@@ -49,6 +49,7 @@ class TestUrlInput(AutomatedTest):
             "URL input flag recognized correctly" if success 
             else "URL input flag not handled correctly",
             {
+                "command": "askai.py -url https://example.com",
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
