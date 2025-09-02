@@ -32,10 +32,6 @@ test-integration-pattern:
 test-integration-%:
 	bash tests/run_integration_tests.sh --test $*
 
-# Run a specific integration test in auto mode (answer yes to prompts)
-test-integration-auto-%:
-	ASKAI_AUTO_TEST=true ASKAI_USE_MOCK_AI=true ASKAI_TESTING=true bash tests/run_integration_tests.sh --test $*
-
 # List available tests
 list-tests:
 	bash tests/run_integration_tests.sh --list
