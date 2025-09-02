@@ -192,8 +192,8 @@ def main():
         # All tests passed - everything in green
         print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {GREEN}{total_failed} failed{RESET}")
     elif total_passed == 0 and total_failed > 0:
-        # All tests failed - passed in red, failed in green (reversed)
-        print(f"OVERALL SUMMARY: {RED}{total_passed} passed{RESET}, {GREEN}{total_failed} failed{RESET}")
+        # All tests failed - both numbers in red
+        print(f"OVERALL SUMMARY: {RED}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")
     else:
         # Mixed results - passed in green, failed in red
         print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")

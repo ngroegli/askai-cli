@@ -42,8 +42,8 @@ class BaseIntegrationTest(ABC):
             # All tests passed - everything in green
             print(f"\nSummary: {GREEN}{passed} passed{RESET}, {GREEN}{failed} failed{RESET}")
         elif passed == 0 and failed > 0:
-            # All tests failed - passed in red, failed in green (reversed)
-            print(f"\nSummary: {RED}{passed} passed{RESET}, {GREEN}{failed} failed{RESET}")
+            # All tests failed - passed in red, failed is red too (not green)
+            print(f"\nSummary: {RED}{passed} passed{RESET}, {RED}{failed} failed{RESET}")
         else:
             # Mixed results - passed in green, failed in red
             print(f"\nSummary: {GREEN}{passed} passed{RESET}, {RED}{failed} failed{RESET}")
