@@ -96,7 +96,14 @@ class TestResult:
         self.details[key] = value
     
     def __str__(self):
-        result = f"[{'PASS' if self.passed else 'FAIL'}] {self.name}: {self.message}"
+        # ANSI color codes
+        GREEN = "\033[92m"  # Bright green
+        RED = "\033[91m"    # Bright red
+        RESET = "\033[0m"   # Reset color
+        
+        status = f"{GREEN}PASS{RESET}" if self.passed else f"{RED}FAIL{RESET}"
+        result = f"[{status}] {self.name}: {self.message}"
+        
         if self.details:
             detail_str = "\n".join(f"  {k}: {v}" for k, v in self.details.items())
             result += f"\nDetails:\n{detail_str}"

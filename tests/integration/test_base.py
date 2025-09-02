@@ -28,10 +28,25 @@ class BaseIntegrationTest(ABC):
             print(result)
             print("-" * 70)
         
-        # Summary
+        # Summary with color formatting
         passed = sum(1 for r in self.results if r.passed)
         failed = sum(1 for r in self.results if not r.passed)
-        print(f"\nSummary: {passed} passed, {failed} failed")
+        
+        # ANSI color codes
+        GREEN = "\033[92m"  # Bright green
+        RED = "\033[91m"    # Bright red
+        RESET = "\033[0m"   # Reset color
+        
+        # Determine the color formatting based on test results
+        if passed > 0 and failed == 0:
+            # All tests passed - everything in green
+            print(f"\nSummary: {GREEN}{passed} passed{RESET}, {GREEN}{failed} failed{RESET}")
+        elif passed == 0 and failed > 0:
+            # All tests failed - passed in red, failed in green (reversed)
+            print(f"\nSummary: {RED}{passed} passed{RESET}, {GREEN}{failed} failed{RESET}")
+        else:
+            # Mixed results - passed in green, failed in red
+            print(f"\nSummary: {GREEN}{passed} passed{RESET}, {RED}{failed} failed{RESET}")
         
         return passed, failed
 

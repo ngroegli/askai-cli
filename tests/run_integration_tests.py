@@ -179,9 +179,25 @@ def main():
         total_passed += passed
         total_failed += failed
     
-    # Print overall summary
+    # Print overall summary with color formatting
     print("\n" + "=" * 70)
-    print(f"OVERALL SUMMARY: {total_passed} passed, {total_failed} failed")
+    
+    # ANSI color codes
+    GREEN = "\033[92m"  # Bright green
+    RED = "\033[91m"    # Bright red
+    RESET = "\033[0m"   # Reset color
+    
+    # Determine the color formatting based on test results
+    if total_passed > 0 and total_failed == 0:
+        # All tests passed - everything in green
+        print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {GREEN}{total_failed} failed{RESET}")
+    elif total_passed == 0 and total_failed > 0:
+        # All tests failed - passed in red, failed in green (reversed)
+        print(f"OVERALL SUMMARY: {RED}{total_passed} passed{RESET}, {GREEN}{total_failed} failed{RESET}")
+    else:
+        # Mixed results - passed in green, failed in red
+        print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")
+    
     print("=" * 70)
     
     # Return appropriate exit code
