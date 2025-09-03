@@ -12,7 +12,7 @@
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },
-    "files.trimTrailingWhitespace": false,
+    "files.trimTrailingWhitespace": true,
     "[python]": {
         "editor.trimTrailingWhitespace": true
     }
