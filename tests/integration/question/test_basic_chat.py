@@ -1,66 +1,163 @@
 """
-Semi-automated integration tests for the chat functionality.
+Automated integration tests for the chat functionality.
 """
-from tests.integration.test_base import SemiAutomatedTest
-from tests.integration.test_utils import run_cli_command
+from tests.integration.test_base import AutomatedTest
+from tests.integration.test_utils import run_cli_command, verify_output_contains
 
 
-class TestBasicChat(SemiAutomatedTest):
-    """Semi-automated test for basic chat interaction with the CLI."""
+class TestBasicChat(AutomatedTest):
+    """Automated test for basic chat interaction with the CLI."""
     
     def run(self):
         """Run the test cases."""
         self._test_basic_chat()
+        self._test_basic_chat_with_model()
+        self._test_basic_chat_with_json_format()
+        self._test_basic_chat_with_model_and_json()
         return self.results
         
     def _test_basic_chat(self):
         """Test a basic chat interaction."""
-        # We'll use a simple question to test the chat functionality
-        # This test requires manual verification because:
-        # 1. It might need API keys to be set up
-        # 2. We need to verify the actual content of the response
-        test_name = "basic_chat_interaction"
-        
-        print("\n" + "=" * 70)
-        print("Testing basic chat functionality")
-        print("=" * 70)
-        
-        # Prompt the user to check if prerequisites are met
-        ready = self.prompt_user(
-            "This test will send a simple query to the AI service.\n"
-            "Make sure you have valid API keys configured.\n"
-            "Are you ready to proceed?",
-            ["y", "n"]
-        )
-        
-        if ready.lower() != "y":
-            result = self.add_manual_result(test_name)
-            result.set_failed("User cancelled the test")
-            return
-        
-        # Simple test query (non-controversial, general knowledge)
+        # Simple test query about the capital of France
         query = "What's the capital of France?"
-        
-        print(f"\nSending query: '{query}'")
-        print("Please wait for the response...\n")
         
         # Run the command
         stdout, stderr, return_code = run_cli_command(["-q", query])
         
-        # Print the response for the user to verify
-        print("\nResponse received:")
-        print("-" * 70)
-        print(stdout)
-        print("-" * 70)
-        if stderr:
-            print("Errors:")
-            print(stderr)
-        print(f"Return code: {return_code}")
+        # Check if "Paris" appears in the response
+        expected_patterns = [
+            r"Paris|paris|PARIS",  # Look for Paris in any case
+        ]
         
-        # Ask the user to verify
-        print("\nPlease verify:")
-        print("1. The command executed successfully")
-        print("2. The response contains relevant information about Paris")
+        success, missing = verify_output_contains(stdout, expected_patterns)
         
-        # Record the test result based on user input
-        self.add_manual_result(test_name)
+        # Also check that the command executed without errors
+        no_errors = return_code == 0
+        
+        # Test passes if Paris is mentioned and no errors occurred
+        test_success = success and no_errors
+        
+        self.add_result(
+            "basic_chat_interaction",
+            test_success,
+            "Basic chat correctly answered with Paris" if test_success
+            else f"Basic chat failed - Paris not found: {missing}" if not success
+            else "Basic chat failed - command returned error",
+            {
+                "command": f"askai.py -q \"{query}\"",
+                "paris_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors", 
+                "return_code": return_code
+            }
+        )
+
+    def _test_basic_chat_with_model(self):
+        """Test a basic chat interaction with specific model."""
+        # Simple test query about the capital of France with model specification
+        query = "What's the capital of France?"
+        model_name = "anthropic/claude-3-haiku"
+        
+        # Run the command with model specification
+        stdout, stderr, return_code = run_cli_command(["-q", query, "-m", model_name])
+        
+        # Check if "Paris" appears in the response
+        expected_patterns = [
+            r"Paris|paris|PARIS",  # Look for Paris in any case
+        ]
+        
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        
+        # Also check that the command executed without errors
+        no_errors = return_code == 0
+        
+        # Test passes if Paris is mentioned and no errors occurred
+        test_success = success and no_errors
+        
+        self.add_result(
+            "basic_chat_with_model",
+            test_success,
+            "Basic chat with model correctly answered with Paris" if test_success
+            else f"Basic chat with model failed - Paris not found: {missing}" if not success
+            else "Basic chat with model failed - command returned error",
+            {
+                "command": f"askai.py -q \"{query}\" -m \"{model_name}\"",
+                "paris_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors", 
+                "return_code": return_code
+            }
+        )
+
+    def _test_basic_chat_with_json_format(self):
+        """Test a basic chat interaction with JSON output format."""
+        # Simple test query about the capital of France with JSON format
+        query = "What's the capital of France?"
+        
+        # Run the command with JSON format
+        stdout, stderr, return_code = run_cli_command(["-q", query, "-f", "json"])
+        
+        # Check if "Paris" appears in the response
+        expected_patterns = [
+            r"Paris|paris|PARIS",  # Look for Paris in any case
+        ]
+        
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        
+        # Also check that the command executed without errors
+        no_errors = return_code == 0
+        
+        # Test passes if Paris is mentioned and no errors occurred
+        test_success = success and no_errors
+        
+        self.add_result(
+            "basic_chat_with_json",
+            test_success,
+            "Basic chat with JSON format correctly answered with Paris" if test_success
+            else f"Basic chat with JSON format failed - Paris not found: {missing}" if not success
+            else "Basic chat with JSON format failed - command returned error",
+            {
+                "command": f"askai.py -q \"{query}\" -f \"json\"",
+                "paris_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors", 
+                "return_code": return_code
+            }
+        )
+
+    def _test_basic_chat_with_model_and_json(self):
+        """Test a basic chat interaction with both model and JSON format."""
+        # Simple test query about the capital of France with model and JSON format
+        query = "What's the capital of France?"
+        model_name = "anthropic/claude-3-haiku"
+        
+        # Run the command with both model and JSON format
+        stdout, stderr, return_code = run_cli_command(["-q", query, "-f", "json", "-m", model_name])
+        
+        # Check if "Paris" appears in the response
+        expected_patterns = [
+            r"Paris|paris|PARIS",  # Look for Paris in any case
+        ]
+        
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        
+        # Also check that the command executed without errors
+        no_errors = return_code == 0
+        
+        # Test passes if Paris is mentioned and no errors occurred
+        test_success = success and no_errors
+        
+        self.add_result(
+            "basic_chat_with_model_and_json",
+            test_success,
+            "Basic chat with model and JSON format correctly answered with Paris" if test_success
+            else f"Basic chat with model and JSON format failed - Paris not found: {missing}" if not success
+            else "Basic chat with model and JSON format failed - command returned error",
+            {
+                "command": f"askai.py -q \"{query}\" -f \"json\" -m \"{model_name}\"",
+                "paris_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors", 
+                "return_code": return_code
+            }
+        )
