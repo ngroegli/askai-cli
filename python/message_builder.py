@@ -105,6 +105,19 @@ class MessageBuilder:
             if not image_ext:
                 image_ext = "jpeg"  # Default extension if none detected
 
+            # Map file extensions to proper MIME types
+            mime_type_map = {
+                "jpg": "jpeg",
+                "jpeg": "jpeg",
+                "png": "png",
+                "gif": "gif",
+                "webp": "webp",
+                "bmp": "bmp"
+            }
+
+            # Get the proper MIME type
+            mime_type = mime_type_map.get(image_ext, "jpeg")
+
             image_base64 = encode_file_to_base64(image)
             if image_base64:
                 # For image inputs, we need to use the content list format for multimodal
@@ -122,7 +135,7 @@ class MessageBuilder:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/{image_ext};base64,{image_base64}"
+                                "url": f"data:image/{mime_type};base64,{image_base64}"
                             }
                         }
                     ]
@@ -464,6 +477,19 @@ class MessageBuilder:
                     if not image_ext:
                         image_ext = "jpeg"  # Default extension if none detected
 
+                    # Map file extensions to proper MIME types
+                    mime_type_map = {
+                        "jpg": "jpeg",
+                        "jpeg": "jpeg",
+                        "png": "png",
+                        "gif": "gif",
+                        "webp": "webp",
+                        "bmp": "bmp"
+                    }
+
+                    # Get the proper MIME type
+                    mime_type = mime_type_map.get(image_ext, "jpeg")
+
                     self.logger.info(json.dumps({
                         "log_message": "Processing image_file from pattern input",
                         "image_path": image_path
@@ -472,28 +498,28 @@ class MessageBuilder:
                     # Encode the image to base64
                     image_base64 = encode_file_to_base64(image_path)
 
-                if image_base64:
-                    # Find user question in pattern inputs or use default
-                    user_question = "Please analyze this image based on the provided inputs."
+                    if image_base64:
+                        # Find user question in pattern inputs or use default
+                        user_question = "Please analyze this image based on the provided inputs."
 
-                    # Create multimodal message with image content
-                    messages.append({
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": user_question},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/{image_ext};base64,{image_base64}"
+                        # Create multimodal message with image content
+                        messages.append({
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_question},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/{mime_type};base64,{image_base64}"
+                                    }
                                 }
-                            }
-                        ]
-                    })
+                            ]
+                        })
 
-                    self.logger.debug(json.dumps({
-                        "log_message": "Created multimodal message for pattern image input",
-                        "message_structure": "multimodal with image"
-                    }))
+                        self.logger.debug(json.dumps({
+                            "log_message": "Created multimodal message for pattern image input",
+                            "message_structure": "multimodal with image"
+                        }))
 
             # Handle PDF files
             elif input_def.input_type.value == "pdf_file" and input_def.name in pattern_inputs:
