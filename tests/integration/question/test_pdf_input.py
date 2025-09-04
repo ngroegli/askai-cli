@@ -8,104 +8,325 @@ from tests.integration.test_utils import run_cli_command, verify_output_contains
 
 class TestPdfInput(AutomatedTest):
     """Test PDF input handling in the CLI."""
-    
+
     def run(self):
         """Run the test cases."""
-        self._test_pdf_detection()
-        self._test_pdf_url_detection()
+        self._test_pdf_file_exists()
+        self._test_pdf_analysis_basic()
+        self._test_pdf_analysis_with_query()
+        self._test_pdf_analysis_with_json()
+        self._test_pdf_analysis_with_model()
+        self._test_pdf_analysis_with_query_and_json()
+        self._test_pdf_analysis_with_query_and_model()
+        self._test_pdf_analysis_with_json_and_model()
+        self._test_pdf_analysis_with_query_model_and_format()
+        self._test_nonexistent_pdf()
         return self.results
-    
-    def _test_pdf_detection(self):
-        """Test that the CLI recognizes PDF files correctly."""
-        # Path to the test PDF file
-        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
-        
-        # Check if the test PDF exists
-        pdf_exists = os.path.exists(test_pdf_path)
-        
-        if not pdf_exists:
-            self.add_result(
-                "pdf_file_existence",
-                False,
-                "Test PDF file not found",
-                {
-                    "expected_path": test_pdf_path,
-                    "solution": "Please ensure a test.pdf file is placed in the tests/test_resources directory"
-                }
-            )
-            return
-            
-        # Verify the CLI recognizes the PDF file format
-        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path])
-        
-        # Check if there's an error specifically about the PDF format
-        pdf_format_error = "not a valid PDF" in (stdout + stderr)
-        
-        if pdf_format_error:
-            self.add_result(
-                "pdf_format_detection",
-                False,
-                "CLI reported that the test file is not a valid PDF",
-                {
-                    "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                    "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),
-                    "return_code": return_code,
-                    "resolution": "Please ensure test.pdf is a valid PDF file"
-                }
-            )
-        else:
-            # Check if there's some recognition of PDF processing
-            pdf_processing_indicators = [
-                r"pdf|PDF",
-                r"document|Document",
-                r"processing|Processing|reading|Reading"
-            ]
-            
-            processing_mentioned, _ = verify_output_contains(stdout + stderr, pdf_processing_indicators)
-            
-            self.add_result(
-                "pdf_format_detection",
-                not pdf_format_error,
-                "CLI correctly recognized the PDF file format" if not pdf_format_error 
-                else "CLI failed to recognize the PDF file format",
-                {
-                    "command": f"askai.py -pdf {test_pdf_path}",
-                    "pdf_path": test_pdf_path,
-                    "pdf_exists": pdf_exists,
-                    "processing_mentioned": processing_mentioned,
-                    "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                    "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),
-                    "return_code": return_code
-                }
-            )
-    
-    def _test_pdf_url_detection(self):
-        """Test that the CLI handles PDF URLs correctly."""
-        pdf_url = "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf"
-        
-        stdout, stderr, return_code = run_cli_command(["-pdf-url", pdf_url])
-        
-        # Check if there's an error specifically about the PDF URL
-        url_error = "URL" in (stdout + stderr) and "error" in (stdout + stderr).lower()
-        
-        # Check if there's some recognition of PDF processing from URL
-        pdf_url_indicators = [
-            r"pdf|PDF",
-            r"url|URL",
-            r"download|Download|fetching|Fetching"
-        ]
-        
-        url_processing_mentioned, _ = verify_output_contains(stdout + stderr, pdf_url_indicators)
-        
+
+    def _test_pdf_file_exists(self):
+        """Test that the PDF test file exists and is accessible."""
+        test_file = os.path.join("tests", "test_resources", "test.pdf")
+
+        file_exists = os.path.isfile(test_file)
+        file_details = {
+            test_file: {
+                "exists": file_exists,
+                "absolute_path": os.path.abspath(test_file) if file_exists else "N/A"
+            }
+        }
+
         self.add_result(
-            "pdf_url_detection",
-            not url_error or url_processing_mentioned,
-            "CLI correctly handles PDF URLs" if not url_error or url_processing_mentioned
-            else "CLI failed to handle the PDF URL",
+            "pdf_test_file_exists",
+            file_exists,
+            "Test PDF file exists and is accessible" if file_exists else "Test PDF file not found",
             {
-                "command": f"askai.py -pdf-url {pdf_url}",
-                "pdf_url": pdf_url,
-                "url_processing_mentioned": url_processing_mentioned,
+                "command": "File existence check",
+                "file": file_details,
+                "note": "This file is used for PDF handling tests"
+            }
+        )
+
+    def _test_pdf_analysis_basic(self):
+        """Test basic PDF analysis without additional parameters."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+
+        # Run PDF analysis without query
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_basic",
+            test_success,
+            "Basic PDF analysis detected Lorem Ipsum text" if test_success
+            else f"Basic PDF analysis failed - Lorem Ipsum not found: {missing}" if not success
+            else "Basic PDF analysis failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path}",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_query(self):
+        """Test PDF analysis with specific query."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        query = "What text content do you see in this PDF document?"
+
+        # Run PDF analysis with query
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-q", query])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_query",
+            test_success,
+            "PDF analysis with query detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with query failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with query failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_json(self):
+        """Test PDF analysis with JSON output format."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+
+        # Run PDF analysis with JSON format
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-f", "json"])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_json",
+            test_success,
+            "PDF analysis with JSON format detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with JSON format failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with JSON format failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -f \"json\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_model(self):
+        """Test PDF analysis with specific model."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run PDF analysis with specific model
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_model",
+            test_success,
+            "PDF analysis with model detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with model failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with model failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_query_and_json(self):
+        """Test PDF analysis with query and JSON format."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        query = "Analyze the text content in this PDF document"
+
+        # Run PDF analysis with query and JSON format
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-q", query, "-f", "json"])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_query_and_json",
+            test_success,
+            "PDF analysis with query and JSON detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with query and JSON failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with query and JSON failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\" -f \"json\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_query_and_model(self):
+        """Test PDF analysis with query and specific model."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        query = "What text content do you see in this PDF document?"
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run PDF analysis with query and model
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-q", query, "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_query_and_model",
+            test_success,
+            "PDF analysis with query and model detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with query and model failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with query and model failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_json_and_model(self):
+        """Test PDF analysis with JSON format and specific model."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run PDF analysis with JSON format and model
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-f", "json", "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_json_and_model",
+            test_success,
+            "PDF analysis with JSON and model detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with JSON and model failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with JSON and model failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -f \"json\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_pdf_analysis_with_query_model_and_format(self):
+        """Test PDF analysis with all options: query, JSON format, and model."""
+        test_pdf_path = os.path.join("tests", "test_resources", "test.pdf")
+        query = "Analyze all text content in this PDF document"
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run PDF analysis with all options
+        stdout, stderr, return_code = run_cli_command(["-pdf", test_pdf_path, "-q", query, "-f", "json", "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "pdf_analysis_with_all_options",
+            test_success,
+            "PDF analysis with all options detected Lorem Ipsum text" if test_success
+            else f"PDF analysis with all options failed - Lorem Ipsum not found: {missing}" if not success
+            else "PDF analysis with all options failed - command returned error",
+            {
+                "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\" -f \"json\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_nonexistent_pdf(self):
+        """Test error handling for nonexistent PDF files."""
+        nonexistent_path = os.path.join("tests", "test_resources", "nonexistent.pdf")
+
+        # Run command with nonexistent PDF - should produce an error
+        stdout, stderr, return_code = run_cli_command(["-pdf", nonexistent_path])
+
+        # Check for appropriate error messages
+        error_patterns = [
+            r"WARNING|[Ff]ile not found|[Nn]o such file|[Dd]oes not exist",
+        ]
+
+        error_found, missing = verify_output_contains(stdout + stderr, error_patterns)
+        error_return_code = return_code != 0
+        test_success = error_found or error_return_code
+
+        self.add_result(
+            "nonexistent_pdf_error",
+            test_success,
+            "Nonexistent PDF properly handled with error" if test_success
+            else f"Nonexistent PDF not handled properly - no error detected: {missing}",
+            {
+                "command": f"askai.py -pdf {nonexistent_path}",
+                "error_found": error_found,
+                "error_return_code": error_return_code,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),
                 "return_code": return_code
