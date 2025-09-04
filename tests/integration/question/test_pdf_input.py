@@ -3,7 +3,7 @@ Integration tests for PDF handling in askai-cli.
 """
 import os
 from tests.integration.test_base import AutomatedTest
-from tests.integration.test_utils import run_cli_command, verify_output_contains
+from tests.integration.test_utils import run_cli_command, verify_output_contains, verify_basic_json_format
 
 
 class TestPdfInput(AutomatedTest):
@@ -121,19 +121,26 @@ class TestPdfInput(AutomatedTest):
             r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout, expected_patterns)
+        lorem_success, lorem_missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = lorem_success and no_errors and json_valid
 
         self.add_result(
             "pdf_analysis_with_json",
             test_success,
             "PDF analysis with JSON format detected Lorem Ipsum text" if test_success
-            else f"PDF analysis with JSON format failed - Lorem Ipsum not found: {missing}" if not success
+            else f"PDF analysis with JSON format failed - Lorem Ipsum not found: {lorem_missing}" if not lorem_success
+            else "PDF analysis with JSON format failed - invalid JSON format" if not json_valid
             else "PDF analysis with JSON format failed - command returned error",
             {
                 "command": f"askai.py -pdf {test_pdf_path} -f \"json\"",
-                "lorem_ipsum_found": success,
+                "lorem_ipsum_found": lorem_success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -185,19 +192,26 @@ class TestPdfInput(AutomatedTest):
             r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout, expected_patterns)
+        lorem_success, lorem_missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = lorem_success and no_errors and json_valid
 
         self.add_result(
             "pdf_analysis_with_query_and_json",
             test_success,
             "PDF analysis with query and JSON detected Lorem Ipsum text" if test_success
-            else f"PDF analysis with query and JSON failed - Lorem Ipsum not found: {missing}" if not success
+            else f"PDF analysis with query and JSON failed - Lorem Ipsum not found: {lorem_missing}" if not lorem_success
+            else "PDF analysis with query and JSON failed - invalid JSON format" if not json_valid
             else "PDF analysis with query and JSON failed - command returned error",
             {
                 "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\" -f \"json\"",
-                "lorem_ipsum_found": success,
+                "lorem_ipsum_found": lorem_success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -250,19 +264,26 @@ class TestPdfInput(AutomatedTest):
             r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout, expected_patterns)
+        lorem_success, lorem_missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = lorem_success and no_errors and json_valid
 
         self.add_result(
             "pdf_analysis_with_json_and_model",
             test_success,
             "PDF analysis with JSON and model detected Lorem Ipsum text" if test_success
-            else f"PDF analysis with JSON and model failed - Lorem Ipsum not found: {missing}" if not success
+            else f"PDF analysis with JSON and model failed - Lorem Ipsum not found: {lorem_missing}" if not lorem_success
+            else "PDF analysis with JSON and model failed - invalid JSON format" if not json_valid
             else "PDF analysis with JSON and model failed - command returned error",
             {
                 "command": f"askai.py -pdf {test_pdf_path} -f \"json\" -m \"{model_name}\"",
-                "lorem_ipsum_found": success,
+                "lorem_ipsum_found": lorem_success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -283,19 +304,26 @@ class TestPdfInput(AutomatedTest):
             r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout, expected_patterns)
+        lorem_success, lorem_missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = lorem_success and no_errors and json_valid
 
         self.add_result(
             "pdf_analysis_with_all_options",
             test_success,
             "PDF analysis with all options detected Lorem Ipsum text" if test_success
-            else f"PDF analysis with all options failed - Lorem Ipsum not found: {missing}" if not success
+            else f"PDF analysis with all options failed - Lorem Ipsum not found: {lorem_missing}" if not lorem_success
+            else "PDF analysis with all options failed - invalid JSON format" if not json_valid
             else "PDF analysis with all options failed - command returned error",
             {
                 "command": f"askai.py -pdf {test_pdf_path} -q \"{query}\" -f \"json\" -m \"{model_name}\"",
-                "lorem_ipsum_found": success,
+                "lorem_ipsum_found": lorem_success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

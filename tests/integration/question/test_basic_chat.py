@@ -2,7 +2,7 @@
 Automated integration tests for the chat functionality.
 """
 from tests.integration.test_base import AutomatedTest
-from tests.integration.test_utils import run_cli_command, verify_output_contains
+from tests.integration.test_utils import run_cli_command, verify_output_contains, verify_basic_json_format
 
 
 class TestBasicChat(AutomatedTest):
@@ -107,18 +107,24 @@ class TestBasicChat(AutomatedTest):
         # Also check that the command executed without errors
         no_errors = return_code == 0
 
-        # Test passes if Paris is mentioned and no errors occurred
-        test_success = success and no_errors
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
+        # Test passes if Paris is mentioned, no errors occurred, and output is JSON-like
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "basic_chat_with_json",
             test_success,
             "Basic chat with JSON format correctly answered with Paris" if test_success
             else f"Basic chat with JSON format failed - Paris not found: {missing}" if not success
+            else "Basic chat with JSON format failed - invalid JSON format" if not json_valid
             else "Basic chat with JSON format failed - command returned error",
             {
                 "command": f"askai.py -q \"{query}\" -f \"json\"",
                 "paris_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -144,18 +150,24 @@ class TestBasicChat(AutomatedTest):
         # Also check that the command executed without errors
         no_errors = return_code == 0
 
-        # Test passes if Paris is mentioned and no errors occurred
-        test_success = success and no_errors
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
+        # Test passes if Paris is mentioned, no errors occurred, and output is JSON-like
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "basic_chat_with_model_and_json",
             test_success,
             "Basic chat with model and JSON format correctly answered with Paris" if test_success
             else f"Basic chat with model and JSON format failed - Paris not found: {missing}" if not success
+            else "Basic chat with model and JSON format failed - invalid JSON format" if not json_valid
             else "Basic chat with model and JSON format failed - command returned error",
             {
                 "command": f"askai.py -q \"{query}\" -f \"json\" -m \"{model_name}\"",
                 "paris_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code

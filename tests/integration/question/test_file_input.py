@@ -3,7 +3,7 @@ Tests for file input functionality.
 """
 import os
 from tests.integration.test_base import AutomatedTest
-from tests.integration.test_utils import run_cli_command, verify_output_contains
+from tests.integration.test_utils import run_cli_command, verify_output_contains, verify_basic_json_format
 
 
 class TestFileInput(AutomatedTest):
@@ -124,18 +124,25 @@ class TestFileInput(AutomatedTest):
         ]
 
         success, missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "file_input_with_json",
             test_success,
             "File input with JSON format detected Lorem Ipsum text" if test_success
             else f"File input with JSON format failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with JSON format failed - invalid JSON format" if not json_valid
             else "File input with JSON format failed - command returned error",
             {
                 "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
                 "lorem_ipsum_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -189,18 +196,25 @@ class TestFileInput(AutomatedTest):
         ]
 
         success, missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "file_input_with_query_and_json",
             test_success,
             "File input with query and JSON detected Lorem Ipsum text" if test_success
             else f"File input with query and JSON failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with query and JSON failed - invalid JSON format" if not json_valid
             else "File input with query and JSON failed - command returned error",
             {
                 "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
                 "lorem_ipsum_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -254,18 +268,25 @@ class TestFileInput(AutomatedTest):
         ]
 
         success, missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "file_input_with_json_and_model",
             test_success,
             "File input with JSON and model detected Lorem Ipsum text" if test_success
             else f"File input with JSON and model failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with JSON and model failed - invalid JSON format" if not json_valid
             else "File input with JSON and model failed - command returned error",
             {
                 "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
                 "lorem_ipsum_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
@@ -287,18 +308,25 @@ class TestFileInput(AutomatedTest):
         ]
 
         success, missing = verify_output_contains(stdout, expected_patterns)
+
+        # Check JSON format validation
+        json_valid, json_reason = verify_basic_json_format(stdout)
+
         no_errors = return_code == 0
-        test_success = success and no_errors
+        test_success = success and no_errors and json_valid
 
         self.add_result(
             "file_input_with_all_options",
             test_success,
             "File input with all options detected Lorem Ipsum text" if test_success
             else f"File input with all options failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with all options failed - invalid JSON format" if not json_valid
             else "File input with all options failed - command returned error",
             {
                 "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\" -m \"{model_name}\"",
                 "lorem_ipsum_found": success,
+                "json_valid": json_valid,
+                "json_reason": json_reason,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
