@@ -2,7 +2,6 @@
 Tests for file input functionality.
 """
 import os
-import sys
 from tests.integration.test_base import AutomatedTest
 from tests.integration.test_utils import run_cli_command, verify_output_contains
 
