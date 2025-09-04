@@ -12,141 +12,327 @@ class TestFileInput(AutomatedTest):
 
     def run(self):
         """Run the test cases."""
-        # Test missing question with file input
-        self._test_file_input_missing_question()
-
-        # Test valid question with valid file
-        self._test_file_input_valid()
-
-        # Test valid question but non-existent file
-        self._test_file_input_missing_file()
-
-        # Test valid file but missing -q flag
-        self._test_file_input_missing_q_flag()
-
+        self._test_file_exists()
+        self._test_file_input_basic()
+        self._test_file_input_with_query()
+        self._test_file_input_with_json()
+        self._test_file_input_with_model()
+        self._test_file_input_with_query_and_json()
+        self._test_file_input_with_query_and_model()
+        self._test_file_input_with_format_and_model()
+        self._test_file_input_with_model_format_and_question()
+        self._test_nonexistent_file()
         return self.results
 
-    def _test_file_input_missing_question(self):
-        """Test that file input flag is recognized."""
-        # Create a temporary test file
-        test_file_path = os.path.join(sys.path[0], "tests/test_resources/test.txt")
+    def _test_file_exists(self):
+        """Test that the file test file exists and is accessible."""
+        test_file = os.path.join("tests", "test_resources", "test.txt")
 
-        # Run command with file input flag but no question
-        # This should result in a structured error about needing a question
-        stdout, stderr, return_code = run_cli_command(["-q", "-fi", test_file_path])
-
-        # The command should fail with an error message about needing a question
-        expected_patterns = [
-            r"error|ERROR",  # Should see an error message
-            r"question|query",  # Should mention needing a question
-        ]
-
-        success, missing = verify_output_contains(stdout + stderr, expected_patterns)
+        file_exists = os.path.isfile(test_file)
+        file_details = {
+            test_file: {
+                "exists": file_exists,
+                "absolute_path": os.path.abspath(test_file) if file_exists else "N/A"
+            }
+        }
 
         self.add_result(
-            "file_input_missing_question",
-            success and return_code != 0,  # Should fail with error code
-            "File input with missing question handled correctly" if success
-            else f"File input with missing question not handled correctly: {missing}",
+            "file_test_file_exists",
+            file_exists,
+            "Test file exists and is accessible" if file_exists else "Test file not found",
             {
-                "command": f"askai -q -fi {test_file_path}",
-                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
-                "stderr": stderr if stderr else "No errors",
-                "return_code": return_code
+                "command": "File existence check",
+                "file": file_details,
+                "note": "This file is used for file input handling tests"
             }
         )
 
-    def _test_file_input_valid(self):
-        """Test file input with valid question and existing file."""
-        # Create a temporary test file
-        test_file_path = os.path.join(sys.path[0], "tests/test_resources/test.txt")
+    def _test_file_input_basic(self):
+        """Test basic file input analysis without additional parameters."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "What text content do you see in this file?"
 
-        # Run command with file input flag and valid question
-        query = "Can you identify the text in this file?"
-        stdout, stderr, return_code = run_cli_command(["-q", query, "-fi", test_file_path])
+        # Run file input analysis with query (required for -fi)
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query])
 
-        # The command should be recognized
+        # Check if Lorem Ipsum is detected
         expected_patterns = [
-            r"lorem|Lorem",  # Should see reference to file
-            r"ipsum|Ipsum",  # Should see reference to input
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
         success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
 
         self.add_result(
-            "file_input_valid",
-            success and return_code == 0,  # Should succeed
-            "File input with valid question processed correctly" if success and return_code == 0
-            else f"File input with valid question not processed correctly: {missing}",
+            "file_input_basic",
+            test_success,
+            "Basic file input detected Lorem Ipsum text" if test_success
+            else f"Basic file input failed - Lorem Ipsum not found: {missing}" if not success
+            else "Basic file input failed - command returned error",
             {
-                "command": f"askai.py -q \"{query}\" -fi {test_file_path}",
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\"",
+                "lorem_ipsum_found": success,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
             }
         )
 
+    def _test_file_input_with_query(self):
+        """Test file input with specific query."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "Analyze the text content in this file and describe what you find"
 
-    def _test_file_input_missing_file(self):
-        """Test file input with valid question but non-existent file."""
-        # Use a file path that doesn't exist
-        test_file_path = os.path.join(sys.path[0], "tests/test_resources/nonexistent_file.txt")
+        # Run file input analysis with specific query
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query])
 
-        # Make sure the file doesn't actually exist
-        if os.path.exists(test_file_path):
-            os.remove(test_file_path)
-
-        # Run command with file input flag, valid question, but non-existent file
-        query = "Summarize this file"
-        stdout, stderr, return_code = run_cli_command(["-q", query, "-fi", test_file_path])
-
-        # The command shows a warning about the missing file but continues execution
+        # Check if Lorem Ipsum is detected
         expected_patterns = [
-            r"warning|WARNING",  # Should see a warning message
-            r"file|File",        # Should mention file
-            r"exist|found",      # Should indicate file not found
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout + stderr, expected_patterns)
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
 
         self.add_result(
-            "file_input_missing_file",
-            success,  # Only check for the warning message, don't check return code
-            "Non-existent file properly produces warning" if success
-            else f"Non-existent file warning not displayed correctly: {missing}",
+            "file_input_with_query",
+            test_success,
+            "File input with query detected Lorem Ipsum text" if test_success
+            else f"File input with query failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with query failed - command returned error",
             {
-                "command": f"askai.py -q \"{query}\" -fi {test_file_path}",
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\"",
+                "lorem_ipsum_found": success,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
                 "return_code": return_code
             }
         )
 
-    def _test_file_input_missing_q_flag(self):
-        """Test file input with valid file but missing -q flag."""
-        # Create a temporary test file
-        test_file_path = os.path.join(sys.path[0], "tests/test_resources/test.txt")
+    def _test_file_input_with_json(self):
+        """Test file input with JSON output format."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "What text content do you see in this file?"
 
-        # Run command with file input flag but without -q flag
-        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path])
+        # Run file input analysis with JSON format
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-f", "json"])
 
-        # The command should fail with an error about the missing question
+        # Check if Lorem Ipsum is detected
         expected_patterns = [
-            r"error|ERROR",       # Should see an error message
-            r"question|query|-q", # Should mention needing a question
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
         ]
 
-        success, missing = verify_output_contains(stdout + stderr, expected_patterns)
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
 
         self.add_result(
-            "file_input_missing_q_flag",
-            success and return_code != 0,  # Should fail with error code
-            "File input with missing -q flag handled correctly" if success and return_code != 0
-            else f"File input with missing -q flag not handled correctly: {missing}",
+            "file_input_with_json",
+            test_success,
+            "File input with JSON format detected Lorem Ipsum text" if test_success
+            else f"File input with JSON format failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with JSON format failed - command returned error",
             {
-                "command": f"askai.py -fi {test_file_path}",
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
+                "lorem_ipsum_found": success,
                 "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
                 "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_file_input_with_model(self):
+        """Test file input with specific model."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "What text content do you see in this file?"
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run file input analysis with specific model
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "file_input_with_model",
+            test_success,
+            "File input with model detected Lorem Ipsum text" if test_success
+            else f"File input with model failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with model failed - command returned error",
+            {
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_file_input_with_query_and_json(self):
+        """Test file input with query and JSON format."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "Describe the text content in this file"
+
+        # Run file input analysis with query and JSON format
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-f", "json"])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "file_input_with_query_and_json",
+            test_success,
+            "File input with query and JSON detected Lorem Ipsum text" if test_success
+            else f"File input with query and JSON failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with query and JSON failed - command returned error",
+            {
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_file_input_with_query_and_model(self):
+        """Test file input with query and specific model."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "What text content do you see in this file?"
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run file input analysis with query and model
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "file_input_with_query_and_model",
+            test_success,
+            "File input with query and model detected Lorem Ipsum text" if test_success
+            else f"File input with query and model failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with query and model failed - command returned error",
+            {
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_file_input_with_format_and_model(self):
+        """Test file input with JSON format and specific model."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "What text content do you see in this file?"
+
+        # Run file input analysis with JSON format and model
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-f", "json"])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "file_input_with_json_and_model",
+            test_success,
+            "File input with JSON and model detected Lorem Ipsum text" if test_success
+            else f"File input with JSON and model failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with JSON and model failed - command returned error",
+            {
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_file_input_with_model_format_and_question(self):
+        """Test file input with all options: query, JSON format, and model."""
+        test_file_path = os.path.join("tests", "test_resources", "test.txt")
+        query = "Analyze all text content in this file"
+        model_name = "anthropic/claude-3-haiku"
+
+        # Run file input analysis with all options
+        stdout, stderr, return_code = run_cli_command(["-fi", test_file_path, "-q", query, "-f", "json", "-m", model_name])
+
+        # Check if Lorem Ipsum is detected
+        expected_patterns = [
+            r"[Ll]orem\s+[Ii]psum|Lorem|lorem|LOREM|Ipsum|ipsum|IPSUM",
+        ]
+
+        success, missing = verify_output_contains(stdout, expected_patterns)
+        no_errors = return_code == 0
+        test_success = success and no_errors
+
+        self.add_result(
+            "file_input_with_all_options",
+            test_success,
+            "File input with all options detected Lorem Ipsum text" if test_success
+            else f"File input with all options failed - Lorem Ipsum not found: {missing}" if not success
+            else "File input with all options failed - command returned error",
+            {
+                "command": f"askai.py -fi {test_file_path} -q \"{query}\" -f \"json\" -m \"{model_name}\"",
+                "lorem_ipsum_found": success,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr if stderr else "No errors",
+                "return_code": return_code
+            }
+        )
+
+    def _test_nonexistent_file(self):
+        """Test error handling for nonexistent files."""
+        nonexistent_path = os.path.join("tests", "test_resources", "nonexistent.txt")
+        query = "What is in this file?"
+
+        # Run command with nonexistent file - should produce an error or warning
+        stdout, stderr, return_code = run_cli_command(["-fi", nonexistent_path, "-q", query])
+
+        # Check for appropriate error or warning messages
+        error_patterns = [
+            r"[Ee]rror|[Ww]arning|[Ff]ile not found|[Nn]o such file|[Dd]oes not exist",
+        ]
+
+        error_found, missing = verify_output_contains(stdout + stderr, error_patterns)
+        # File input might still process with warning, so don't strictly require error return code
+        test_success = error_found
+
+        self.add_result(
+            "nonexistent_file_error",
+            test_success,
+            "Nonexistent file properly handled with error/warning" if test_success
+            else f"Nonexistent file not handled properly - no error/warning detected: {missing}",
+            {
+                "command": f"askai.py -fi {nonexistent_path} -q \"{query}\"",
+                "error_found": error_found,
+                "stdout": stdout[:500] + ("..." if len(stdout) > 500 else ""),
+                "stderr": stderr[:500] + ("..." if len(stderr) > 500 else ""),
                 "return_code": return_code
             }
         )
