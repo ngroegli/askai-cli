@@ -25,11 +25,14 @@ class CommandHandler:
                 print("No pattern files found.")
             else:
                 print("\nAvailable patterns:")
-                print("-" * 60)
+                print("-" * 70)
                 for pattern in patterns:
-                    print(f"ID: {pattern['pattern_id']}")
+                    source_indicator = "🔒" if pattern.get('is_private', False) else "📦"
+                    print(f"ID: {pattern['pattern_id']} {source_indicator}")
                     print(f"Name: {pattern['name']}")
-                    print("-" * 60)
+                    print(f"Source: {pattern.get('source', 'built-in')}")
+                    print("-" * 70)
+                print("\n🔒 = Private pattern, 📦 = Built-in pattern")
             return True
 
         if args.view_pattern is not None:  # -vp was used

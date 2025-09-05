@@ -31,38 +31,104 @@ class PatternManager:
     pattern requirements, and collecting user inputs for pattern execution.
     """
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str, config: Optional[Dict[str, Any]] = None):
         """Initialize the pattern manager.
 
         Args:
             base_path: Base path of the application
+            config: Application configuration dictionary
         """
+        # Built-in patterns directory
         self.patterns_dir = os.path.join(base_path, "patterns")
         if not os.path.isdir(self.patterns_dir):
             raise ValueError(f"No 'patterns' directory found at {self.patterns_dir}")
 
+        # Private patterns directory (optional)
+        self.private_patterns_dir = None
+        if config and 'patterns' in config and 'private_patterns_path' in config['patterns']:
+            private_path = config['patterns']['private_patterns_path']
+            if private_path and private_path.strip():  # Check for non-empty string
+                # Expand user home directory if needed
+                expanded_path = os.path.expanduser(private_path.strip())
+                if os.path.isdir(expanded_path):
+                    self.private_patterns_dir = expanded_path
+                    logger.info("Using private patterns directory: %s", expanded_path)
+                else:
+                    # Ask user if they want to create the directory
+                    print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
+                    create_dir = input(f"Would you like to create the directory '{expanded_path}'? (y/n): ").lower().strip()
+                    if create_dir == 'y':
+                        try:
+                            os.makedirs(expanded_path, exist_ok=True)
+                            self.private_patterns_dir = expanded_path
+                            print(f"Created private patterns directory: {expanded_path}")
+                            logger.info("Created private patterns directory: %s", expanded_path)
+                        except Exception as e:
+                            print(f"Error creating directory '{expanded_path}': {str(e)}")
+                            logger.error("Error creating private patterns directory %s: %s", expanded_path, str(e))
+                    else:
+                        print("Continuing without private patterns directory.")
+                        logger.warning("Private patterns directory not created: %s", expanded_path)
+
+    def _get_pattern_directories(self) -> List[str]:
+        """Get all pattern directories to search.
+
+        Returns:
+            List[str]: List of directories to search for patterns (private first, then built-in)
+        """
+        directories = []
+        # Private patterns come first (higher priority)
+        if self.private_patterns_dir:
+            directories.append(self.private_patterns_dir)
+        # Built-in patterns directory
+        directories.append(self.patterns_dir)
+        return directories
+
     def list_patterns(self) -> List[Dict[str, Any]]:
-        """List all available pattern files.
+        """List all available pattern files from all directories.
 
         Returns:
             List[Dict[str, Any]]: List of pattern metadata
         """
         patterns = []
-        for filename in os.listdir(self.patterns_dir):
-            if filename.endswith('.md') and not filename.startswith('_'):
-                file_path = os.path.join(self.patterns_dir, filename)
-                pattern_id = filename.removesuffix('.md')
+        seen_pattern_ids = set()
 
-                # Read first line of the file to get the pattern name
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    first_line = f.readline().strip()
-                    name = first_line.replace('# Pattern:', '').strip()
+        # Search all directories (private patterns first for priority)
+        for patterns_dir in self._get_pattern_directories():
+            if not os.path.exists(patterns_dir):
+                continue
 
-                patterns.append({
-                    'pattern_id': pattern_id,
-                    'name': name,
-                    'file_path': file_path
-                })
+            for filename in os.listdir(patterns_dir):
+                if filename.endswith('.md') and not filename.startswith('_'):
+                    pattern_id = filename.removesuffix('.md')
+
+                    # Skip if we've already seen this pattern (private overrides built-in)
+                    if pattern_id in seen_pattern_ids:
+                        continue
+
+                    file_path = os.path.join(patterns_dir, filename)
+
+                    try:
+                        # Read first line of the file to get the pattern name
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            first_line = f.readline().strip()
+                            name = first_line.replace('# Pattern:', '').strip()
+
+                        # Determine if this is a private or built-in pattern
+                        is_private = patterns_dir == self.private_patterns_dir
+
+                        patterns.append({
+                            'pattern_id': pattern_id,
+                            'name': name,
+                            'file_path': file_path,
+                            'is_private': is_private,
+                            'source': 'private' if is_private else 'built-in'
+                        })
+
+                        seen_pattern_ids.add(pattern_id)
+
+                    except Exception as e:
+                        logger.warning("Error reading pattern file %s: %s", file_path, str(e))
 
         return sorted(patterns, key=lambda x: x['name'])
 
@@ -374,25 +440,38 @@ class PatternManager:
         Returns:
             Optional[Dict[str, Any]]: Dictionary containing pattern content and metadata
         """
-        file_path = os.path.join(self.patterns_dir, f"{pattern_id}.md")
-        if not os.path.exists(file_path):
-            return None
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Search in priority order (private first, then built-in)
+        for patterns_dir in self._get_pattern_directories():
+            file_path = os.path.join(patterns_dir, f"{pattern_id}.md")
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
 
-        inputs, input_groups = self._parse_pattern_inputs(content)
-        outputs = self._parse_pattern_outputs(content)
-        execution_config = self._parse_pattern_execution(content)
+                    inputs, input_groups = self._parse_pattern_inputs(content)
+                    outputs = self._parse_pattern_outputs(content)
+                    execution_config = self._parse_pattern_execution(content)
 
-        return {
-            'prompt_content': self._parse_pattern_prompt(content),
-            'inputs': inputs,
-            'input_groups': input_groups,
-            'outputs': outputs,
-            'configuration': self._parse_pattern_configuration(content),
-            'execution': execution_config,
-            'pattern_id': pattern_id
-        }
+                    # Determine if this is a private pattern
+                    is_private = patterns_dir == self.private_patterns_dir
+
+                    return {
+                        'prompt_content': self._parse_pattern_prompt(content),
+                        'inputs': inputs,
+                        'input_groups': input_groups,
+                        'outputs': outputs,
+                        'configuration': self._parse_pattern_configuration(content),
+                        'execution': execution_config,
+                        'pattern_id': pattern_id,
+                        'file_path': file_path,
+                        'is_private': is_private,
+                        'source': 'private' if is_private else 'built-in'
+                    }
+                except Exception as e:
+                    logger.error("Error reading pattern file %s: %s", file_path, str(e))
+                    continue
+
+        return None
 
     def _read_input_file(self, file_path: str) -> Optional[str]:
         """Read content from an input file.
@@ -647,17 +726,19 @@ class PatternManager:
             return None
 
         print("\nAvailable patterns:")
-        print("-" * 60)
+        print("-" * 70)
 
         # Display patterns with index
         for i, pattern in enumerate(patterns, 1):
-            print(f"{i}. {pattern['name']}")
-            print(f"   ID: {pattern['pattern_id']}")
-            print("-" * 60)
+            source_indicator = "🔒" if pattern.get('is_private', False) else "📦"
+            print(f"{i}. {pattern['name']} {source_indicator}")
+            print(f"   ID: {pattern['pattern_id']} ({pattern.get('source', 'built-in')})")
+            print("-" * 70)
 
         print("\nOptions:")
         print(f"1-{len(patterns)}. Select pattern")
         print("q. Quit")
+        print("\n🔒 = Private pattern, 📦 = Built-in pattern")
 
         while True:
             choice = input(f"\nEnter your choice (1-{len(patterns)} or q): ").lower()
