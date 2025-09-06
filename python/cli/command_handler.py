@@ -376,3 +376,48 @@ class CommandHandler:
             return True
 
         return False
+
+    def handle_config_commands(self, args):
+        """Handle configuration-related commands."""
+        if args.config is None:
+            return False
+
+        if not args.config:  # Empty list means --config was used without arguments
+            print("Available configuration commands:")
+            print("  create-test-config  - Create or recreate test configuration file")
+            print("  show-config-path    - Show which configuration file is being used")
+            return True
+
+        command = args.config[0]
+
+        if command == 'create-test-config':
+            self.logger.info(json.dumps({"log_message": "User requested to create test configuration"}))
+            from config import create_test_config_from_production, TEST_CONFIG_PATH
+
+            if create_test_config_from_production():
+                print(f"\nTest configuration successfully created at {TEST_CONFIG_PATH}")
+                print("\nThis configuration will be used automatically when ASKAI_TESTING=true")
+                print("You can edit this file to customize test settings without affecting production.")
+            else:
+                print_error_or_warnings("Failed to create test configuration")
+            return True
+
+        elif command == 'show-config-path':
+            self.logger.info(json.dumps({"log_message": "User requested to show config path"}))
+            from config import get_config_path, is_test_environment
+
+            config_path = get_config_path()
+            env_type = "test" if is_test_environment() else "production"
+            print(f"\nCurrently using {env_type} configuration:")
+            print(f"  {config_path}")
+
+            if is_test_environment():
+                print("\nTest environment detected (ASKAI_TESTING=true)")
+            else:
+                print("\nProduction environment")
+            return True
+
+        else:
+            print_error_or_warnings(f"Unknown configuration command: {command}")
+            print("Available commands: create-test-config, show-config-path")
+            return True

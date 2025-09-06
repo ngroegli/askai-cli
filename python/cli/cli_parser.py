@@ -103,6 +103,13 @@ class CLIParser:
         #                     metavar='COMMAND',
         #                     help='Azure OpenAI API commands: check-quota, list-deployments [FILTER...]')
 
+        # Configuration management
+        config_group = parser.add_argument_group('Configuration management')
+        config_group.add_argument('--config',
+                           nargs='*',
+                           metavar='ACTION',
+                           help='Configuration management commands: create-test-config, show-config-path')
+
         # Debug options (moved to the end)
         debug_group = parser.add_argument_group('Debug options')
         debug_group.add_argument('--debug',
