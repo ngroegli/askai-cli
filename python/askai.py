@@ -66,7 +66,7 @@ def main():
     if simple_commands:
         # For simple commands, we only need specific managers
         if args.list_patterns or args.view_pattern is not None:
-            pattern_manager = PatternManager(base_path)
+            pattern_manager = PatternManager(base_path, config)
 
         if args.list_chats or args.view_chat is not None:
             chat_manager = ChatManager(config, logger)
@@ -75,7 +75,7 @@ def main():
         command_handler = CommandHandler(pattern_manager, chat_manager, logger)
     else:
         # Full command execution requires all components
-        pattern_manager = PatternManager(base_path)
+        pattern_manager = PatternManager(base_path, config)
         chat_manager = ChatManager(config, logger)
         command_handler = CommandHandler(pattern_manager, chat_manager, logger)
         message_builder = MessageBuilder(pattern_manager, logger)
@@ -110,7 +110,7 @@ def main():
             "log_message": "User attempted to use chat functionality with patterns"
         }))
         print_error_or_warnings(
-            "Patterns and chat features are not compatible. Chat options (-pc, -vc) will be ignored.", 
+            "Patterns and chat features are not compatible. Chat options (-pc, -vc) will be ignored.",
             warning_only=True
         )
         # Force chat features to be disabled
@@ -225,7 +225,7 @@ def main():
     if resolved_pattern_id:
         # Make sure pattern_manager is initialized
         if pattern_manager is None:
-            pattern_manager = PatternManager(base_path)
+            pattern_manager = PatternManager(base_path, config)
 
         pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
         if pattern_data:
@@ -254,7 +254,7 @@ def main():
     # Add format to output_config so the handler knows what format to use
     # But only use the user's format if not using a pattern
     output_config['format'] = "rawtext" if using_pattern else args.format
-    
+
     # Add plain_md flag to output_config if it's set and we're using markdown format
     if hasattr(args, 'plain_md') and args.plain_md and args.format == 'md':
         output_config['plain_md'] = True
