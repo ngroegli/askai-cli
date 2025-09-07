@@ -256,15 +256,9 @@ def create_test_config_from_production():
             config['log_path'] = "~/.askai/test/logs/askai_test.log"
 
         if 'patterns' in config and 'private_patterns_path' in config['patterns']:
-            if config['patterns']['private_patterns_path']:
-                # Add '_test' suffix to private patterns path
-                original_path = config['patterns']['private_patterns_path']
-                if original_path.startswith("~/.askai/"):
-                    config['patterns']['private_patterns_path'] = original_path.replace("~/.askai/", "~/.askai/test/")
-                elif original_path.endswith('/'):
-                    config['patterns']['private_patterns_path'] = original_path.rstrip('/') + '_test/'
-                else:
-                    config['patterns']['private_patterns_path'] = original_path + '_test'
+            # For testing, remove private patterns path to avoid creating non-existent directories
+            # Private patterns are optional, so tests can run without them
+            config['patterns']['private_patterns_path'] = None
 
         if 'chat' in config and 'storage_path' in config['chat']:
             config['chat']['storage_path'] = "~/.askai/test/chats"
@@ -277,8 +271,7 @@ def create_test_config_from_production():
         print("Modified settings for testing:")
         print(f"  - Log path: {config.get('log_path', 'unchanged')}")
         print(f"  - Chat storage: {config['chat']['storage_path']}")
-        if config.get('patterns', {}).get('private_patterns_path'):
-            print(f"  - Private patterns: {config['patterns']['private_patterns_path']}")
+        print("  - Private patterns: disabled for testing")
 
         return True
 
@@ -321,27 +314,10 @@ def ensure_askai_setup():
         if is_test_environment():
             # In test mode, try to create from production config
             if os.path.exists(CONFIG_PATH):
-                # Check if we're in a non-interactive environment
-                is_interactive = os.isatty(0)
-
-                if not is_interactive:
-                    print("Test configuration not found. Creating automatically from production config...")
-                    create_directory_structure(test_mode=True)
-                    return create_test_config_from_production()
-                else:
-                    print(f"\nTest configuration file not found at {TEST_CONFIG_PATH}")
-                    print("This file is needed to run tests without affecting your production configuration.")
-
-                    while True:
-                        choice = input("Would you like to create it from your production config? (y/n): ").lower().strip()
-                        if choice in ['y', 'yes']:
-                            create_directory_structure(test_mode=True)
-                            return create_test_config_from_production()
-                        elif choice in ['n', 'no']:
-                            print("Test configuration is required for testing. Exiting.")
-                            return False
-                        else:
-                            print("Please enter 'y' for yes or 'n' for no.")
+                # In test mode, always be non-interactive
+                print("Test configuration not found. Creating automatically from production config...")
+                create_directory_structure(test_mode=True)
+                return create_test_config_from_production()
             else:
                 print("Production configuration not found. Please run setup in production mode first.")
                 return False
