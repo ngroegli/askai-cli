@@ -4,8 +4,15 @@ Handles all CLI commands like listing, viewing systems and chats.
 """
 
 import json
+import os
 from ai import OpenRouterClient
 from utils import print_error_or_warnings
+from config import (
+    ASKAI_DIR, CONFIG_PATH, CHATS_DIR, LOGS_DIR, TEST_DIR,
+    TEST_CHATS_DIR, TEST_CONFIG_PATH, TEST_LOGS_DIR,
+    get_config_path, is_test_environment, create_test_config_from_production
+)
+
 
 
 class CommandHandler:
@@ -386,13 +393,13 @@ class CommandHandler:
             print("Available configuration commands:")
             print("  create-test-config  - Create or recreate test configuration file")
             print("  show-config-path    - Show which configuration file is being used")
+            print("  show-structure      - Show the ~/.askai directory structure")
             return True
 
         command = args.config[0]
 
         if command == 'create-test-config':
             self.logger.info(json.dumps({"log_message": "User requested to create test configuration"}))
-            from config import create_test_config_from_production, TEST_CONFIG_PATH
 
             if create_test_config_from_production():
                 print(f"\nTest configuration successfully created at {TEST_CONFIG_PATH}")
@@ -404,7 +411,6 @@ class CommandHandler:
 
         elif command == 'show-config-path':
             self.logger.info(json.dumps({"log_message": "User requested to show config path"}))
-            from config import get_config_path, is_test_environment
 
             config_path = get_config_path()
             env_type = "test" if is_test_environment() else "production"
@@ -417,7 +423,24 @@ class CommandHandler:
                 print("\nProduction environment")
             return True
 
+        elif command == 'show-structure':
+            self.logger.info(json.dumps({"log_message": "User requested to show directory structure"}))
+
+            print("\nAskAI Directory Structure:")
+            print(f"  {ASKAI_DIR}/")
+            print(f"  ├── config.yml {'✓' if os.path.exists(CONFIG_PATH) else '✗'}")
+            print(f"  ├── chats/ {'✓' if os.path.exists(CHATS_DIR) else '✗'}")
+            print(f"  ├── logs/ {'✓' if os.path.exists(LOGS_DIR) else '✗'}")
+            print(f"  └── test/ {'✓' if os.path.exists(TEST_DIR) else '✗'}")
+            if os.path.exists(TEST_DIR):
+                print(f"      ├── config.yml {'✓' if os.path.exists(TEST_CONFIG_PATH) else '✗'}")
+                print(f"      ├── chats/ {'✓' if os.path.exists(TEST_CHATS_DIR) else '✗'}")
+                print(f"      └── logs/ {'✓' if os.path.exists(TEST_LOGS_DIR) else '✗'}")
+
+            print("\n✓ = exists, ✗ = missing")
+            return True
+
         else:
             print_error_or_warnings(f"Unknown configuration command: {command}")
-            print("Available commands: create-test-config, show-config-path")
+            print("Available commands: create-test-config, show-config-path, show-structure")
             return True
