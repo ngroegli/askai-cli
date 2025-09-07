@@ -366,16 +366,25 @@ class ChatManager:
                 chat_id = self.create_chat()
                 print(f"\nCreated new chat with ID: {chat_id}")
             elif args.persistent_chat == 'new':
-                selected_chat = self.select_chat(allow_new=True)
+                # Check if there are existing chats
+                existing_chats = self.list_chats()
 
-                if selected_chat is None:
-                    print("Chat selection cancelled.")
-                    sys.exit(0)
-                elif selected_chat == 'new':
+                if not existing_chats:
+                    # No existing chats, create new one automatically
                     chat_id = self.create_chat()
                     print(f"\nCreated new chat with ID: {chat_id}")
                 else:
-                    chat_id = selected_chat
+                    # There are existing chats, show selection menu
+                    selected_chat = self.select_chat(allow_new=True)
+
+                    if selected_chat is None:
+                        print("Chat selection cancelled.")
+                        sys.exit(0)
+                    elif selected_chat == 'new':
+                        chat_id = self.create_chat()
+                        print(f"\nCreated new chat with ID: {chat_id}")
+                    else:
+                        chat_id = selected_chat
             else:
                 chat_id = args.persistent_chat
 
