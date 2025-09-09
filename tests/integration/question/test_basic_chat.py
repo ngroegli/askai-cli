@@ -56,7 +56,7 @@ class TestBasicChat(AutomatedTest):
         """Test a basic chat interaction with specific model."""
         # Simple test query about the capital of France with model specification
         query = "What's the capital of France?"
-        model_name = "anthropic/claude-3-haiku"
+        model_name = "openai/gpt-4.1-mini"
 
         # Run the command with model specification
         stdout, stderr, return_code = run_cli_command(["-q", query, "-m", model_name])
@@ -135,7 +135,7 @@ class TestBasicChat(AutomatedTest):
         """Test a basic chat interaction with both model and JSON format."""
         # Simple test query about the capital of France with model and JSON format
         query = "What's the capital of France?"
-        model_name = "anthropic/claude-3-haiku"
+        model_name = "openai/gpt-4.1-mini"
 
         # Run the command with both model and JSON format
         stdout, stderr, return_code = run_cli_command(["-q", query, "-f", "json", "-m", model_name])

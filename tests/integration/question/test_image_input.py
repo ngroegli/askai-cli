@@ -87,7 +87,7 @@ class TestImageInput(AutomatedTest):
 
     def _test_image_analysis_with_query(self):
         """Test image analysis with specific query."""
-        test_image_path = os.path.join("tests", "test_resources", "test.png")
+        test_image_path = os.path.join("tests", "test_resources", "test.jpg")
         query = "What text do you see in this image?"
 
         # Run image analysis with query
