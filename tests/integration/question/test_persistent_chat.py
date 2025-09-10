@@ -99,7 +99,7 @@ class TestPersistentChat(AutomatedTest):
         test_name = "new_persistent_chat_query"
 
         # Simple test query with persistent chat flag
-        query = "Tell me a short fun fact about space"
+        query = "What is the capital of France?"
 
         # Run the command with persistent chat flag and query flag
         # Use stdin "0" to explicitly select "Create new chat" option (NOT existing chats)
@@ -118,7 +118,7 @@ class TestPersistentChat(AutomatedTest):
 
         # Check for successful chat creation patterns
         success_patterns = [
-            r"Chat ID|chat.*created|response|fact|space",
+            r"Chat ID|chat.*created|response|paris|Paris",
         ]
 
         success, missing = verify_output_contains(stdout, success_patterns)
@@ -275,7 +275,7 @@ class TestPersistentChat(AutomatedTest):
 
         # Check for successful follow-up patterns (just verify we got a contextual response)
         success_patterns = [
-            r"trillion|trees|Earth|Milky Way|galaxy|context|details|scientists|estimate",
+            r"paris|Paris",
         ]
 
         success, missing = verify_output_contains(stdout, success_patterns)
