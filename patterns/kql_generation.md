@@ -1,10 +1,10 @@
 # Pattern: KQL Query Generation
 
-## Purpose:
+## Purpose
 
 This system takes natural language input and generates corresponding Kusto Query Language (KQL) queries. It does not execute the queries or return data results — it simply converts user questions into valid KQL syntax.
 
-## Functionality:
+## Functionality
 
 Accepts a natural language question about data.
 
@@ -14,7 +14,7 @@ Outputs a valid, best-matching KQL query based on that input. If there exists va
 
 Optional support for contextual hints like table names or time filters.
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -36,7 +36,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -82,7 +82,7 @@ results:
       ```
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

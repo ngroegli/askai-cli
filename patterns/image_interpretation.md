@@ -1,10 +1,10 @@
 # Pattern: Image Interpretation
 
-## Purpose:
+## Purpose
 
 The purpose of `image_interpretation` is to analyze and provide detailed descriptions of images from either local file paths or web URLs. This system helps users understand image content without needing visual access, supports accessibility needs, and extracts meaningful information from visual data.
 
-## Functionality:
+## Functionality
 
 * Analyze images from local file paths or web URLs
 * Provide detailed descriptions of image content, subjects, and context
@@ -13,7 +13,7 @@ The purpose of `image_interpretation` is to analyze and provide detailed descrip
 * Detect and describe relationships between elements in the image
 * Support accessibility needs by offering comprehensive textual alternatives to visual content
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -54,7 +54,7 @@ input_groups:
     required_inputs: 1
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -93,7 +93,7 @@ results:
       * **Camera Info**: DSLR with wide-angle lens
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

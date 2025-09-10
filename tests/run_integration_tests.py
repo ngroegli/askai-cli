@@ -206,9 +206,10 @@ def main():
         print("Use --list to see all available tests")
         return 0
 
-    # Count total passed and failed tests
+    # Count total passed and failed tests and collect detailed results
     total_passed = 0
     total_failed = 0
+    detailed_results = []
 
     # Run the selected tests
     for name, test_class in sorted(selected_tests.items()):
@@ -218,6 +219,15 @@ def main():
         passed, failed = test.report()
         total_passed += passed
         total_failed += failed
+
+        # Collect detailed results for the summary table
+        for result in test.results:
+            detailed_results.append({
+                'test_file': name,
+                'test_action': result.name,
+                'status': 'PASS' if result.passed else 'FAIL',
+                'message': result.message
+            })
 
     # Print overall summary with color formatting
     print("\n" + "=" * 70)
@@ -238,7 +248,45 @@ def main():
         # Mixed results - passed in green, failed in red
         print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")
 
-    print("=" * 70)
+    # Print detailed results table
+    if detailed_results:
+        print("\nDETAILED TEST RESULTS:")
+
+        # Calculate column widths
+        max_file_width = max(len(r['test_file']) for r in detailed_results)
+        max_action_width = max(len(r['test_action']) for r in detailed_results)
+        max_message_width = max(len(r['message']) for r in detailed_results)
+
+        # Ensure minimum and maximum widths
+        file_width = max(20, min(max_file_width, 35))
+        action_width = max(25, min(max_action_width, 40))
+        message_width = max(35, min(max_message_width, 50))
+        status_width = 8
+
+        # Calculate total table width
+        total_width = file_width + action_width + status_width + message_width + 3  # +3 for spaces
+
+        print("=" * total_width)
+        print(f"{'TEST FILE':<{file_width}} {'TEST ACTION':<{action_width}} {'STATUS':<{status_width}} {'MESSAGE':<{message_width}}")
+        print("-" * total_width)
+
+        # Print each test result
+        for result in detailed_results:
+            # Truncate long strings if necessary
+            test_file = result['test_file'][:file_width-3] + "..." if len(result['test_file']) > file_width else result['test_file']
+            test_action = result['test_action'][:action_width-3] + "..." if len(result['test_action']) > action_width else result['test_action']
+            message = result['message'][:message_width-3] + "..." if len(result['message']) > message_width else result['message']
+
+            # Color the status
+            status = result['status']
+            if status == 'PASS':
+                colored_status = f"{GREEN}{status}{RESET}"
+            else:
+                colored_status = f"{RED}{status}{RESET}"
+
+            print(f"{test_file:<{file_width}} {test_action:<{action_width}} {colored_status:<15} {message:<{message_width}}")
+
+    print("=" * total_width)
 
     # Return appropriate exit code
     return 1 if total_failed > 0 else 0

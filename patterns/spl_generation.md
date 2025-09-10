@@ -1,17 +1,17 @@
 # Pattern: SPL Query Generation
 
-## Purpose:
+## Purpose
 
 This system takes natural language input and generates corresponding Splunk Search Processing Language (SPL) queries. It does not execute the queries or return live data — it solely translates user questions into valid SPL syntax.
 
-## Functionality:
+## Functionality
 
 * Accepts a natural language question about logs, metrics, or indexed data.
 * Infers the expected output and understands the user's analytical goal.
 * Outputs a valid, best-matching SPL query based on that input. If multiple valid approaches exist, up to three solutions are provided.
 * Optionally incorporates contextual hints, such as known index names, source types, or time filters.
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -39,7 +39,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -80,7 +80,7 @@ results:
       ```
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

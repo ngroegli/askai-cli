@@ -1,12 +1,12 @@
 # Pattern: Linux CLI Command Generation
 
-## Purpose:
+## Purpose
 
 The purpose of `linux_cli_command_generation` is to generate efficient Linux command-line one-liners based on descriptive scenarios provided by users. This system helps users quickly obtain precise shell commands for common and complex tasks without needing to remember exact syntax or research command options.
 
-## Functionality:
+## Functionality
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -39,7 +39,7 @@ inputs:
     default: efficient
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -58,7 +58,7 @@ results:
     example: "ls -la /var/log"
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

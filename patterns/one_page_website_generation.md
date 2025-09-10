@@ -1,10 +1,10 @@
 # Pattern: One Page Website Generation
 
-## Purpose:
+## Purpose
 
 The purpose of `one_page_website_generation` is to rapidly generate lightweight, visually appealing, single-page websites with minimal complexity. It focuses on clean design, valid structure, and essential components such as navigation, branding, imagery, and contact information. Ideal for personal profiles, portfolios, small businesses, or project landing pages.
 
-## Functionality:
+## Functionality
 
 * Automatically generate responsive, minimalistic one-page websites.
 * Utilize valid HTML and CSS structure with optional lightweight JavaScript animations.
@@ -25,7 +25,7 @@ Requirements:
   - JavaScript should include smooth scrolling and animations
   - All code should be production-ready
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -65,7 +65,7 @@ inputs:
     ignore_undefined: true
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -119,7 +119,7 @@ results:
     group: website_files
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:
