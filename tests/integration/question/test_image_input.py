@@ -88,7 +88,7 @@ class TestImageInput(AutomatedTest):
     def _test_image_analysis_with_query(self):
         """Test image analysis with specific query."""
         test_image_path = os.path.join("tests", "test_resources", "test.jpg")
-        query = "What text do you see in this image?"
+        query = "What text is in this image?"
 
         # Run image analysis with query
         stdout, stderr, return_code = run_cli_command(["-img", test_image_path, "-q", query])
@@ -229,7 +229,7 @@ class TestImageInput(AutomatedTest):
     def _test_image_analysis_with_query_and_model(self):
         """Test image analysis with query and specific model."""
         test_image_path = os.path.join("tests", "test_resources", "test.png")
-        query = "What text do you see in this image?"
+        query = "What text is in this image?"
         model_name = "anthropic/claude-3-haiku"
 
         # Run image analysis with query and model
