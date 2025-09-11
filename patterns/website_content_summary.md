@@ -62,38 +62,38 @@ results:
     required: true
     example: |
       # Website Summary: TechAI Blog
-      
+
       ## Overview
       TechAI Blog is a technology website focused on artificial intelligence and machine learning developments. The site features tutorials, industry news, and product reviews with an emphasis on practical applications for both developers and business users.
-      
+
       ## Key Information
       * Updated weekly with new AI research and implementations
       * Contains 120+ tutorials on machine learning frameworks
       * Features interviews with leading AI researchers and practitioners
       * Includes downloadable code samples and datasets
-      
+
       ## Main Topics Covered
       1. **Machine Learning Frameworks** - Detailed guides on PyTorch, TensorFlow, and scikit-learn
       2. **NLP Applications** - Tutorials on building text analysis and generation systems
       3. **Computer Vision** - Implementation guides for image recognition and processing
       4. **Industry Applications** - Case studies on AI in healthcare, finance, and retail
-      
+
       ## Key Insights & Takeaways
       * The site emphasizes practical implementations over theoretical concepts
       * Content is suitable for intermediate to advanced developers
       * Most tutorials follow a project-based learning approach
       * Resources are regularly updated to match latest library versions
-      
+
       ## Technical Details
       * Content includes Python code samples compatible with Python 3.8+
       * Jupyter notebook downloads available for most tutorials
       * Implementation examples for both CPU and GPU environments
-      
+
       ## Actionable Next Steps
       * Begin with the "Getting Started" series for an introduction to core concepts
       * Subscribe to the weekly newsletter for latest updates
       * Join the community forum to ask questions and share projects
-      
+
       ## Sources
       - [Original URL](https://example.com)
       - Analysis Date: August 6, 2025
@@ -109,10 +109,10 @@ model:
   max_tokens: 4000
   web_plugin: true
   web_max_results: 8
-  
+
 format_instructions: |
   When analyzing website content:
-  
+
   1. First provide a concise summary of the website's purpose and main content (2-4 sentences)
   2. Then provide a detailed analysis with the following sections:
      - Overview: A comprehensive description of the website's purpose and content
@@ -121,7 +121,7 @@ format_instructions: |
      - Key Insights & Takeaways: Important findings and conclusions
      - Actionable Next Steps: Recommendations based on the content
      - Sources: Reference to the original URL and analysis date
-  
-  Your analysis should be thorough, well-structured, and highlight the most relevant 
+
+  Your analysis should be thorough, well-structured, and highlight the most relevant
   information from the website to help users quickly understand the content.
 ```
