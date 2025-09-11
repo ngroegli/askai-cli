@@ -1,10 +1,10 @@
 # Pattern: Pattern MD Generation
 
-## Purpose:
+## Purpose
 
 The purpose of this pattern is to automatically create well-structured pattern files in markdown format based on a concise goal description. It generates complete, standardized pattern files that follow the project's template structure, ensuring consistency across all pattern definitions while saving time and eliminating manual formatting errors.
 
-## Functionality:
+## Functionality
 
 * Generate complete pattern markdown files from a concise goal description
 * Create all required sections in the correct order and format:
@@ -20,7 +20,7 @@ The purpose of this pattern is to automatically create well-structured pattern f
 * Automatically save the pattern to a file with an appropriate name
 * Support custom model configurations to match the pattern's complexity
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -73,7 +73,7 @@ inputs:
     example: "anthropic/claude-3.7-sonnet"
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -91,7 +91,7 @@ results:
     write_to_file: "{pattern_name}.md"
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

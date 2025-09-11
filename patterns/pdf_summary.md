@@ -1,10 +1,10 @@
 # Pattern: PDF Summary
 
-## Purpose:
+## Purpose
 
 The purpose of `pdf_summary` is to extract and summarize key information from PDF documents accessible via local file paths or web URLs. This system helps users quickly understand the core content and important points of PDF documents without needing to read through the entire text.
 
-## Functionality:
+## Functionality
 
 * Access and process PDF documents from local file paths or web URLs
 * Extract the main content, structure, and important information
@@ -13,7 +13,7 @@ The purpose of `pdf_summary` is to extract and summarize key information from PD
 * Preserve the logical structure and organization of the original document
 * Provide different levels of summarization based on user needs
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -54,7 +54,7 @@ input_groups:
     required_inputs: 1
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -102,7 +102,7 @@ results:
       **Key Data**: Provides percentage changes in biodiversity across different ecosystems
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

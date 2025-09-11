@@ -54,20 +54,24 @@ class PatternManager:
                     self.private_patterns_dir = expanded_path
                     logger.info("Using private patterns directory: %s", expanded_path)
                 else:
-                    # Ask user if they want to create the directory
-                    print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
-                    create_dir = input(f"Would you like to create the directory '{expanded_path}'? (y/n): ").lower().strip()
-                    if create_dir == 'y':
-                        try:
-                            os.makedirs(expanded_path, exist_ok=True)
-                            self.private_patterns_dir = expanded_path
-                            print(f"Created private patterns directory: {expanded_path}")
-                            logger.info("Created private patterns directory: %s", expanded_path)
-                        except Exception as e:
-                            print(f"Error creating directory '{expanded_path}': {str(e)}")
-                            logger.error("Error creating private patterns directory %s: %s", expanded_path, str(e))
+                    # Ask user if they want to create the directory (only in non-test mode)
+                    if os.environ.get('ASKAI_TESTING', '').lower() in ('true', '1', 'yes'):
+                        # In test mode, silently skip creating private patterns directory
+                        logger.debug("Private patterns directory not found in test mode: %s", expanded_path)
                     else:
-                        print("Continuing without private patterns directory.")
+                        print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
+                        create_dir = input(f"Would you like to create the directory '{expanded_path}'? (y/n): ").lower().strip()
+                        if create_dir == 'y':
+                            try:
+                                os.makedirs(expanded_path, exist_ok=True)
+                                self.private_patterns_dir = expanded_path
+                                print(f"Created private patterns directory: {expanded_path}")
+                                logger.info("Created private patterns directory: %s", expanded_path)
+                            except Exception as e:
+                                print(f"Error creating directory '{expanded_path}': {str(e)}")
+                                logger.error("Error creating private patterns directory %s: %s", expanded_path, str(e))
+                        else:
+                            print("Continuing without private patterns directory.")
                         logger.warning("Private patterns directory not created: %s", expanded_path)
 
     def _get_pattern_directories(self) -> List[str]:

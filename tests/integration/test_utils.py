@@ -35,8 +35,19 @@ def run_cli_command(args: List[str], input_text: Optional[str] = None) -> Tuple[
     # Set testing environment variable to disable spinner animation
     env['ASKAI_TESTING'] = 'true'
 
+    # Determine the correct Python executable to use
+    # If we're in a virtual environment, use that Python, otherwise use sys.executable
+    python_executable = sys.executable
+
+    # Check if we're running from a virtual environment and it's available
+    venv_python = os.path.join(PROJECT_ROOT, "venv", "bin", "python")
+    if os.path.exists(venv_python):
+        # If venv exists and we're not already using it, use it
+        if not python_executable.startswith(os.path.join(PROJECT_ROOT, "venv")):
+            python_executable = venv_python
+
     # Use the Python interpreter directly with the correct module
-    cmd = [sys.executable, os.path.join(PROJECT_ROOT, "python/askai.py")] + args
+    cmd = [python_executable, os.path.join(PROJECT_ROOT, "python/askai.py")] + args
 
     # Set up the subprocess parameters
     process = subprocess.Popen(

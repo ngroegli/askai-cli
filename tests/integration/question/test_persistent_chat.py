@@ -27,6 +27,9 @@ class TestPersistentChat(AutomatedTest):
         if not os.environ.get('ASKAI_TESTING'):
             raise RuntimeError("ASKAI_TESTING environment variable not set - refusing to run tests that could affect production chats")
 
+        # Clean up any existing test chats to ensure test isolation
+        self._cleanup_test_chats()
+
         # Test listing available chats
         self._test_list_chats()
 
@@ -52,6 +55,19 @@ class TestPersistentChat(AutomatedTest):
         self._test_manage_chats()
 
         return self.results
+
+    def _cleanup_test_chats(self):
+        """Clean up any existing test chat files to ensure test isolation."""
+        import glob
+        test_chats_dir = os.path.expanduser("~/.askai/test/chats")
+        if os.path.exists(test_chats_dir):
+            # Remove all .json chat files
+            chat_files = glob.glob(os.path.join(test_chats_dir, "*.json"))
+            for chat_file in chat_files:
+                try:
+                    os.remove(chat_file)
+                except Exception:
+                    pass  # Ignore cleanup errors
 
     def _test_list_chats(self):
         """Test listing available chats."""
@@ -83,7 +99,7 @@ class TestPersistentChat(AutomatedTest):
         test_name = "new_persistent_chat_query"
 
         # Simple test query with persistent chat flag
-        query = "Tell me a short fun fact about space"
+        query = "What is the capital of France?"
 
         # Run the command with persistent chat flag and query flag
         # Use stdin "0" to explicitly select "Create new chat" option (NOT existing chats)
@@ -96,13 +112,13 @@ class TestPersistentChat(AutomatedTest):
         new_chat_created, _ = verify_output_contains(stdout, new_chat_indicators)
 
         # Try to extract chat ID from output
-        chat_id_match = re.search(r'Chat ID:\s*([A-Za-z0-9\-]+)', stdout)
+        chat_id_match = re.search(r'Created new chat with ID:\s*([A-Za-z0-9\-]+)', stdout)
         if chat_id_match:
             self.test_chat_id = chat_id_match.group(1)
 
         # Check for successful chat creation patterns
         success_patterns = [
-            r"Chat ID|chat.*created|response|fact|space",
+            r"Chat ID|chat.*created|response|paris|Paris",
         ]
 
         success, missing = verify_output_contains(stdout, success_patterns)
@@ -144,8 +160,8 @@ class TestPersistentChat(AutomatedTest):
                 return
 
         # Run the command with persistent chat flag and PDF
-        # Use stdin "0" to explicitly select "Create new chat" option (NOT existing chats)
-        stdout, stderr, return_code = run_cli_command(["-pc", "--pdf", test_pdf], input_text="0\n")
+        # Use -pc n to force create a new chat (bypassing selection menu)
+        stdout, stderr, return_code = run_cli_command(["-pc", "n", "--pdf", test_pdf])
 
         # Verify we created a NEW chat (not selected an existing one)
         new_chat_indicators = [
@@ -215,8 +231,8 @@ class TestPersistentChat(AutomatedTest):
         nonexistent_pdf = "/tmp/nonexistent_file_12345.pdf"
 
         # Run command with persistent chat and non-existent PDF
-        # Use stdin "0" to automatically select "Create new chat" option, even though the PDF doesn't exist
-        stdout, stderr, return_code = run_cli_command(["-pc", "--pdf", nonexistent_pdf], input_text="0\n")
+        # Use -pc n to force create new chat, avoiding selection menu
+        stdout, stderr, return_code = run_cli_command(["-pc", "n", "--pdf", nonexistent_pdf])
 
         # Check if proper error handling occurs
         error_patterns = [
@@ -257,9 +273,9 @@ class TestPersistentChat(AutomatedTest):
         # Run the command with existing chat ID
         stdout, stderr, return_code = run_cli_command(["-pc", self.test_chat_id, "-q", follow_up_query])
 
-        # Check for successful follow-up patterns
+        # Check for successful follow-up patterns (just verify we got a contextual response)
         success_patterns = [
-            r"more|details|additional|further|expand|about|that|response|answer",
+            r"paris|Paris",
         ]
 
         success, missing = verify_output_contains(stdout, success_patterns)
@@ -313,7 +329,7 @@ class TestPersistentChat(AutomatedTest):
 
             # Check if specific chat history is displayed
             history_patterns = [
-                r"chat|history|conversation|message|query|response",
+                r"Chat ID|Conversation|User:|A:|Created:|--",
             ]
 
             success2, missing2 = verify_output_contains(stdout2, history_patterns)
