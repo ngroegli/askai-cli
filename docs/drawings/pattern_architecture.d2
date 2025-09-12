@@ -1,0 +1,65 @@
+# AskAI CLI - Pattern System Architecture
+title: "Pattern System Architecture"
+
+# Pattern Storage
+storage: "Pattern Storage" {
+  shape: cylinder
+  style.fill: "#E1F5FE"
+  
+  builtin: "Built-in Patterns"
+  private: "Private Patterns"
+}
+
+# Pattern Manager
+manager: "Pattern Manager" {
+  style.fill: "#F3E5F5"
+  
+  loader: "Pattern Loader"
+  validator: "Input Validator"
+  selector: "Pattern Selector"
+}
+
+# Pattern Components
+components: "Pattern Components" {
+  style.fill: "#E8F5E8"
+  
+  inputs: "Pattern Inputs"
+  outputs: "Pattern Outputs"
+  config: "Pattern Configuration"
+}
+
+# Processing Pipeline
+pipeline: "Processing Pipeline" {
+  style.fill: "#FFF3E0"
+  
+  template: "Template Engine"
+  formatter: "Format Instructions"
+  executor: "Output Executor"
+}
+
+# Output Handlers
+outputs: "Output Handlers" {
+  style.fill: "#FFEBEE"
+  
+  display: "Display Handler"
+  file: "File Writer"
+  command: "Command Executor"
+}
+
+# Connections
+storage -> manager: "Load Patterns"
+manager -> components: "Parse Definition"
+components -> pipeline: "Process Template"
+pipeline -> outputs: "Execute Outputs"
+
+# Internal connections
+manager.loader -> storage.builtin: "Load Built-in"
+manager.loader -> storage.private: "Load Private"
+manager.validator -> components.inputs: "Validate"
+manager.selector -> components.config: "Configure"
+
+pipeline.template -> components.outputs: "Apply Template"
+pipeline.formatter -> components.config: "Format Instructions"
+pipeline.executor -> outputs.display: "Display"
+pipeline.executor -> outputs.file: "Write Files"
+pipeline.executor -> outputs.command: "Execute Commands"

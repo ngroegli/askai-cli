@@ -1,0 +1,67 @@
+# AskAI CLI - Configuration and Initialization Flow
+title: "Configuration & Initialization Flow"
+
+startup: "Application Startup" {
+  shape: oval
+  style.fill: "#E3F2FD"
+}
+
+dir_check: "Directory Check" {
+  shape: diamond
+  style.fill: "#F3E5F5"
+}
+
+create_dirs: "Create Directories" {
+  shape: rectangle
+  style.fill: "#E8F5E8"
+}
+
+config_check: "Config File Check" {
+  shape: diamond
+  style.fill: "#FFF3E0"
+}
+
+setup_wizard: "Setup Wizard" {
+  shape: rectangle
+  style.fill: "#FFEBEE"
+}
+
+load_config: "Load Configuration" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+}
+
+init_components: "Initialize Components" {
+  shape: rectangle
+  style.fill: "#E0F2E1"
+}
+
+ready: "Application Ready" {
+  shape: oval
+  style.fill: "#E8EAF6"
+}
+
+# Flow connections
+startup -> dir_check: "Check ~/.askai"
+dir_check -> create_dirs: "Missing"
+dir_check -> config_check: "Exists"
+create_dirs -> config_check: "Created"
+config_check -> setup_wizard: "Missing Config"
+config_check -> load_config: "Config Exists"
+setup_wizard -> load_config: "Config Created"
+load_config -> init_components: "Valid Config"
+init_components -> ready: "All Components Ready"
+
+# Error handling
+dir_check -> startup: "Permission Error" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}
+config_check -> startup: "Invalid Config" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}
+setup_wizard -> startup: "Setup Cancelled" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}

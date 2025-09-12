@@ -1,0 +1,59 @@
+# AskAI CLI - Chat Session Management Flow
+title: "Chat Session Management Flow"
+
+chat_request: "Chat Request" {
+  shape: oval
+  style.fill: "#E3F2FD"
+}
+
+session_check: "Session Check" {
+  shape: diamond
+  style.fill: "#F3E5F5"
+}
+
+new_session: "Create New Session" {
+  shape: rectangle
+  style.fill: "#E8F5E8"
+}
+
+load_history: "Load Chat History" {
+  shape: rectangle
+  style.fill: "#FFF3E0"
+}
+
+context_build: "Build Context" {
+  shape: rectangle
+  style.fill: "#FFEBEE"
+}
+
+ai_call: "AI Service Call" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+}
+
+response_process: "Process Response" {
+  shape: rectangle
+  style.fill: "#E0F2E1"
+}
+
+store_history: "Store in History" {
+  shape: rectangle
+  style.fill: "#FFF8E1"
+}
+
+display_result: "Display Result" {
+  shape: oval
+  style.fill: "#E8EAF6"
+}
+
+# Main flow
+chat_request -> session_check: "Chat ID"
+session_check -> new_session: "New Session"
+session_check -> load_history: "Existing Session"
+new_session -> context_build: "Empty Context"
+load_history -> context_build: "Historical Context"
+context_build -> ai_call: "Complete Messages"
+ai_call -> response_process: "AI Response"
+response_process -> store_history: "Formatted Output"
+response_process -> display_result: "User Output"
+store_history -> display_result: "Success Confirmation"

@@ -1,0 +1,82 @@
+# AskAI CLI - Pattern Processing Data Flow
+title: "Pattern Processing Data Flow"
+
+user_input: "User Input" {
+  shape: oval
+  style.fill: "#E3F2FD"
+}
+
+cli_parse: "CLI Parsing" {
+  shape: diamond
+  style.fill: "#F3E5F5"
+}
+
+pattern_select: "Pattern Selection" {
+  shape: rectangle
+  style.fill: "#E8F5E8"
+}
+
+input_collect: "Input Collection" {
+  shape: rectangle
+  style.fill: "#E8F5E8"
+}
+
+msg_build: "Message Building" {
+  shape: rectangle
+  style.fill: "#FFF3E0"
+}
+
+ai_process: "AI Processing" {
+  shape: rectangle
+  style.fill: "#FFEBEE"
+}
+
+response_parse: "Response Parsing" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+}
+
+output_process: "Output Processing" {
+  shape: rectangle
+  style.fill: "#E0F2E1"
+}
+
+file_gen: "File Generation" {
+  shape: parallelogram
+  style.fill: "#FFF8E1"
+}
+
+display: "Display Results" {
+  shape: oval
+  style.fill: "#E8EAF6"
+}
+
+# Flow connections
+user_input -> cli_parse: "Command & Args"
+cli_parse -> pattern_select: "Pattern ID"
+pattern_select -> input_collect: "Pattern Definition"
+input_collect -> msg_build: "Validated Inputs"
+msg_build -> ai_process: "Formatted Messages"
+ai_process -> response_parse: "AI Response"
+response_parse -> output_process: "Structured Data"
+output_process -> file_gen: "File Content"
+output_process -> display: "Console Output"
+file_gen -> display: "File Paths"
+
+# Error flows
+cli_parse -> display: "Help/Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}
+pattern_select -> display: "Pattern Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}
+input_collect -> display: "Validation Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}
+ai_process -> display: "API Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#F44336"
+}

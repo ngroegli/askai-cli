@@ -1,0 +1,97 @@
+# AskAI CLI - Component Dependencies and Relationships
+title: "Component Dependencies & Relationships"
+
+# Main Components
+main: "askai.py" {
+  style.fill: "#4CAF50"
+  style.stroke: "#2E7D32"
+}
+
+# CLI Layer
+cli_parser: "CLIParser" {
+  style.fill: "#9C27B0"
+}
+command_handler: "CommandHandler" {
+  style.fill: "#9C27B0"
+}
+banner_parser: "BannerArgumentParser" {
+  style.fill: "#9C27B0"
+}
+
+# Service Layer
+ai_service: "AIService" {
+  style.fill: "#FF9800"
+}
+openrouter_client: "OpenRouterClient" {
+  style.fill: "#FF9800"
+}
+pattern_manager: "PatternManager" {
+  style.fill: "#2196F3"
+}
+pattern_input: "PatternInput" {
+  style.fill: "#2196F3"
+}
+pattern_output: "PatternOutput" {
+  style.fill: "#2196F3"
+}
+chat_manager: "ChatManager" {
+  style.fill: "#607D8B"
+}
+output_handler: "OutputHandler" {
+  style.fill: "#795548"
+}
+file_writer: "FileWriter" {
+  style.fill: "#795548"
+}
+message_builder: "MessageBuilder" {
+  style.fill: "#009688"
+}
+
+# Infrastructure
+config: "Configuration" {
+  style.fill: "#757575"
+}
+logger: "Logger" {
+  style.fill: "#757575"
+}
+utils: "Utils" {
+  style.fill: "#757575"
+}
+
+# Dependencies
+main -> cli_parser: "Argument Parsing"
+main -> command_handler: "Command Routing"
+main -> ai_service: "AI Interactions"
+main -> pattern_manager: "Pattern Processing"
+main -> chat_manager: "Chat Sessions"
+main -> output_handler: "Output Processing"
+main -> message_builder: "Message Construction"
+main -> config: "Configuration Loading"
+main -> logger: "Logging"
+
+cli_parser -> banner_parser: "Enhanced Help"
+command_handler -> pattern_manager: "Pattern Commands"
+command_handler -> chat_manager: "Chat Commands"
+command_handler -> openrouter_client: "API Commands"
+
+ai_service -> openrouter_client: "API Communication"
+ai_service -> config: "Model Configuration"
+
+pattern_manager -> pattern_input: "Input Validation"
+pattern_manager -> pattern_output: "Output Definition"
+pattern_manager -> config: "Private Patterns"
+
+output_handler -> file_writer: "File Operations"
+output_handler -> pattern_output: "Pattern Outputs"
+
+message_builder -> pattern_manager: "Pattern Templates"
+message_builder -> utils: "Content Processing"
+
+# All components use logger and utils
+cli_parser -> logger
+command_handler -> logger
+ai_service -> logger
+pattern_manager -> logger
+chat_manager -> logger
+output_handler -> logger
+message_builder -> logger

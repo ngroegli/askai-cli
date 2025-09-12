@@ -1,0 +1,67 @@
+# AskAI CLI - AI Service Integration Architecture
+title: "AI Service Integration Architecture"
+
+# Application Layer
+app_layer: "Application Layer" {
+  style.fill: "#E3F2FD"
+  
+  ai_service: "AI Service"
+  model_config: "Model Configuration"
+}
+
+# Client Layer
+client_layer: "Client Layer" {
+  style.fill: "#F3E5F5"
+  
+  openrouter: "OpenRouter Client"
+  web_search: "Web Search Plugin"
+  multimodal: "Multimodal Handler"
+}
+
+# External Services
+external: "External Services" {
+  style.fill: "#E8F5E8"
+  
+  openrouter_api: "OpenRouter API"
+  ai_models: "AI Models"
+  web_services: "Web Services"
+}
+
+# Message Processing
+message_proc: "Message Processing" {
+  style.fill: "#FFF3E0"
+  
+  builder: "Message Builder"
+  encoder: "Content Encoder"
+  formatter: "Format Handler"
+}
+
+# Response Processing
+response_proc: "Response Processing" {
+  style.fill: "#FFEBEE"
+  
+  parser: "Response Parser"
+  extractor: "Content Extractor"
+  validator: "Response Validator"
+}
+
+# Connections
+app_layer -> message_proc: "Build Messages"
+message_proc -> client_layer: "Formatted Messages"
+client_layer -> external: "API Requests"
+external -> client_layer: "API Responses"
+client_layer -> response_proc: "Raw Responses"
+response_proc -> app_layer: "Processed Results"
+
+# Internal flows
+app_layer.ai_service -> app_layer.model_config: "Configure"
+app_layer.model_config -> client_layer.openrouter: "Model Settings"
+
+client_layer.web_search -> external.web_services: "Search Queries"
+client_layer.multimodal -> external.ai_models: "Multimodal Content"
+
+message_proc.builder -> message_proc.encoder: "Content"
+message_proc.encoder -> message_proc.formatter: "Encoded Content"
+
+response_proc.parser -> response_proc.extractor: "Parsed Data"
+response_proc.extractor -> response_proc.validator: "Extracted Content"

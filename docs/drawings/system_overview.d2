@@ -1,0 +1,63 @@
+# AskAI CLI - High-Level System Architecture
+title: "AskAI CLI - System Overview"
+
+user: "User" {
+  shape: person
+  style.fill: "#E1F5FE"
+}
+
+cli: "CLI Interface" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+  
+  parser: "CLI Parser"
+  commands: "Command Handler"
+  banner: "Banner Display"
+}
+
+app: "Application Core" {
+  shape: rectangle
+  style.fill: "#E8F5E8"
+  
+  orchestrator: "Main Orchestrator (askai.py)"
+  workflow: "Workflow Coordinator"
+}
+
+services: "Service Layer" {
+  shape: rectangle
+  style.fill: "#FFF3E0"
+  
+  ai_service: "AI Service"
+  pattern_mgr: "Pattern Manager"
+  chat_mgr: "Chat Manager"
+  output_handler: "Output Handler"
+  msg_builder: "Message Builder"
+}
+
+infrastructure: "Infrastructure" {
+  shape: rectangle
+  style.fill: "#FAFAFA"
+  
+  config: "Configuration"
+  logging: "Logging"
+  filesystem: "File System"
+}
+
+external: "External Services" {
+  shape: rectangle
+  style.fill: "#FFEBEE"
+  
+  openrouter: "OpenRouter API"
+  ai_models: "AI Models"
+}
+
+# Connections
+user -> cli: "Commands & Input"
+cli -> app: "Parsed Arguments"
+app -> services: "Service Calls"
+services -> infrastructure: "System Resources"
+services -> external: "API Requests"
+external -> services: "AI Responses"
+services -> app: "Processed Results"
+app -> cli: "Formatted Output"
+cli -> user: "Results & Feedback"
