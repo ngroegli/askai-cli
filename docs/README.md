@@ -16,8 +16,6 @@ This document provides a comprehensive overview of the AskAI CLI system architec
 - Performance and scalability aspects
 - Extension points for customization
 
-**Target Audience**: System architects, senior developers, project stakeholders
-
 ### 🔧 [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md)
 **Detailed technical implementation guide**
 
