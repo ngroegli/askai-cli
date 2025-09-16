@@ -1,44 +1,46 @@
 # AskAI CLI - Configuration and Initialization Flow
 title: "Configuration & Initialization Flow"
 
+
+
 startup: "Application Startup" {
   shape: oval
-  style.fill: "#E3F2FD"
+  style.fill: "#90CAF9" # Light Blue (core app/user)
 }
 
 dir_check: "Directory Check" {
   shape: diamond
-  style.fill: "#F3E5F5"
+  style.fill: "#BDBDBD" # Light Gray (infra)
 }
 
 create_dirs: "Create Directories" {
   shape: rectangle
-  style.fill: "#E8F5E8"
+  style.fill: "#BDBDBD" # Light Gray
 }
 
 config_check: "Config File Check" {
   shape: diamond
-  style.fill: "#FFF3E0"
+  style.fill: "#BDBDBD" # Light Gray
 }
 
 setup_wizard: "Setup Wizard" {
   shape: rectangle
-  style.fill: "#FFEBEE"
+  style.fill: "#CE93D8" # Light Purple (CLI/user interaction)
 }
 
 load_config: "Load Configuration" {
   shape: rectangle
-  style.fill: "#F3E5F5"
+  style.fill: "#BDBDBD" # Light Gray
 }
 
 init_components: "Initialize Components" {
   shape: rectangle
-  style.fill: "#E0F2E1"
+  style.fill: "#90CAF9" # Light Blue (core app)
 }
 
 ready: "Application Ready" {
   shape: oval
-  style.fill: "#E8EAF6"
+  style.fill: "#90CAF9" # Light Blue (core app/user)
 }
 
 # Flow connections
@@ -53,15 +55,17 @@ load_config -> init_components: "Valid Config"
 init_components -> ready: "All Components Ready"
 
 # Error handling
+
+
 dir_check -> startup: "Permission Error" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red (error)
 }
 config_check -> startup: "Invalid Config" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red
 }
 setup_wizard -> startup: "Setup Cancelled" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red
 }

@@ -1,48 +1,52 @@
 # AskAI CLI - AI Service Integration Architecture
 title: "AI Service Integration Architecture"
 
-# Application Layer
-app_layer: "Application Layer" {
-  style.fill: "#E3F2FD"
 
-  ai_service: "AI Service"
-  model_config: "Model Configuration"
+app_layer: "Application Layer" {
+  style.fill: "#E3F2FD" # Light Blue (group)
+
+  ai_service: "AI Service" {style.fill: "#90CAF9"} # Light Blue (node)
+  model_config: "Model Configuration" {style.fill: "#90CAF9"}
 }
+
 
 # Client Layer
 client_layer: "Client Layer" {
-  style.fill: "#F3E5F5"
+  style.fill: "#F3E5F5" # Light Purple (group)
 
-  openrouter: "OpenRouter Client"
-  web_search: "Web Search Plugin"
-  multimodal: "Multimodal Handler"
+  openrouter: "OpenRouter Client" {style.fill: "#CE93D8"} # Light Purple (node)
+  web_search: "Web Search Plugin" {style.fill: "#CE93D8"}
+  multimodal: "Multimodal Handler" {style.fill: "#CE93D8"}
 }
+
 
 # External Services
 external: "External Services" {
-  style.fill: "#E8F5E8"
+  style.fill: "#FFF3E0" # Light Orange (group)
 
-  openrouter_api: "OpenRouter API"
-  ai_models: "AI Models"
-  web_services: "Web Services"
+  openrouter_api: "OpenRouter API" {style.fill: "#FFCC80"} # Light Orange (node)
+  ai_models: "AI Models" {style.fill: "#FFCC80"}
+  web_services: "Web Services" {style.fill: "#FFCC80"}
 }
+
 
 # Message Processing
 message_proc: "Message Processing" {
-  style.fill: "#FFF3E0"
+  style.fill: "#E8F5E9" # Light Green (group)
 
-  builder: "Message Builder"
-  encoder: "Content Encoder"
-  formatter: "Format Handler"
+  builder: "Message Builder" {style.fill: "#A5D6A7"} # Light Green (node)
+  encoder: "Content Encoder" {style.fill: "#A5D6A7"}
+  formatter: "Format Handler" {style.fill: "#A5D6A7"}
 }
+
 
 # Response Processing
 response_proc: "Response Processing" {
-  style.fill: "#FFEBEE"
+  style.fill: "#E8F5E9" # Light Green (group)
 
-  parser: "Response Parser"
-  extractor: "Content Extractor"
-  validator: "Response Validator"
+  parser: "Response Parser" {style.fill: "#A5D6A7"} # Light Green (node)
+  extractor: "Content Extractor" {style.fill: "#A5D6A7"}
+  validator: "Response Validator" {style.fill: "#A5D6A7"}
 }
 
 # Connections

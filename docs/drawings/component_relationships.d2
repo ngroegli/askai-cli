@@ -1,61 +1,68 @@
 # AskAI CLI - Component Dependencies and Relationships
 title: "Component Dependencies & Relationships"
 
+
 # Main Components
+
 main: "askai.py" {
-  style.fill: "#4CAF50"
-  style.stroke: "#2E7D32"
+  style.fill: "#90CAF9" # Light Blue (core app)
+  style.stroke: "#1976D2"
 }
 
 # CLI Layer
+
 cli_parser: "CLIParser" {
-  style.fill: "#9C27B0"
+  style.fill: "#CE93D8" # Light Purple (CLI)
 }
 command_handler: "CommandHandler" {
-  style.fill: "#9C27B0"
+  style.fill: "#CE93D8" # Light Purple
 }
 banner_parser: "BannerArgumentParser" {
-  style.fill: "#9C27B0"
+  style.fill: "#CE93D8" # Light Purple
 }
 
 # Service Layer
+
 ai_service: "AIService" {
-  style.fill: "#FF9800"
+  style.fill: "#FFCC80" # Light Orange (AI)
 }
 openrouter_client: "OpenRouterClient" {
-  style.fill: "#FF9800"
+  style.fill: "#FFCC80" # Light Orange
 }
+
+
 pattern_manager: "PatternManager" {
-  style.fill: "#2196F3"
+  style.fill: "#A5D6A7" # Light Green (data processing)
 }
 pattern_input: "PatternInput" {
-  style.fill: "#2196F3"
+  style.fill: "#A5D6A7" # Light Green
 }
 pattern_output: "PatternOutput" {
-  style.fill: "#2196F3"
+  style.fill: "#A5D6A7" # Light Green
 }
 chat_manager: "ChatManager" {
-  style.fill: "#607D8B"
+  style.fill: "#A5D6A7" # Light Green
 }
 output_handler: "OutputHandler" {
-  style.fill: "#795548"
+  style.fill: "#A5D6A7" # Light Green
 }
 file_writer: "FileWriter" {
-  style.fill: "#795548"
+  style.fill: "#A5D6A7" # Light Green
 }
 message_builder: "MessageBuilder" {
-  style.fill: "#009688"
+  style.fill: "#A5D6A7" # Light Green
 }
 
 # Infrastructure
+
 config: "Configuration" {
-  style.fill: "#757575"
+  style.fill: "#BDBDBD" # Light Gray (infra)
 }
 logger: "Logger" {
-  style.fill: "#757575"
+  style.fill: "#BDBDBD" # Light Gray
 }
 utils: "Utils" {
-  style.fill: "#757575"
+  style.fill: "#BDBDBD" # Light Gray
 }
 
 # Dependencies

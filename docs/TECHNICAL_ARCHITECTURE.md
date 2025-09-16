@@ -33,7 +33,7 @@ askai-cli/
 ├── docs/                       # Documentation
 ├── requirements.txt            # Python dependencies
 ├── pyproject.toml             # Project metadata
-└── Makefile                   # Build automation
+└── Makefile                   # Build & Test automation
 ```
 
 ### Package Responsibilities

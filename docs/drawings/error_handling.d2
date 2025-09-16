@@ -2,52 +2,53 @@
 title: "Error Handling & Recovery System"
 
 # Error Sources
-sources: "Error Sources" {
-  style.fill: "#FFEBEE"
 
-  cli_errors: "CLI Errors"
-  config_errors: "Config Errors"
-  api_errors: "API Errors"
-  file_errors: "File I/O Errors"
-  validation_errors: "Validation Errors"
+sources: "Error Sources" {
+  style.fill: "#FFEBEE" # Light Red (error group)
+
+  cli_errors: "CLI Errors" { style.fill: "#EF9A9A" }
+  config_errors: "Config Errors" { style.fill: "#EF9A9A" }
+  api_errors: "API Errors" { style.fill: "#EF9A9A" }
+  file_errors: "File I/O Errors" { style.fill: "#EF9A9A" }
+  validation_errors: "Validation Errors" { style.fill: "#EF9A9A" }
 }
 
 # Error Handlers
 handlers: "Error Handlers" {
-  style.fill: "#FFF3E0"
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
 
-  cli_handler: "CLI Error Handler"
-  api_handler: "API Error Handler"
-  file_handler: "File Error Handler"
-  validation_handler: "Validation Handler"
+  cli_handler: "CLI Error Handler" { style.fill: "#FFCC80" }
+  api_handler: "API Error Handler" { style.fill: "#FFCC80" }
+  file_handler: "File Error Handler" { style.fill: "#FFCC80" }
+  validation_handler: "Validation Handler" { style.fill: "#FFCC80" }
 }
 
 # Recovery Strategies
 recovery: "Recovery Strategies" {
-  style.fill: "#E8F5E8"
+  style.fill: "#E8F5E9" # Light Green (data processing group)
 
-  retry: "Retry Logic"
-  fallback: "Fallback Options"
-  graceful: "Graceful Degradation"
-  user_prompt: "User Interaction"
+  retry: "Retry Logic" { style.fill: "#A5D6A7" }
+  fallback: "Fallback Options" { style.fill: "#A5D6A7" }
+  graceful: "Graceful Degradation" { style.fill: "#A5D6A7" }
+  user_prompt: "User Interaction" { style.fill: "#A5D6A7" }
 }
 
 # Logging and Monitoring
 monitoring: "Logging & Monitoring" {
-  style.fill: "#F3E5F5"
+  style.fill: "#FAFAFA" # Light Gray (infra group)
 
-  logger: "Error Logger"
-  metrics: "Error Metrics"
-  alerts: "User Alerts"
+  logger: "Error Logger" { style.fill: "#BDBDBD" }
+  metrics: "Error Metrics" { style.fill: "#BDBDBD" }
+  alerts: "User Alerts" { style.fill: "#BDBDBD" }
 }
 
 # User Feedback
 feedback: "User Feedback" {
-  style.fill: "#E1F5FE"
+  style.fill: "#E3F2FD" # Light Blue (core app/user group)
 
-  messages: "Error Messages"
-  suggestions: "Recovery Suggestions"
-  help: "Help Information"
+  messages: "Error Messages" { style.fill: "#90CAF9" }
+  suggestions: "Recovery Suggestions" { style.fill: "#90CAF9" }
+  help: "Help Information" { style.fill: "#90CAF9" }
 }
 
 # Error flow

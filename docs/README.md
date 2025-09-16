@@ -4,7 +4,7 @@ This directory contains comprehensive architecture and technical documentation f
 
 ## Documentation Overview
 
-### 📋 [SOFTWARE_ARCHITECTURE.md](SOFTWARE_ARCHITECTURE.md)
+### [SOFTWARE_ARCHITECTURE.md](SOFTWARE_ARCHITECTURE.md)
 **High-level system architecture and design documentation**
 
 This document provides a comprehensive overview of the AskAI CLI system architecture, including:
@@ -16,7 +16,7 @@ This document provides a comprehensive overview of the AskAI CLI system architec
 - Performance and scalability aspects
 - Extension points for customization
 
-### 🔧 [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md)
+### [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md)
 **Detailed technical implementation guide**
 
 This document dives deep into the technical implementation details:
@@ -29,7 +29,7 @@ This document dives deep into the technical implementation details:
 
 **Target Audience**: Developers, DevOps engineers, technical maintainers
 
-### 📊 [architecture_diagrams.d2](architecture_diagrams.d2)
+### [architecture_diagrams.d2](architecture_diagrams.d2)
 **Visual architecture diagrams using D2 language**
 
 This file contains D2 (declarative diagramming) definitions for:
@@ -55,11 +55,6 @@ d2 architecture_diagrams.d2 architecture_diagrams.svg
 # View specific diagram
 d2 -t system_overview architecture_diagrams.d2 system_overview.png
 ```
-
-## Legacy Documentation
-
-- [Branch Protection and Development Workflow](./BRANCH_PROTECTION.md) - Details about branch protection rules and recommended development workflow
-- [Architecture](../ARCHITECTURE.md) - Original architecture overview (pattern-focused)
 
 ## Quick Reference
 

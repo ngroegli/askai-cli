@@ -152,15 +152,25 @@ d2 --theme=102 docs/drawings/system_overview.d2 docs/drawings/system_overview_sk
 - Use flow diagrams for debugging complex workflows
 - Pattern architecture diagram helps when extending pattern functionality
 
+
+
+
 ## Color Coding Convention
 
-The diagrams use consistent color coding:
-- **Blue tones (#E3F2FD, #2196F3)**: Core application components
-- **Purple tones (#F3E5F5, #9C27B0)**: CLI and user interface
-- **Orange tones (#FFF3E0, #FF9800)**: AI and external services
-- **Green tones (#E8F5E8, #4CAF50)**: Data processing and business logic
-- **Gray tones (#FAFAFA, #757575)**: Infrastructure and utilities
-- **Red tones (#FFEBEE, #F44336)**: Error conditions and critical paths
+**How to use colors in D2 diagrams:**
+- Use the **Background/Group Color** for containers, layers, or groupings (e.g., major architectural blocks).
+- Use the **Accent/Node Color** for individual nodes, components, or key elements inside those groups.
+- This creates clear visual hierarchy and matches the AskAI CLI design system.
+
+**Recommended D2 fill colors:**
+| Area                        | Background/Group Color | Accent/Node Color |
+|-----------------------------|-----------------------|-------------------|
+| Core Application Components | #E3F2FD               | #90CAF9           |
+| CLI/User Interface          | #F3E5F5               | #CE93D8           |
+| AI/External Services        | #FFF3E0               | #FFCC80           |
+| Data Processing/Logic       | #E8F5E9               | #A5D6A7           |
+| Infrastructure/Utilities    | #FAFAFA               | #BDBDBD           |
+| Error/Critical Paths        | #FFEBEE               | #EF9A9A           |
 
 ## Updating Diagrams
 

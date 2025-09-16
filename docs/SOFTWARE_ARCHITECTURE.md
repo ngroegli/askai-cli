@@ -17,7 +17,7 @@
 AskAI CLI is a sophisticated command-line interface application that provides AI-powered assistance through structured patterns and interactive conversations. The system integrates with multiple AI providers through the OpenRouter API and supports various input formats including text, images, PDFs, and URLs.
 
 ### Key Features
-- **Pattern-based AI Interactions**: Pre-defined templates for specific use cases
+- **Pattern-based AI Interactions**: Pre-defined pattern templates for specific use cases
 - **Multi-modal Input Support**: Text, images, PDFs, URLs
 - **Persistent Chat Sessions**: Contextual conversations with history
 - **Flexible Output Formats**: Raw text, JSON, Markdown with file export
@@ -330,15 +330,32 @@ logging:
 - Automatic retry logic with exponential backoff
 
 ---
-
 ## Component Interaction Diagrams
 
-See the accompanying D2 diagrams in `architecture_diagrams.d2` for visual representations of:
-- High-level system architecture
-- Component relationships and dependencies
-- Data flow patterns
-- Pattern processing workflow
-- Chat session management
-- Configuration and initialization flow
+The following diagrams illustrate key aspects of the AskAI CLI architecture. Each PNG is generated from its corresponding D2 file in `docs/drawings/`.
+
+**High-level System Architecture**
+![System Overview](drawings/system_overview.png)
+
+**Component Relationships and Dependencies**
+![Component Relationships](drawings/component_relationships.png)
+
+**Pattern Processing Workflow**
+![Pattern Flow](drawings/pattern_flow.png)
+
+**Chat Session Management**
+![Chat Flow](drawings/chat_flow.png)
+
+**Configuration and Initialization Flow**
+![Configuration Flow](drawings/config_flow.png)
+
+**Pattern System Detailed Architecture**
+![Pattern Architecture](drawings/pattern_architecture.png)
+
+**AI Service Integration Architecture**
+![AI Integration](drawings/ai_integration.png)
+
+**Error Handling and Recovery System**
+![Error Handling](drawings/error_handling.png)
 
 This architecture supports the current feature set while providing clear extension points for future enhancements. The modular design ensures maintainability and testability while the layered approach provides clear separation of concerns.

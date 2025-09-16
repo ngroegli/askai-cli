@@ -1,54 +1,66 @@
 # AskAI CLI - Pattern Processing Data Flow
 title: "Pattern Processing Data Flow"
 
+
+
+
 user_input: "User Input" {
   shape: oval
-  style.fill: "#E3F2FD"
+  style.fill: "#90CAF9" # Light Blue (core app)
 }
+
 
 cli_parse: "CLI Parsing" {
   shape: diamond
-  style.fill: "#F3E5F5"
+  style.fill: "#CE93D8" # Light Purple (CLI)
 }
+
 
 pattern_select: "Pattern Selection" {
   shape: rectangle
-  style.fill: "#E8F5E8"
+  style.fill: "#A5D6A7" # Light Green (data processing)
 }
+
 
 input_collect: "Input Collection" {
   shape: rectangle
-  style.fill: "#E8F5E8"
+  style.fill: "#A5D6A7" # Light Green
 }
+
 
 msg_build: "Message Building" {
   shape: rectangle
-  style.fill: "#FFF3E0"
+  style.fill: "#FFCC80" # Light Orange (AI integration)
 }
+
 
 ai_process: "AI Processing" {
   shape: rectangle
-  style.fill: "#FFEBEE"
+  style.fill: "#FFCC80" # Light Orange
 }
+
 
 response_parse: "Response Parsing" {
   shape: rectangle
-  style.fill: "#F3E5F5"
+  style.fill: "#A5D6A7" # Light Green (data transformation)
 }
+
 
 output_process: "Output Processing" {
   shape: rectangle
-  style.fill: "#E0F2E1"
+  style.fill: "#A5D6A7" # Light Green
 }
+
 
 file_gen: "File Generation" {
   shape: parallelogram
-  style.fill: "#FFF8E1"
+  style.fill: "#BDBDBD" # Light Gray (infra)
 }
+
 
 display: "Display Results" {
   shape: oval
-  style.fill: "#E8EAF6"
+  style.fill: "#90CAF9" # Light Blue (core app/user)
 }
 
 # Flow connections
@@ -64,19 +76,21 @@ output_process -> display: "Console Output"
 file_gen -> display: "File Paths"
 
 # Error flows
+
+
 cli_parse -> display: "Help/Errors" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red (error)
 }
 pattern_select -> display: "Pattern Errors" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red
 }
 input_collect -> display: "Validation Errors" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red
 }
 ai_process -> display: "API Errors" {
   style.stroke-dash: 5
-  style.stroke: "#F44336"
+  style.stroke: "#EF9A9A" # Light Red
 }
