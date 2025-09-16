@@ -1,0 +1,59 @@
+# AskAI CLI - Chat Session Management Flow
+title: "Chat Session Management Flow"
+
+chat_request: "Chat Request" {
+  shape: oval
+  style.fill: "#90CAF9" # Light Blue (core app/user)
+}
+
+session_check: "Session Check" {
+  shape: diamond
+  style.fill: "#CE93D8" # Light Purple (CLI)
+}
+
+new_session: "Create New Session" {
+  shape: rectangle
+  style.fill: "#A5D6A7" # Light Green (data processing)
+}
+
+load_history: "Load Chat History" {
+  shape: rectangle
+  style.fill: "#A5D6A7" # Light Green
+}
+
+context_build: "Build Context" {
+  shape: rectangle
+  style.fill: "#A5D6A7" # Light Green
+}
+
+ai_call: "AI Service Call" {
+  shape: rectangle
+  style.fill: "#FFCC80" # Light Orange (AI integration)
+}
+
+response_process: "Process Response" {
+  shape: rectangle
+  style.fill: "#A5D6A7" # Light Green (data transformation)
+}
+
+store_history: "Store in History" {
+  shape: rectangle
+  style.fill: "#BDBDBD" # Light Gray (infra)
+}
+
+display_result: "Display Result" {
+  shape: oval
+  style.fill: "#90CAF9" # Light Blue (core app/user)
+}
+
+# Main flow
+chat_request -> session_check: "Chat ID"
+session_check -> new_session: "New Session"
+session_check -> load_history: "Existing Session"
+new_session -> context_build: "Empty Context"
+load_history -> context_build: "Historical Context"
+context_build -> ai_call: "Complete Messages"
+ai_call -> response_process: "AI Response"
+response_process -> store_history: "Formatted Output"
+response_process -> display_result: "User Output"
+store_history -> display_result: "Success Confirmation"

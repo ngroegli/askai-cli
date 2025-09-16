@@ -1,0 +1,65 @@
+# AskAI CLI - High-Level System Architecture
+title: "AskAI CLI - System Overview"
+
+
+
+user: "User" {
+  shape: person
+  style.fill: "#90CAF9" # Light Blue (core app, user)
+}
+
+cli: "CLI Interface" {
+  shape: rectangle
+  style.fill: "#F3E5F5" # Light Purple (CLI group)
+
+  parser: "CLI Parser" { style.fill: "#CE93D8" }
+  commands: "Command Handler" { style.fill: "#CE93D8" }
+  banner: "Banner Display" { style.fill: "#CE93D8" }
+}
+
+app: "Application Core" {
+  shape: rectangle
+  style.fill: "#E3F2FD" # Light Blue (core app group)
+
+  orchestrator: "Main Orchestrator (askai.py)" { style.fill: "#90CAF9" }
+  workflow: "Workflow Coordinator" { style.fill: "#90CAF9" }
+}
+
+services: "Service Layer" {
+  shape: rectangle
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+
+  ai_service: "AI Service" { style.fill: "#FFCC80" }
+  pattern_mgr: "Pattern Manager" { style.fill: "#A5D6A7" } # Light Green (data processing)
+  chat_mgr: "Chat Manager" { style.fill: "#A5D6A7" } # Light Green
+  output_handler: "Output Handler" { style.fill: "#A5D6A7" } # Light Green
+  msg_builder: "Message Builder" { style.fill: "#A5D6A7" } # Light Green
+}
+
+infrastructure: "Infrastructure" {
+  shape: rectangle
+  style.fill: "#FAFAFA" # Light Gray (infra group)
+
+  config: "Configuration" { style.fill: "#BDBDBD" }
+  logging: "Logging" { style.fill: "#BDBDBD" }
+  filesystem: "File System" { style.fill: "#BDBDBD" }
+}
+
+external: "External Services" {
+  shape: rectangle
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+
+  openrouter: "OpenRouter API" { style.fill: "#FFCC80" }
+  ai_models: "AI Models" { style.fill: "#FFCC80" }
+}
+
+# Connections
+user -> cli: "Commands & Input"
+cli -> app: "Parsed Arguments"
+app -> services: "Service Calls"
+services -> infrastructure: "System Resources"
+services -> external: "API Requests"
+external -> services: "AI Responses"
+services -> app: "Processed Results"
+app -> cli: "Formatted Output"
+cli -> user: "Results & Feedback"

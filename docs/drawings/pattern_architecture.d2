@@ -1,0 +1,66 @@
+# AskAI CLI - Pattern System Architecture
+title: "Pattern System Architecture"
+
+# Pattern Storage
+
+storage: "Pattern Storage" {
+  shape: cylinder
+  style.fill: "#E3F2FD" # Light Blue (core app group)
+
+  builtin: "Built-in Patterns" { style.fill: "#90CAF9" }
+  private: "Private Patterns" { style.fill: "#90CAF9" }
+}
+
+# Pattern Manager
+manager: "Pattern Manager" {
+  style.fill: "#E8F5E9" # Light Green (data processing group)
+
+  loader: "Pattern Loader" { style.fill: "#A5D6A7" }
+  validator: "Input Validator" { style.fill: "#A5D6A7" }
+  selector: "Pattern Selector" { style.fill: "#A5D6A7" }
+}
+
+# Pattern Components
+components: "Pattern Components" {
+  style.fill: "#F3E5F5" # Light Purple (group)
+
+  inputs: "Pattern Inputs" { style.fill: "#CE93D8" }
+  outputs: "Pattern Outputs" { style.fill: "#CE93D8" }
+  config: "Pattern Configuration" { style.fill: "#BDBDBD" } # Light Gray (infra)
+}
+
+# Processing Pipeline
+pipeline: "Processing Pipeline" {
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+
+  template: "Template Engine" { style.fill: "#FFCC80" }
+  formatter: "Format Instructions" { style.fill: "#FFCC80" }
+  executor: "Output Executor" { style.fill: "#FFCC80" }
+}
+
+# Output Handlers
+outputs: "Output Handlers" {
+  style.fill: "#FAFAFA" # Light Gray (infra group)
+
+  display: "Display Handler" { style.fill: "#90CAF9" } # Light Blue (core app/user)
+  file: "File Writer" { style.fill: "#BDBDBD" }
+  command: "Command Executor" { style.fill: "#BDBDBD" }
+}
+
+# Connections
+storage -> manager: "Load Patterns"
+manager -> components: "Parse Definition"
+components -> pipeline: "Process Template"
+pipeline -> outputs: "Execute Outputs"
+
+# Internal connections
+manager.loader -> storage.builtin: "Load Built-in"
+manager.loader -> storage.private: "Load Private"
+manager.validator -> components.inputs: "Validate"
+manager.selector -> components.config: "Configure"
+
+pipeline.template -> components.outputs: "Apply Template"
+pipeline.formatter -> components.config: "Format Instructions"
+pipeline.executor -> outputs.display: "Display"
+pipeline.executor -> outputs.file: "Write Files"
+pipeline.executor -> outputs.command: "Execute Commands"

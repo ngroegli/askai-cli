@@ -1,0 +1,104 @@
+# AskAI CLI - Component Dependencies and Relationships
+title: "Component Dependencies & Relationships"
+
+
+# Main Components
+
+main: "askai.py" {
+  style.fill: "#90CAF9" # Light Blue (core app)
+  style.stroke: "#1976D2"
+}
+
+# CLI Layer
+
+cli_parser: "CLIParser" {
+  style.fill: "#CE93D8" # Light Purple (CLI)
+}
+command_handler: "CommandHandler" {
+  style.fill: "#CE93D8" # Light Purple
+}
+banner_parser: "BannerArgumentParser" {
+  style.fill: "#CE93D8" # Light Purple
+}
+
+# Service Layer
+
+ai_service: "AIService" {
+  style.fill: "#FFCC80" # Light Orange (AI)
+}
+openrouter_client: "OpenRouterClient" {
+  style.fill: "#FFCC80" # Light Orange
+}
+
+
+pattern_manager: "PatternManager" {
+  style.fill: "#A5D6A7" # Light Green (data processing)
+}
+pattern_input: "PatternInput" {
+  style.fill: "#A5D6A7" # Light Green
+}
+pattern_output: "PatternOutput" {
+  style.fill: "#A5D6A7" # Light Green
+}
+chat_manager: "ChatManager" {
+  style.fill: "#A5D6A7" # Light Green
+}
+output_handler: "OutputHandler" {
+  style.fill: "#A5D6A7" # Light Green
+}
+file_writer: "FileWriter" {
+  style.fill: "#A5D6A7" # Light Green
+}
+message_builder: "MessageBuilder" {
+  style.fill: "#A5D6A7" # Light Green
+}
+
+# Infrastructure
+
+config: "Configuration" {
+  style.fill: "#BDBDBD" # Light Gray (infra)
+}
+logger: "Logger" {
+  style.fill: "#BDBDBD" # Light Gray
+}
+utils: "Utils" {
+  style.fill: "#BDBDBD" # Light Gray
+}
+
+# Dependencies
+main -> cli_parser: "Argument Parsing"
+main -> command_handler: "Command Routing"
+main -> ai_service: "AI Interactions"
+main -> pattern_manager: "Pattern Processing"
+main -> chat_manager: "Chat Sessions"
+main -> output_handler: "Output Processing"
+main -> message_builder: "Message Construction"
+main -> config: "Configuration Loading"
+main -> logger: "Logging"
+
+cli_parser -> banner_parser: "Enhanced Help"
+command_handler -> pattern_manager: "Pattern Commands"
+command_handler -> chat_manager: "Chat Commands"
+command_handler -> openrouter_client: "API Commands"
+
+ai_service -> openrouter_client: "API Communication"
+ai_service -> config: "Model Configuration"
+
+pattern_manager -> pattern_input: "Input Validation"
+pattern_manager -> pattern_output: "Output Definition"
+pattern_manager -> config: "Private Patterns"
+
+output_handler -> file_writer: "File Operations"
+output_handler -> pattern_output: "Pattern Outputs"
+
+message_builder -> pattern_manager: "Pattern Templates"
+message_builder -> utils: "Content Processing"
+
+# All components use logger and utils
+cli_parser -> logger
+command_handler -> logger
+ai_service -> logger
+pattern_manager -> logger
+chat_manager -> logger
+output_handler -> logger
+message_builder -> logger

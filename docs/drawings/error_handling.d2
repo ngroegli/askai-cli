@@ -1,0 +1,69 @@
+# AskAI CLI - Error Handling and Recovery System
+title: "Error Handling & Recovery System"
+
+# Error Sources
+
+sources: "Error Sources" {
+  style.fill: "#FFEBEE" # Light Red (error group)
+
+  cli_errors: "CLI Errors" { style.fill: "#EF9A9A" }
+  config_errors: "Config Errors" { style.fill: "#EF9A9A" }
+  api_errors: "API Errors" { style.fill: "#EF9A9A" }
+  file_errors: "File I/O Errors" { style.fill: "#EF9A9A" }
+  validation_errors: "Validation Errors" { style.fill: "#EF9A9A" }
+}
+
+# Error Handlers
+handlers: "Error Handlers" {
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+
+  cli_handler: "CLI Error Handler" { style.fill: "#FFCC80" }
+  api_handler: "API Error Handler" { style.fill: "#FFCC80" }
+  file_handler: "File Error Handler" { style.fill: "#FFCC80" }
+  validation_handler: "Validation Handler" { style.fill: "#FFCC80" }
+}
+
+# Recovery Strategies
+recovery: "Recovery Strategies" {
+  style.fill: "#E8F5E9" # Light Green (data processing group)
+
+  retry: "Retry Logic" { style.fill: "#A5D6A7" }
+  fallback: "Fallback Options" { style.fill: "#A5D6A7" }
+  graceful: "Graceful Degradation" { style.fill: "#A5D6A7" }
+  user_prompt: "User Interaction" { style.fill: "#A5D6A7" }
+}
+
+# Logging and Monitoring
+monitoring: "Logging & Monitoring" {
+  style.fill: "#FAFAFA" # Light Gray (infra group)
+
+  logger: "Error Logger" { style.fill: "#BDBDBD" }
+  metrics: "Error Metrics" { style.fill: "#BDBDBD" }
+  alerts: "User Alerts" { style.fill: "#BDBDBD" }
+}
+
+# User Feedback
+feedback: "User Feedback" {
+  style.fill: "#E3F2FD" # Light Blue (core app/user group)
+
+  messages: "Error Messages" { style.fill: "#90CAF9" }
+  suggestions: "Recovery Suggestions" { style.fill: "#90CAF9" }
+  help: "Help Information" { style.fill: "#90CAF9" }
+}
+
+# Error flow
+sources -> handlers: "Catch Errors"
+handlers -> recovery: "Apply Strategy"
+handlers -> monitoring: "Log Errors"
+recovery -> feedback: "User Guidance"
+monitoring -> feedback: "Status Updates"
+
+# Specific error handling flows
+sources.cli_errors -> handlers.cli_handler: "Parse Errors"
+sources.api_errors -> handlers.api_handler: "Network/API Errors"
+sources.file_errors -> handlers.file_handler: "I/O Errors"
+sources.validation_errors -> handlers.validation_handler: "Data Errors"
+
+handlers.api_handler -> recovery.retry: "Transient Errors"
+handlers.file_handler -> recovery.fallback: "Missing Files"
+handlers.validation_handler -> recovery.user_prompt: "Invalid Input"
