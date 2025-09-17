@@ -105,14 +105,17 @@ The system follows a layered architecture pattern with clear separation of conce
 ### 5. Output Handling Package (`output/`)
 **Components**:
 - `OutputHandler`: Central output processing coordinator
-- `FileWriter`: File I/O operations
+- `FileWriterChain`: Chain of Responsibility pattern for file operations
+  - `HTMLWriter`, `CSSWriter`, `JavaScriptWriter`: Web content writers
+  - `MarkdownWriter`, `JSONWriter`, `TextWriter`: Document writers
 - Formatters: Console, JSON, Markdown formatting
 
 **Responsibilities**:
 - Process and extract AI responses
 - Format output for different display modes
-- Handle file creation and command execution
+- Handle specialized file creation based on content type
 - Support pattern-based and standard output flows
+- Route file operations through appropriate specialized writers
 
 ### 6. Chat Management Package (`chat/`)
 **Components**:
@@ -169,7 +172,7 @@ askai.py (main)
 ├── cli/ (CLIParser, CommandHandler)
 ├── ai/ (AIService, OpenRouterClient)
 ├── patterns/ (PatternManager, PatternInput, PatternOutput)
-├── output/ (OutputHandler, FileWriter)
+├── output/ (OutputHandler, FileWriterChain + specialized writers)
 ├── chat/ (ChatManager)
 ├── message_builder.py
 ├── config.py
@@ -202,7 +205,12 @@ askai.py (main)
 - Dynamic component initialization based on command requirements
 - Pattern selection and instantiation
 
-### 5. Observer Pattern
+### 5. Chain of Responsibility Pattern
+- `FileWriterChain` routes file operations to specialized writers
+- Each writer handles specific file extensions and passes unhandled requests to the next writer
+- Enables extensible file handling with clear separation of concerns
+
+### 6. Observer Pattern
 - Logging system observes operations across components
 - Progress tracking during long-running operations
 

@@ -1,5 +1,4 @@
-"""
-Output handling module for askai-cli.
+"""Output handling module for askai.
 
 This module handles all output processing from AI responses, including:
 - Extracting different content types (HTML, CSS, JS, markdown, etc.)
@@ -17,10 +16,10 @@ import traceback
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple, Any, Union
 
-from patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
+from python.patterns.pattern_outputs import PatternOutput, OutputType, OutputAction
 from python.output.formatters.console_formatter import ConsoleFormatter
 from python.output.formatters.markdown_formatter import MarkdownFormatter
-from python.output.file_writer import FileWriter
+from python.output.file_writers.file_writer_chain import FileWriterChain
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class OutputHandler:
         }
 
         # Initialize file writer
-        self.file_writer = FileWriter(output_dir=output_dir, logger=logger)
+        self.file_writer = FileWriterChain()
 
     def process_output(
             self,
@@ -515,7 +514,7 @@ class OutputHandler:
             # Process file writes in order
             elif output.action == OutputAction.WRITE:
                 # Get output directory with user confirmation for file operations
-                if any(output.action == OutputAction.WRITE for output in pattern_outputs) and output_dir == None:
+                if any(output.action == OutputAction.WRITE for output in pattern_outputs) and output_dir is None:
                     output_dir = self._get_output_directory()
 
                 content = output.get_content()
@@ -1238,7 +1237,7 @@ class OutputHandler:
             logger.debug("Text is not valid JSON")
 
         return None
-    
+
     def _categorize_outputs(self, pattern_outputs: List[PatternOutput]) -> Tuple[
         List[PatternOutput], List[PatternOutput], List[PatternOutput]
     ]:

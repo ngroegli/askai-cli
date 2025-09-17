@@ -43,7 +43,7 @@ outputs: "Output Handlers" {
   style.fill: "#FAFAFA" # Light Gray (infra group)
 
   display: "Display Handler" { style.fill: "#90CAF9" } # Light Blue (core app/user)
-  file: "File Writer" { style.fill: "#BDBDBD" }
+  file_chain: "FileWriterChain" { style.fill: "#BDBDBD" }
   command: "Command Executor" { style.fill: "#BDBDBD" }
 }
 
@@ -62,5 +62,5 @@ manager.selector -> components.config: "Configure"
 pipeline.template -> components.outputs: "Apply Template"
 pipeline.formatter -> components.config: "Format Instructions"
 pipeline.executor -> outputs.display: "Display"
-pipeline.executor -> outputs.file: "Write Files"
+pipeline.executor -> outputs.file_chain: "Write Files"
 pipeline.executor -> outputs.command: "Execute Commands"
