@@ -18,7 +18,7 @@ def tqdm_spinner(stop_event):
     """Displays a rotating spinner using tqdm."""
     # Check if we're running in a test environment
     in_test_env = os.environ.get('ASKAI_TESTING', '').lower() in ('true', '1', 'yes')
-    
+
     thinking_color = "light_cyan"
     result_color = "green"
 
@@ -27,7 +27,7 @@ def tqdm_spinner(stop_event):
         # For tests, don't wait in a blocking loop, just return immediately
         # The test runner will handle the stop_event through other mechanisms
         return
-    
+
     with tqdm(total=1, bar_format="{desc} {bar}", leave=False) as pbar:
         spinner_cycle = itertools.cycle(['|', '/', '-', '\\'])
         while not stop_event.is_set():

@@ -362,20 +362,35 @@ class OutputHandler:
 - Command recognition and validation
 ```
 
-#### File Writer (`file_writer.py`)
-```python
-class FileWriter:
-    def __init__(self, base_directory: str)
+#### File Writers (`file_writers/`)
+Implements Chain of Responsibility pattern for specialized file writing:
 
-    def write_file(self, content: str, filename: str, subdirectory: Optional[str]) -> str
-    def create_directory(self, path: str) -> bool
-    def validate_filename(self, filename: str) -> bool
+```python
+# Base Writer (Chain of Responsibility pattern)
+class BaseWriter:
+    def __init__(self, next_writer: Optional['BaseWriter'])
+    def write(self, content: str, file_extension: str, output_path: str) -> Optional[str]
+    def can_handle(self, file_extension: str) -> bool
+
+# File Writer Chain Coordinator
+class FileWriterChain:
+    def __init__(self)
+    def write_by_extension(self, content: str, file_extension: str, output_path: str) -> Optional[str]
+
+# Specialized Writers:
+- HTMLWriter: .html, .htm files
+- CSSWriter: .css files
+- JavaScriptWriter: .js files
+- MarkdownWriter: .md files
+- JSONWriter: .json files
+- TextWriter: .txt and fallback for all other extensions
 
 # Safety Features:
 - Path validation and sanitization
 - Directory traversal prevention
 - File permission handling
 - Atomic write operations
+- Extension-based routing
 ```
 
 #### Formatters (`output/formatters/`)
@@ -461,7 +476,13 @@ Application (askai.py)
 ├── MessageBuilder
 │   └── PatternManager
 └── OutputHandler
-    ├── FileWriter
+    ├── FileWriterChain
+    │   ├── HTMLWriter
+    │   ├── CSSWriter
+    │   ├── JavaScriptWriter
+    │   ├── MarkdownWriter
+    │   ├── JSONWriter
+    │   └── TextWriter
     └── Formatters[]
 ```
 

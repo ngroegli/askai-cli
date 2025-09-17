@@ -8,7 +8,7 @@ including model configurations, pattern purposes, and functionalities.
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
-from utils import print_error_or_warnings
+from python.utils import print_error_or_warnings
 
 
 class ModelProvider(Enum):

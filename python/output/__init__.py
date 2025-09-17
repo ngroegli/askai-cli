@@ -5,11 +5,11 @@ This module handles all aspects of output processing, extraction, formatting, an
 
 from python.output.common import unescape_string, looks_like_command
 from python.output.output_handler import OutputHandler
-from python.output.file_writer import FileWriter
+from python.output.file_writers.file_writer_chain import FileWriterChain
 
 __all__ = [
     "OutputHandler",
-    "FileWriter",
+    "FileWriterChain",
     "unescape_string",
     "looks_like_command"
 ]

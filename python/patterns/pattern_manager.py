@@ -11,10 +11,10 @@ import os
 import logging
 from typing import List, Dict, Any, Optional, Union, Tuple
 import yaml
-from utils import print_error_or_warnings
-from patterns.pattern_inputs import PatternInput, InputGroup, InputType
-from patterns.pattern_outputs import PatternOutput
-from patterns.pattern_configuration import (
+from python.utils import print_error_or_warnings
+from python.patterns.pattern_inputs import PatternInput, InputGroup, InputType
+from python.patterns.pattern_outputs import PatternOutput
+from python.patterns.pattern_configuration import (
     PatternConfiguration,
     PatternFunctionality,
     PatternPurpose

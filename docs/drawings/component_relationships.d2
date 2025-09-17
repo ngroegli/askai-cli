@@ -46,7 +46,19 @@ chat_manager: "ChatManager" {
 output_handler: "OutputHandler" {
   style.fill: "#A5D6A7" # Light Green
 }
-file_writer: "FileWriter" {
+file_writer_chain: "FileWriterChain" {
+  style.fill: "#A5D6A7" # Light Green
+}
+html_writer: "HTMLWriter" {
+  style.fill: "#A5D6A7" # Light Green
+}
+css_writer: "CSSWriter" {
+  style.fill: "#A5D6A7" # Light Green
+}
+js_writer: "JavaScriptWriter" {
+  style.fill: "#A5D6A7" # Light Green
+}
+text_writer: "TextWriter" {
   style.fill: "#A5D6A7" # Light Green
 }
 message_builder: "MessageBuilder" {
@@ -88,7 +100,11 @@ pattern_manager -> pattern_input: "Input Validation"
 pattern_manager -> pattern_output: "Output Definition"
 pattern_manager -> config: "Private Patterns"
 
-output_handler -> file_writer: "File Operations"
+output_handler -> file_writer_chain: "File Operations"
+file_writer_chain -> html_writer: "HTML Files"
+file_writer_chain -> css_writer: "CSS Files"
+file_writer_chain -> js_writer: "JS Files"
+file_writer_chain -> text_writer: "Text/Fallback"
 output_handler -> pattern_output: "Pattern Outputs"
 
 message_builder -> pattern_manager: "Pattern Templates"
