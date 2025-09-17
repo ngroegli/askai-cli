@@ -7,10 +7,11 @@
 4. [Data Flow](#data-flow)
 5. [Module Dependencies](#module-dependencies)
 6. [Design Patterns](#design-patterns)
-7. [Configuration Management](#configuration-management)
-8. [Extension Points](#extension-points)
-9. [Security Considerations](#security-considerations)
-10. [Performance & Scalability](#performance--scalability)
+7. [File Writing System - Chain of Responsibility](#file-writing-system---chain-of-responsibility)
+8. [Configuration Management](#configuration-management)
+9. [Extension Points](#extension-points)
+10. [Security Considerations](#security-considerations)
+11. [Performance & Scalability](#performance--scalability)
 
 ## System Overview
 
@@ -213,6 +214,278 @@ askai.py (main)
 ### 6. Observer Pattern
 - Logging system observes operations across components
 - Progress tracking during long-running operations
+
+## File Writing System - Chain of Responsibility
+
+The AskAI CLI implements a sophisticated file writing system based on the Chain of Responsibility design pattern. This architecture replaced a monolithic `FileWriter` class with a modular, extensible system that handles different file types through specialized writers.
+
+### Architecture Overview
+
+The file writing system consists of three main layers:
+
+```
+OutputHandler
+    ↓
+FileWriterChain (Coordinator)
+    ↓
+Specialized Writers (HTML, CSS, JS, JSON, Markdown, Text)
+```
+
+### Core Components
+
+#### 1. FileWriterChain - The Coordinator
+**Location**: `python/output/file_writers/file_writer_chain.py`
+
+The `FileWriterChain` acts as the main coordinator and entry point for all file writing operations:
+
+```python
+class FileWriterChain:
+    def __init__(self):
+        # Build the chain: HTML → CSS → JS → JSON → Markdown → Text
+
+    def write_by_extension(self, content: str, file_extension: str, output_path: str) -> Optional[str]
+    def write_file(self, content: str, content_type: str, output_path: str) -> Optional[str]
+```
+
+**Key Features**:
+- **Extension-based routing**: Automatically routes files based on their extension
+- **Content-type routing**: Supports explicit content type specification from patterns
+- **Chain initialization**: Sets up the complete chain of specialized writers
+- **Backward compatibility**: Maintains `write_by_extension()` for existing code
+
+#### 2. BaseWriter - The Abstract Foundation
+**Location**: `python/output/file_writers/base_writer.py`
+
+All specialized writers inherit from `BaseWriter`, which implements the Chain of Responsibility pattern:
+
+```python
+class BaseWriter:
+    def __init__(self, next_writer: Optional['BaseWriter'] = None)
+    def write(self, content: str, file_extension: str, output_path: str) -> Optional[str]
+    def can_handle(self, file_extension: str) -> bool  # Abstract method
+    def _clean_content(self, content: str) -> str      # Common content cleaning
+    def _write_file_safely(self, content: str, output_path: str) -> str  # Safe file writing
+```
+
+**Pattern Implementation**:
+- Each writer checks if it can handle the file type via `can_handle()`
+- If yes, processes the content and writes the file
+- If no, passes the request to the next writer in the chain
+- Provides common functionality for content cleaning and safe file writing
+
+#### 3. Specialized Writers
+
+Each writer is focused on a single responsibility and optimized for specific content types:
+
+##### HTMLWriter (`html_writer.py`)
+- **Handles**: `.html`, `.htm` files
+- **Features**:
+  - Document structure validation
+  - Automatic `<!DOCTYPE html>` addition if missing
+  - Reference injection for related files (CSS/JS)
+  - Content cleaning and formatting
+
+##### CSSWriter (`css_writer.py`)
+- **Handles**: `.css` files
+- **Features**:
+  - Selector cleaning and validation
+  - Automatic header comments with generation timestamp
+  - CSS syntax formatting
+  - Comment preservation
+
+##### JavaScriptWriter (`js_writer.py`)
+- **Handles**: `.js` files
+- **Features**:
+  - Automatic `'use strict';` directive addition
+  - DOM ready wrapper for UI code
+  - Function extraction and formatting
+  - Code structure optimization
+
+##### JSONWriter (`json_writer.py`)
+- **Handles**: `.json` files
+- **Features**:
+  - JSON validation and formatting
+  - Automatic parsing and pretty-printing
+  - Error handling for malformed JSON
+  - Structure validation
+
+##### MarkdownWriter (`markdown_writer.py`)
+- **Handles**: `.md` files
+- **Features**:
+  - Heading structure validation
+  - List formatting optimization
+  - Link validation
+  - Metadata preservation
+
+##### TextWriter (`text_writer.py`)
+- **Handles**: `.txt` files and **fallback for all other extensions**
+- **Features**:
+  - Basic text cleaning
+  - Encoding handling
+  - Universal fallback functionality
+  - Preserves original content structure
+
+### Chain Flow Example
+
+When a file needs to be written:
+
+1. **OutputHandler** calls `FileWriterChain.write_by_extension("content", ".css", "/path/to/styles.css")`
+2. **FileWriterChain** starts the chain with HTMLWriter
+3. **HTMLWriter** checks: Can I handle `.css`? → No → Pass to next
+4. **CSSWriter** checks: Can I handle `.css`? → Yes → Process and write file
+5. **Result** returned: Path to written file or error message
+
+### Benefits of the Chain Architecture
+
+#### 1. **Single Responsibility Principle**
+Each writer handles only one file type, making code more maintainable and testable.
+
+#### 2. **Open/Closed Principle**
+New file types can be added by creating new writers without modifying existing code.
+
+#### 3. **Extensibility**
+Easy to add support for new file formats:
+```python
+class PythonWriter(BaseWriter):
+    def can_handle(self, file_extension: str) -> bool:
+        return file_extension.lower() in ['.py']
+
+    def write(self, content: str, file_extension: str, output_path: str) -> Optional[str]:
+        # Python-specific processing
+        pass
+```
+
+#### 4. **Content-Type Awareness**
+Unlike the old system that guessed from file extensions, the new system uses explicit content types from pattern definitions.
+
+#### 5. **Consistent Error Handling**
+Each writer implements robust error handling with detailed logging and user feedback.
+
+### Integration with Pattern System
+
+The file writing system integrates seamlessly with the pattern system:
+
+```python
+# Pattern defines explicit content types
+outputs:
+  - name: "website_preview"
+    type: "file"
+    content_type: "html"
+    filename: "index.html"
+
+  - name: "styles"
+    type: "file"
+    content_type: "css"
+    filename: "styles.css"
+```
+
+The `OutputHandler` uses these content types to route to the appropriate writer, ensuring optimal processing for each file type.
+
+### Performance Considerations
+
+- **Lazy Chain Building**: Writers are only instantiated when needed
+- **Early Exit**: Chain stops at the first writer that can handle the file type
+- **Memory Efficient**: Each writer processes content in-place without duplication
+- **Atomic Writes**: All file operations are atomic to prevent corruption
+
+### Testing Strategy
+
+Each writer is independently testable:
+- **Unit Tests**: Individual writer behavior and content processing
+- **Integration Tests**: Complete chain functionality
+- **Content Tests**: Validation of output quality for each file type
+
+### CLI Integration with `-q` and `-o` Flags
+
+The file writing system seamlessly integrates with the command-line interface, particularly with the question (`-q`) and output directory (`-o`) flags:
+
+#### Question Mode with Output Directory
+```bash
+# Basic question with output directory
+askai -q "Create a simple HTML page with CSS" -o ./my-website
+
+# Multi-modal question with file output
+askai -q "Analyze this image and create documentation" -img photo.jpg -o ./analysis
+
+# Question with specific format and output
+askai -q "Generate API documentation" -f json -o ./docs/api.json
+```
+
+#### How it Works
+
+1. **Command Parsing**: The `CLIParser` processes `-q` and `-o` arguments
+2. **Output Directory Setup**: If `-o` is specified, the `OutputHandler` is configured with the target directory
+3. **Content Processing**: The AI response is processed through the normal flow
+4. **File Writing**: The `FileWriterChain` automatically routes content to appropriate writers based on file extensions
+
+#### Integration Flow
+```
+User Command: -q "Create website" -o ./site
+    ↓
+CLIParser extracts question and output directory
+    ↓
+OutputHandler.output_dir = "./site"
+    ↓
+AI generates response (HTML, CSS, JS content)
+    ↓
+OutputHandler._write_to_file() called for each content type
+    ↓
+FileWriterChain.write_by_extension() routes to:
+  - HTMLWriter for .html files
+  - CSSWriter for .css files
+  - JavaScriptWriter for .js files
+    ↓
+Files created in ./site/ directory
+```
+
+#### Automatic File Type Detection
+
+The system automatically determines file types and applies appropriate processing:
+
+- **HTML Content**: Routed to `HTMLWriter` → Document structure validation, DOCTYPE addition
+- **CSS Content**: Routed to `CSSWriter` → Selector cleaning, header comments
+- **JavaScript**: Routed to `JavaScriptWriter` → 'use strict' addition, DOM ready wrapping
+- **JSON Data**: Routed to `JSONWriter` → Validation, pretty-printing
+- **Markdown**: Routed to `MarkdownWriter` → Heading structure, list formatting
+- **Other Text**: Routed to `TextWriter` → Basic text cleaning
+
+#### Format-Specific Output
+
+When using format flags (`-f`), the system respects the user's choice:
+
+```bash
+# Force JSON output format
+askai -q "Create data structure" -f json -o ./data.json
+# → Uses JSONWriter for validation and formatting
+
+# Force Markdown output
+askai -q "Write documentation" -f md -o ./docs.md
+# → Uses MarkdownWriter for proper structure
+```
+
+#### Error Handling and Safety
+
+- **Directory Creation**: Automatically creates output directories if they don't exist
+- **Path Validation**: Prevents directory traversal attacks
+- **Atomic Writes**: Ensures file integrity during write operations
+- **Permission Handling**: Graceful handling of permission issues
+- **Fallback Behavior**: Falls back to TextWriter for unknown file types
+
+#### Pattern Integration
+
+The system works seamlessly with both standalone questions and pattern-based operations:
+
+```bash
+# Standalone question (uses -q/-o integration)
+askai -q "Build a calculator app" -o ./calculator
+
+# Pattern-based (uses pattern-defined outputs)
+askai -up website_generator -o ./my-site
+```
+
+This integration ensures that users get the same high-quality, specialized file processing whether they're using simple questions or complex pattern templates.
+
+This architecture provides a robust, maintainable, and extensible foundation for file handling in the AskAI CLI system.
 
 ## Configuration Management
 
