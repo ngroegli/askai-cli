@@ -14,7 +14,7 @@ from python.chat import ChatManager
 from python.cli import CommandHandler
 from python.logger import setup_logger
 from python.message_builder import MessageBuilder
-from python.output.output_handler import OutputHandler
+from python.output.output_coordinator import OutputCoordinator
 from python.config import load_config
 from python.patterns import PatternManager
 from python.cli.cli_parser import CLIParser
@@ -82,7 +82,7 @@ def main():
         ai_service = AIService(logger)
 
     # Initialize output handler
-    output_handler = OutputHandler()
+    output_handler = OutputCoordinator()
 
     # Check for incompatible combinations of pattern and chat commands
     using_pattern = args.use_pattern is not None
@@ -321,12 +321,20 @@ def main():
             console_output=console_output,
             file_output=file_output
         )
-        print(formatted_output)
+
+    # Print the formatted output for both pattern and non-pattern responses
+    print(formatted_output)
+
+    # Execute any pending operations (commands and files) after display is shown
+    additional_files = output_handler.execute_pending_operations()
+
+    # Combine created files from both output processing and pending operations
+    all_created_files = created_files + additional_files
 
     # Log created files
-    if created_files:
-        print(f"\nCreated output files: {', '.join(created_files)}")
-        logger.info("Created output files: %s", ', '.join(created_files))
+    if all_created_files:
+        print(f"\nCreated output files: {', '.join(all_created_files)}")
+        logger.info("Created output files: %s", ', '.join(all_created_files))
 
 
 if __name__ == "__main__":

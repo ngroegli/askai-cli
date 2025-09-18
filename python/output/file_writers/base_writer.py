@@ -48,11 +48,10 @@ class BaseWriter(ABC):
         """
         if self.can_handle(content_type):
             return self.write(content, file_path, additional_params)
-        elif self._next_writer:
+        if self._next_writer:
             return self._next_writer.handle(content, file_path, content_type, additional_params)
-        else:
-            self.logger.warning(f"No writer found for content type: {content_type}")
-            return False
+        self.logger.warning(f"No writer found for content type: {content_type}")
+        return False
 
     @abstractmethod
     def can_handle(self, content_type: str) -> bool:

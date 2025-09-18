@@ -249,7 +249,7 @@ class PatternManager:
         self,
         pattern_id: str,
         response: Union[str, Dict],
-        output_handler: OutputHandler
+        output_coordinator: OutputCoordinator
     ) -> Tuple[str, List[str]]
 
 # Pattern Discovery:
@@ -335,9 +335,9 @@ class PatternPurpose(Enum):
 
 ### Output Package (`python/output/`)
 
-#### Output Handler (`output_handler.py`)
+#### Output Coordinator (`output_coordinator.py`)
 ```python
-class OutputHandler:
+class OutputCoordinator:
     def __init__(self, output_dir: Optional[str])
 
     def process_output(
@@ -349,17 +349,71 @@ class OutputHandler:
         pattern_outputs: Optional[List[PatternOutput]]
     ) -> Tuple[str, List[str]]
 
-# Processing Methods:
-- _handle_standardized_pattern_output()
-- _extract_content_by_patterns()
-- _extract_and_save_content()
-- _handle_command_execution()
+    def execute_pending_operations(self) -> List[str]
 
-# Content Extraction:
-- JSON extraction from AI responses
-- Code block parsing
-- Multi-format content detection
-- Command recognition and validation
+# Coordination Methods:
+- _process_pattern_outputs_in_order(): Process outputs in definition order
+- _store_file_creation_info(): Store file operations for deferred execution
+- _execute_pattern_commands(): Handle command execution with user confirmation
+- pending_commands: List of commands to execute after display
+- pending_files: List of files to create after display
+
+# Content Processing Flow:
+1. Extract content once from AI response
+2. Process outputs in pattern definition order
+3. Handle displays immediately, store commands/files for later
+4. Execute deferred operations after display is shown to user
+5. Maintains proper order: display → file creation → command execution
+```
+
+#### Content Processors (`processors/`)
+```python
+class ContentExtractor:
+    def extract_structured_data(response: Union[str, Dict]) -> Dict[str, Any]
+    def clean_escaped_content(content: str) -> str
+    def _extract_from_malformed_json(text: str) -> Optional[Dict[str, str]]
+
+    # Enhanced JSON handling:
+    - Supports both JSON strings and pre-parsed dict responses
+    - Robust malformed JSON parsing with regex fallback
+    - Handles unescaped quotes and special characters in AI responses
+
+class PatternProcessor:
+    def extract_pattern_contents(
+        response: Union[str, Dict],
+        pattern_outputs: List[PatternOutput]
+    ) -> Dict[str, str]
+
+    def handle_pattern_outputs(
+        response: Union[str, Dict],
+        pattern_outputs: List[PatternOutput]
+    ) -> List[str]
+
+    # Pattern-specific content extraction:
+    - Uses named regex patterns for each output type
+    - Supports HTML, CSS, JavaScript, Markdown, JSON patterns
+    - Falls back to generic patterns when specific patterns don't match
+
+class ResponseNormalizer:
+    def normalize_response(response: str) -> str
+    def clean_ai_artifacts(content: str) -> str
+
+class DirectoryManager:
+    def get_output_directory() -> Optional[str]
+    def validate_path_security(path: str) -> bool
+```
+```
+
+#### Display Formatters (`display_formatters/`)
+```python
+class TerminalFormatter(BaseDisplayFormatter):
+    def format(content: str, content_type: str, **kwargs) -> str
+    def _format_markdown(markdown: str) -> str
+    def _highlight_code(code: str, language: str) -> str
+
+class MarkdownFormatter(BaseDisplayFormatter):
+    def format(content: str, content_type: str, **kwargs) -> str
+    def _format_as_code_block(code: str, language_tag: str) -> str
 ```
 
 #### File Writers (`file_writers/`)
@@ -475,15 +529,20 @@ Application (askai.py)
 │   └── OpenRouterClient
 ├── MessageBuilder
 │   └── PatternManager
-└── OutputHandler
-    ├── FileWriterChain
-    │   ├── HTMLWriter
-    │   ├── CSSWriter
-    │   ├── JavaScriptWriter
-    │   ├── MarkdownWriter
-    │   ├── JSONWriter
-    │   └── TextWriter
-    └── Formatters[]
+└── OutputCoordinator
+    ├── ContentExtractor
+    ├── PatternProcessor
+    ├── ResponseNormalizer
+    ├── DirectoryManager
+    ├── TerminalFormatter
+    ├── MarkdownFormatter
+    └── FileWriterChain
+        ├── HTMLWriter
+        ├── CSSWriter
+        ├── JavaScriptWriter
+        ├── MarkdownWriter
+        ├── JSONWriter
+        └── TextWriter
 ```
 
 ## API Interfaces

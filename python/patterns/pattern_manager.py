@@ -60,7 +60,9 @@ class PatternManager:
                         logger.debug("Private patterns directory not found in test mode: %s", expanded_path)
                     else:
                         print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
-                        create_dir = input(f"Would you like to create the directory '{expanded_path}'? (y/n): ").lower().strip()
+                        create_dir = input(
+                            f"Would you like to create the directory '{expanded_path}'? (y/n): "
+                        ).lower().strip()
                         if create_dir == 'y':
                             try:
                                 os.makedirs(expanded_path, exist_ok=True)
@@ -769,7 +771,7 @@ class PatternManager:
         Args:
             pattern_id: ID of the pattern
             response: Response from the AI service
-            output_handler: Instance of OutputHandler
+            output_handler: Instance of OutputCoordinator
 
         Returns:
             Tuple[str, List[str]]: (formatted output, list of created files)

@@ -4,10 +4,10 @@ Markdown formatter for formatting content for markdown output.
 
 import re
 
-from python.output.formatters.base_formatter import BaseFormatter
+from python.output.display_formatters.base_display_formatter import BaseDisplayFormatter
 
 
-class MarkdownFormatter(BaseFormatter):
+class MarkdownFormatter(BaseDisplayFormatter):
     """Formatter for markdown output with proper syntax."""
 
     def format(self, content: str, content_type: str = 'text',

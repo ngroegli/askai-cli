@@ -126,16 +126,16 @@ def get_user_input_for_setting(key, value, path="", depth=0):
             result[sub_key] = get_user_input_for_setting(sub_key, sub_value, full_key, depth + 1)
         return result
 
-    elif isinstance(value, list):
+    if isinstance(value, list):
         # For lists, just return the default for now
         return value
 
-    elif value is None:
+    if value is None:
         # Handle null values
         user_input = input(f"{indent}{key}: ").strip()
         return user_input if user_input else None
 
-    elif isinstance(value, bool):
+    if isinstance(value, bool):
         # Handle boolean values
         while True:
             user_input = input(f"{indent}{key} (y/n, default: {'y' if value else 'n'}): ").strip().lower()
@@ -143,11 +143,11 @@ def get_user_input_for_setting(key, value, path="", depth=0):
                 return value
             if user_input in ['y', 'yes', 'true', '1']:
                 return True
-            elif user_input in ['n', 'no', 'false', '0']:
+            if user_input in ['n', 'no', 'false', '0']:
                 return False
             print(f"{indent}Please enter y/n")
 
-    elif isinstance(value, (int, float)):
+    if isinstance(value, (int, float)):
         # Handle numeric values
         while True:
             user_input = input(f"{indent}{key} (default: {value}): ").strip()
@@ -301,11 +301,10 @@ def ensure_askai_setup():
                     print("Failed to create directory structure.")
                     return False
                 break
-            elif choice in ['n', 'no']:
+            if choice in ['n', 'no']:
                 print("AskAI requires the directory structure to function. Exiting.")
                 return False
-            else:
-                print("Please enter 'y' for yes or 'n' for no.")
+            print("Please enter 'y' for yes or 'n' for no.")
 
     # Check if configuration file exists
     config_path = TEST_CONFIG_PATH if is_test_environment() else CONFIG_PATH
@@ -318,25 +317,23 @@ def ensure_askai_setup():
                 print("Test configuration not found. Creating automatically from production config...")
                 create_directory_structure(test_mode=True)
                 return create_test_config_from_production()
-            else:
-                print("Production configuration not found. Please run setup in production mode first.")
-                return False
-        else:
-            # Production mode - run setup wizard
-            config = run_dynamic_setup_wizard()
+            print("Production configuration not found. Please run setup in production mode first.")
+            return False
+        # Production mode - run setup wizard
+        config = run_dynamic_setup_wizard()
 
-            if not config:
-                print("Setup wizard failed. Cannot continue without configuration.")
-                return False
+        if not config:
+            print("Setup wizard failed. Cannot continue without configuration.")
+            return False
 
-            try:
-                with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-                    yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
-                print("Configuration saved successfully!")
-                return True
-            except Exception as e:
-                print(f"Error saving configuration: {str(e)}")
-                return False
+        try:
+            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
+            print("Configuration saved successfully!")
+            return True
+        except Exception as e:
+            print(f"Error saving configuration: {str(e)}")
+            return False
 
     return True
 
