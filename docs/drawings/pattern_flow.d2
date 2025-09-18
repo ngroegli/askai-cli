@@ -1,83 +1,93 @@
 # AskAI CLI - Pattern Processing Data Flow
 title: "Pattern Processing Data Flow"
 
-
-
-
 user_input: "User Input" {
   shape: oval
   style.fill: "#90CAF9" # Light Blue (core app)
 }
-
 
 cli_parse: "CLI Parsing" {
   shape: diamond
   style.fill: "#CE93D8" # Light Purple (CLI)
 }
 
-
 pattern_select: "Pattern Selection" {
   shape: rectangle
   style.fill: "#A5D6A7" # Light Green (data processing)
 }
-
 
 input_collect: "Input Collection" {
   shape: rectangle
   style.fill: "#A5D6A7" # Light Green
 }
 
-
 msg_build: "Message Building" {
   shape: rectangle
   style.fill: "#FFCC80" # Light Orange (AI integration)
 }
-
 
 ai_process: "AI Processing" {
   shape: rectangle
   style.fill: "#FFCC80" # Light Orange
 }
 
-
-response_parse: "Response Parsing" {
+content_extract: "Content Extraction" {
   shape: rectangle
   style.fill: "#A5D6A7" # Light Green (data transformation)
 }
 
-
-output_process: "Output Processing" {
+order_process: "Definition Order Processing" {
   shape: rectangle
   style.fill: "#A5D6A7" # Light Green
 }
-
-
-file_gen: "File Generation" {
-  shape: parallelogram
-  style.fill: "#BDBDBD" # Light Gray (infra)
-}
-
 
 display: "Display Results" {
   shape: oval
   style.fill: "#90CAF9" # Light Blue (core app/user)
 }
 
-# Flow connections
+deferred_ops: "Execute Deferred Operations" {
+  shape: rectangle
+  style.fill: "#BDBDBD" # Light Gray (infra)
+}
+
+file_gen: "File Generation" {
+  shape: parallelogram
+  style.fill: "#BDBDBD" # Light Gray (infra)
+}
+
+command_exec: "Command Execution" {
+  shape: parallelogram
+  style.fill: "#F8BBD9" # Light Pink (actions)
+}
+
+# Main flow connections
 user_input -> cli_parse: "Command & Args"
 cli_parse -> pattern_select: "Pattern ID"
 pattern_select -> input_collect: "Pattern Definition"
 input_collect -> msg_build: "Validated Inputs"
 msg_build -> ai_process: "Formatted Messages"
-ai_process -> response_parse: "AI Response"
-response_parse -> output_process: "Structured Data"
-output_process -> file_gen: "File Content"
-output_process -> display: "Console Output"
-file_gen -> display: "File Paths"
+ai_process -> content_extract: "AI Response"
+content_extract -> order_process: "Structured Data"
+order_process -> display: "Display Content (First)"
+display -> deferred_ops: "After Display Shown"
+deferred_ops -> file_gen: "File Operations"
+deferred_ops -> command_exec: "Commands (if any)"
+file_gen -> display: "File Creation Results"
+command_exec -> display: "Command Results"
+
+# Enhanced processing notes
+content_extract: {
+  near: ai_process
+  label: "• JSON parsing\n• Malformed JSON fallback\n• Pattern-specific extraction"
+}
+
+order_process: {
+  near: content_extract
+  label: "• Respects pattern definition order\n• Immediate displays\n• Deferred files & commands"
+}
 
 # Error flows
-
-
 cli_parse -> display: "Help/Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red (error)
@@ -91,6 +101,10 @@ input_collect -> display: "Validation Errors" {
   style.stroke: "#EF9A9A" # Light Red
 }
 ai_process -> display: "API Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red
+}
+content_extract -> display: "Extraction Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red
 }

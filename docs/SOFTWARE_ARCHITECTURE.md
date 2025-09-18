@@ -506,46 +506,70 @@ This architecture provides a robust, maintainable, and extensible foundation for
 
 ## Output Processing Architecture
 
-The AskAI CLI has been refactored from a monolithic output handling approach to a modular, specialized architecture that separates concerns between content processing, display formatting, and file operations.
+The AskAI CLI has been refactored from a monolithic output handling approach to a modular, specialized architecture that separates concerns between content processing, display formatting, and file operations with enhanced deferred execution capabilities.
 
 ### Architecture Overview
 
 ```
-OutputCoordinator (Facade)
-    ├── ContentExtractor (Response Processing)
-    ├── PatternProcessor (Pattern-Specific Handling)
+OutputCoordinator (Facade & Orchestrator)
+    ├── ContentExtractor (Enhanced Response Processing with Malformed JSON Support)
+    ├── PatternProcessor (Streamlined Pattern Content Extraction)
     ├── ResponseNormalizer (Content Cleaning)
     ├── DirectoryManager (File System Operations)
     ├── TerminalFormatter (CLI Display)
     ├── MarkdownFormatter (File Formatting)
     └── FileWriterChain (File Operations)
+
+Deferred Execution Flow:
+    Display Processing → Content Presentation → Pending Operations → Execute Commands/Files
 ```
 
 ### Core Components
 
-#### 1. OutputCoordinator - Main Facade
+#### 1. OutputCoordinator - Main Facade & Orchestrator
 **Location**: `python/output/output_coordinator.py`
 
-The `OutputCoordinator` serves as the unified entry point for all output operations, replacing the previous monolithic `OutputHandler`:
+The `OutputCoordinator` serves as the unified entry point for all output operations and orchestrates the new deferred execution pattern:
 
 **Key Responsibilities**:
 - Coordinate between processors, formatters, and file writers
-- Manage the overall output workflow
+- Implement deferred execution pattern for proper output ordering
+- Store pending operations (commands and file creations) for after-display execution
+- Manage the overall output workflow with proper sequencing
 - Handle quiet mode and output directory configuration
 - Provide a clean interface for the main application
+
+**New Deferred Execution Features**:
+- `_store_file_creation_info()`: Stores file operations for later execution
+- `execute_pending_operations()`: Executes stored commands and file operations after display
+- `pending_files`: Storage for deferred file creation operations
+- Pattern content processing with proper ordering (explanation → execution → file creation)
 
 #### 2. Content Processors Package
 **Location**: `python/output/processors/`
 
-##### ContentExtractor (`content_extractor.py`)
-- Extracts and validates structured content from AI responses
-- Handles JSON parsing and content type detection
-- Manages fallback scenarios for malformed responses
+##### ContentExtractor (`content_extractor.py`) - Enhanced
+- **Enhanced JSON Parsing**: Handles both JSON strings and pre-parsed response structures
+- **Malformed JSON Support**: Regex-based fallback for responses with unescaped quotes
+- **Response Structure Detection**: Automatically detects and processes `response['results']` format
+- **Robust Error Handling**: Multiple fallback mechanisms for content extraction
+- **Public Content Cleaning**: `clean_escaped_content()` method now public for reuse
 
-##### PatternProcessor (`pattern_processor.py`)
-- Processes pattern-specific output requirements
-- Handles pattern output definitions and actions
-- Manages pattern-based file generation workflows
+**Key Methods**:
+- `extract_structured_data()`: Enhanced to handle dict responses and malformed JSON
+- `_extract_from_malformed_json()`: New regex-based JSON extraction for broken responses
+- `_extract_json_from_text()`: Improved to detect pre-parsed structures
+
+##### PatternProcessor (`pattern_processor.py`) - Streamlined
+- **Single Content Extraction**: Extracts pattern contents once for reuse across operations
+- **Simplified Processing**: Removed duplicate content processing, focuses on extraction
+- **Public Interface**: `extract_pattern_contents()` now public for coordinator access
+- **Command Execution Integration**: Maintains integration with `PatternOutput.execute_command()`
+
+**Workflow**:
+1. Extract content once using `ContentExtractor`
+2. Provide extracted content to `OutputCoordinator` for processing
+3. Support both display and execution operations with shared content
 
 ##### ResponseNormalizer (`response_normalizer.py`)
 - Cleans and normalizes AI response content
@@ -576,36 +600,74 @@ The `OutputCoordinator` serves as the unified entry point for all output operati
 - Provides common functionality like content truncation
 - Defines the formatter interface contract
 
-### Benefits of the New Architecture
+### Enhanced Processing Flow
+
+#### Deferred Execution Pattern
+The new architecture implements a deferred execution pattern to ensure proper output ordering:
+
+1. **Content Extraction**: Extract all pattern contents once using enhanced `ContentExtractor`
+2. **Display Processing**: Format and display explanations/content using `TerminalFormatter`
+3. **Pending Operations Storage**: Store command executions and file creations for later
+4. **Deferred Execution**: Execute stored operations after display is complete
+
+This ensures users see explanations before commands execute and maintains proper sequence.
+
+#### Malformed JSON Handling
+The enhanced `ContentExtractor` handles AI responses with malformed JSON:
+
+1. **Standard JSON Parsing**: Attempts normal JSON parsing first
+2. **Pre-parsed Detection**: Checks for response structures with 'results' key
+3. **Regex Fallback**: Uses regex to extract JSON from responses with unescaped quotes
+4. **Error Recovery**: Multiple fallback mechanisms ensure content extraction succeeds
+
+### Benefits of the Enhanced Architecture
+
+#### Deferred Execution Benefits
+- **Proper Output Ordering**: Explanations always appear before command execution
+- **User Experience**: Users can read explanations while commands are prepared
+- **Security**: Commands are clearly visible before execution with confirmation prompts
+- **Flexibility**: Supports complex patterns with multiple operations in correct sequence
+
+#### Robust Content Extraction
+- **AI Response Resilience**: Handles various AI response formats including malformed JSON
+- **Reduced Processing**: Single content extraction eliminates duplicate work
+- **Error Recovery**: Multiple fallback mechanisms ensure extraction success
+- **Format Flexibility**: Supports both string and pre-parsed response formats
 
 #### Separation of Concerns
-- **Processing**: Content extraction and normalization
+- **Processing**: Content extraction and normalization with enhanced error handling
 - **Formatting**: Display and file presentation
 - **Writing**: File system operations
+- **Orchestration**: Deferred execution and proper sequencing
 
 #### Modularity and Maintainability
 - Each component has a single, well-defined responsibility
 - Easy to test individual components in isolation
 - Clear interfaces between components
+- Enhanced error handling and recovery mechanisms
 
 #### Extensibility
 - New processors can be added for different content types
 - New formatters can be implemented for different output targets
 - File writers can be extended for new file types
+- Deferred execution pattern supports complex workflow extensions
 
-#### Code Reduction
+#### Code Quality Improvements
 - Reduced from 1500-line monolithic class to ~200-line coordinator
 - Individual specialized components are focused and compact
 - Eliminated code duplication and improved reusability
+- Enhanced error handling and user feedback
 
 ### Migration Benefits
 
-The refactoring achieved:
+The enhanced refactoring achieved:
 - **53% code reduction** in the output handling system
 - **Improved maintainability** through single responsibility principle
 - **Enhanced testability** with isolated, focused components
 - **Better extensibility** for future enhancements
 - **Clearer code organization** with purpose-specific packages
+- **Robust error handling** for real-world AI response variations
+- **Improved user experience** through proper output sequencing
 
 ## Configuration Management
 

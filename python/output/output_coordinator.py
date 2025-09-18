@@ -394,7 +394,9 @@ class OutputCoordinator:
                 if content:
                     self.pending_files.append((content, output))
 
-    def _create_pattern_files(self, pattern_contents: Dict[str, str], pattern_outputs: List[PatternOutput]) -> List[str]:
+    def _create_pattern_files(
+        self, pattern_contents: Dict[str, str], pattern_outputs: List[PatternOutput]
+    ) -> List[str]:
         """Create files from pattern outputs using already extracted content.
 
         Args:

@@ -349,37 +349,59 @@ class OutputCoordinator:
         pattern_outputs: Optional[List[PatternOutput]]
     ) -> Tuple[str, List[str]]
 
-# Coordination Methods:
-- _handle_standardized_pattern_output()
-- _extract_content_by_patterns()
-- _extract_and_save_content()
-- _handle_command_execution()
+    def execute_pending_operations(self) -> List[str]
 
-# Content Processing:
-- Delegates to specialized processors
-- Coordinates between formatters and file writers
-- Manages output workflow
+# Coordination Methods:
+- _process_pattern_outputs_in_order(): Process outputs in definition order
+- _store_file_creation_info(): Store file operations for deferred execution
+- _execute_pattern_commands(): Handle command execution with user confirmation
+- pending_commands: List of commands to execute after display
+- pending_files: List of files to create after display
+
+# Content Processing Flow:
+1. Extract content once from AI response
+2. Process outputs in pattern definition order
+3. Handle displays immediately, store commands/files for later
+4. Execute deferred operations after display is shown to user
+5. Maintains proper order: display → file creation → command execution
 ```
 
 #### Content Processors (`processors/`)
 ```python
 class ContentExtractor:
-    def extract_content(response: Union[str, Dict]) -> Dict[str, Any]
-    def validate_json_structure(content: Dict) -> bool
+    def extract_structured_data(response: Union[str, Dict]) -> Dict[str, Any]
+    def clean_escaped_content(content: str) -> str
+    def _extract_from_malformed_json(text: str) -> Optional[Dict[str, str]]
+
+    # Enhanced JSON handling:
+    - Supports both JSON strings and pre-parsed dict responses
+    - Robust malformed JSON parsing with regex fallback
+    - Handles unescaped quotes and special characters in AI responses
 
 class PatternProcessor:
-    def process_pattern_outputs(
-        pattern_outputs: List[PatternOutput],
-        content: Dict[str, Any]
+    def extract_pattern_contents(
+        response: Union[str, Dict],
+        pattern_outputs: List[PatternOutput]
+    ) -> Dict[str, str]
+
+    def handle_pattern_outputs(
+        response: Union[str, Dict],
+        pattern_outputs: List[PatternOutput]
     ) -> List[str]
+
+    # Pattern-specific content extraction:
+    - Uses named regex patterns for each output type
+    - Supports HTML, CSS, JavaScript, Markdown, JSON patterns
+    - Falls back to generic patterns when specific patterns don't match
 
 class ResponseNormalizer:
     def normalize_response(response: str) -> str
     def clean_ai_artifacts(content: str) -> str
 
 class DirectoryManager:
-    def ensure_output_directory(directory: str) -> str
+    def get_output_directory() -> Optional[str]
     def validate_path_security(path: str) -> bool
+```
 ```
 
 #### Display Formatters (`display_formatters/`)
