@@ -1,4 +1,4 @@
-# AskAI CLI - Pattern Processing Data Flow
+# AskAI CLI - Pattern Processing Data Flow (Layered Architecture)
 title: "Pattern Processing Data Flow"
 
 user_input: "User Input" {
@@ -6,105 +6,140 @@ user_input: "User Input" {
   style.fill: "#90CAF9" # Light Blue (core app)
 }
 
-cli_parse: "CLI Parsing" {
-  shape: diamond
-  style.fill: "#CE93D8" # Light Purple (CLI)
-}
-
-pattern_select: "Pattern Selection" {
+# Presentation Layer
+presentation: "Presentation Layer" {
   shape: rectangle
-  style.fill: "#A5D6A7" # Light Green (data processing)
+  style.fill: "#F3E5F5" # Light Purple background
+
+  cli_parse: "CLI Parsing" {
+    shape: diamond
+    style.fill: "#CE93D8" # Light Purple (CLI)
+  }
 }
 
-input_collect: "Input Collection" {
+# Modules Layer
+modules: "Modules Layer" {
   shape: rectangle
-  style.fill: "#A5D6A7" # Light Green
+  style.fill: "#E8F5E9" # Light Green background
+
+  pattern_select: "Pattern Selection\n(patterns/)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green (data processing)
+  }
+
+  input_collect: "Input Collection\n(patterns/)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green
+  }
+
+  msg_build: "Message Building\n(messaging/)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green
+  }
+
+  ai_process: "AI Processing\n(ai/)" {
+    shape: rectangle
+    style.fill: "#81C784" # Slightly different green for AI
+  }
 }
 
-msg_build: "Message Building" {
+# Infrastructure Layer
+infrastructure: "Infrastructure Layer" {
   shape: rectangle
-  style.fill: "#FFCC80" # Light Orange (AI integration)
+  style.fill: "#FFF9C4" # Light Yellow background
+
+  content_extract: "Content Extraction\n(output/processors/)" {
+    shape: rectangle
+    style.fill: "#FFF176" # Light Yellow
+  }
+
+  order_process: "Definition Order Processing\n(output/)" {
+    shape: rectangle
+    style.fill: "#FFF176" # Light Yellow
+  }
+
+  display: "Display Results\n(output/formatters/)" {
+    shape: oval
+    style.fill: "#FFF176" # Light Yellow
+  }
+
+  deferred_ops: "Execute Deferred Operations\n(output/)" {
+    shape: rectangle
+    style.fill: "#FFF176" # Light Yellow
+  }
+
+  file_gen: "File Generation\n(output/file_writers/)" {
+    shape: parallelogram
+    style.fill: "#FFEB3B" # Brighter yellow
+  }
+
+  command_exec: "Command Execution\n(output/)" {
+    shape: parallelogram
+    style.fill: "#F8BBD9" # Light Pink (actions)
+  }
 }
 
-ai_process: "AI Processing" {
+# External Services
+external: "External Services" {
   shape: rectangle
-  style.fill: "#FFCC80" # Light Orange
+  style.fill: "#FFF3E0" # Light Orange
+
+  openrouter: "OpenRouter API" {
+    shape: rectangle
+    style.fill: "#FFCC80" # Light Orange
+  }
 }
 
-content_extract: "Content Extraction" {
-  shape: rectangle
-  style.fill: "#A5D6A7" # Light Green (data transformation)
-}
+# Layer Flow (Main Path)
+user_input -> presentation: "Command & Args"
+presentation -> modules: "Parsed Arguments"
+modules -> external: "AI Messages"
+external -> infrastructure: "AI Response"
+infrastructure -> presentation: "Formatted Output"
+presentation -> user_input: "Results & Feedback"
 
-order_process: "Definition Order Processing" {
-  shape: rectangle
-  style.fill: "#A5D6A7" # Light Green
-}
-
-display: "Display Results" {
-  shape: oval
-  style.fill: "#90CAF9" # Light Blue (core app/user)
-}
-
-deferred_ops: "Execute Deferred Operations" {
-  shape: rectangle
-  style.fill: "#BDBDBD" # Light Gray (infra)
-}
-
-file_gen: "File Generation" {
-  shape: parallelogram
-  style.fill: "#BDBDBD" # Light Gray (infra)
-}
-
-command_exec: "Command Execution" {
-  shape: parallelogram
-  style.fill: "#F8BBD9" # Light Pink (actions)
-}
-
-# Main flow connections
-user_input -> cli_parse: "Command & Args"
-cli_parse -> pattern_select: "Pattern ID"
-pattern_select -> input_collect: "Pattern Definition"
-input_collect -> msg_build: "Validated Inputs"
-msg_build -> ai_process: "Formatted Messages"
-ai_process -> content_extract: "AI Response"
-content_extract -> order_process: "Structured Data"
-order_process -> display: "Display Content (First)"
-display -> deferred_ops: "After Display Shown"
-deferred_ops -> file_gen: "File Operations"
-deferred_ops -> command_exec: "Commands (if any)"
-file_gen -> display: "File Creation Results"
-command_exec -> display: "Command Results"
+# Detailed Component Flow
+presentation.cli_parse -> modules.pattern_select: "Pattern ID"
+modules.pattern_select -> modules.input_collect: "Pattern Definition"
+modules.input_collect -> modules.msg_build: "Validated Inputs"
+modules.msg_build -> modules.ai_process: "Formatted Messages"
+modules.ai_process -> external.openrouter: "HTTP Request"
+external.openrouter -> infrastructure.content_extract: "AI Response"
+infrastructure.content_extract -> infrastructure.order_process: "Structured Data"
+infrastructure.order_process -> infrastructure.display: "Display Content (First)"
+infrastructure.display -> infrastructure.deferred_ops: "After Display Shown"
+infrastructure.deferred_ops -> infrastructure.file_gen: "File Operations"
+infrastructure.deferred_ops -> infrastructure.command_exec: "Commands (if any)"
+infrastructure.file_gen -> infrastructure.display: "File Creation Results"
+infrastructure.command_exec -> infrastructure.display: "Command Results"
 
 # Enhanced processing notes
-content_extract: {
-  near: ai_process
+infrastructure.content_extract: {
   label: "• JSON parsing\n• Malformed JSON fallback\n• Pattern-specific extraction"
 }
 
-order_process: {
-  near: content_extract
+infrastructure.order_process: {
   label: "• Respects pattern definition order\n• Immediate displays\n• Deferred files & commands"
 }
 
-# Error flows
-cli_parse -> display: "Help/Errors" {
+# Error flows (Layer-aware)
+presentation.cli_parse -> infrastructure.display: "Help/Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red (error)
 }
-pattern_select -> display: "Pattern Errors" {
+modules.pattern_select -> infrastructure.display: "Pattern Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red
 }
-input_collect -> display: "Validation Errors" {
+modules.input_collect -> infrastructure.display: "Validation Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red
 }
-ai_process -> display: "API Errors" {
+external.openrouter -> infrastructure.display: "API Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red
 }
-content_extract -> display: "Extraction Errors" {
+infrastructure.content_extract -> infrastructure.display: "Extraction Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red
 }

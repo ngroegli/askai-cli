@@ -15,18 +15,23 @@
 ### Project Root Structure
 ```
 askai-cli/
-├── python/                     # Main application code
+├── python/                     # Main application code (Layered Architecture)
 │   ├── __init__.py
 │   ├── askai.py               # Application entry point
-│   ├── config.py              # Configuration management
-│   ├── logger.py              # Logging setup
-│   ├── message_builder.py     # Message construction
-│   ├── utils.py               # Shared utilities
-│   ├── ai/                    # AI service integration
-│   ├── chat/                  # Chat session management
-│   ├── cli/                   # Command-line interface
-│   ├── output/                # Output processing
-│   └── patterns/              # Pattern management
+│   ├── shared/                # Common utilities and infrastructure
+│   │   ├── config/            # Configuration management
+│   │   ├── logging/           # Logging infrastructure
+│   │   └── utils/             # Shared utilities
+│   ├── modules/               # Core business logic
+│   │   ├── ai/                # AI service integration
+│   │   ├── chat/              # Chat session management
+│   │   ├── messaging/         # Message construction
+│   │   ├── patterns/          # Pattern management
+│   │   └── questions/         # Question processing logic (NEW)
+│   ├── presentation/          # User interface layer
+│   │   └── cli/               # Command-line interface
+│   └── infrastructure/        # External output processing
+│       └── output/            # Output coordination and handling
 ├── patterns/                   # Built-in pattern definitions
 ├── config/                     # Configuration templates
 ├── tests/                      # Test suite
@@ -38,7 +43,10 @@ askai-cli/
 
 ### Package Responsibilities
 
-**python/**: Core application logic and components
+**python/shared/**: Common infrastructure, configuration management, logging, and utilities
+**python/modules/**: Core business logic organized by functional domain
+**python/presentation/**: User interface components and CLI handling
+**python/infrastructure/**: External output processing and coordination
 **patterns/**: Pattern template definitions in Markdown format
 **config/**: Configuration templates and examples
 **tests/**: Comprehensive test suite with integration tests
@@ -57,17 +65,16 @@ askai-cli/
 # Key Responsibilities:
 - Command-line argument processing
 - Component initialization and coordination
-- Workflow orchestration (pattern vs. chat modes)
+- Workflow orchestration (pattern vs. question vs. chat modes)
 - Output processing coordination
 - Error handling and cleanup
 ```
 
-#### Configuration Module (`config.py`)
-```python
-# Primary Classes:
-- No classes (functional module)
+#### Shared Infrastructure (`shared/`)
 
-# Key Functions:
+##### Configuration Module (`shared/config/loader.py`)
+```python
+# Primary Functions:
 - load_config() -> Dict[str, Any]
 - ensure_askai_setup() -> bool
 - run_dynamic_setup_wizard() -> Dict[str, Any]
@@ -79,9 +86,12 @@ askai-cli/
 - CONFIG_PATH: ~/.askai/config.yml
 - CHATS_DIR: ~/.askai/chats
 - LOGS_DIR: ~/.askai/logs
+
+# Exported Constants:
+- All configuration constants available via shared.config
 ```
 
-#### Logging Module (`logger.py`)
+##### Logging Module (`shared/logging/setup.py`)
 ```python
 # Primary Functions:
 - setup_logger(config: Dict, debug: bool) -> logging.Logger
@@ -93,34 +103,7 @@ askai-cli/
 - JSON-structured logging
 ```
 
-#### Message Builder (`message_builder.py`)
-```python
-# Primary Class:
-class MessageBuilder:
-    def __init__(self, pattern_manager: PatternManager, logger: logging.Logger)
-
-    def build_messages(
-        self,
-        question: Optional[str],
-        file_input: Optional[str],
-        pattern_id: Optional[str],
-        pattern_input: Optional[str],
-        response_format: str,
-        url: Optional[str],
-        image: Optional[str],
-        pdf: Optional[str],
-        image_url: Optional[str],
-        pdf_url: Optional[str]
-    ) -> Tuple[List[Dict], Optional[str]]
-
-# Responsibilities:
-- Construct AI conversation messages
-- Handle multimodal content encoding
-- Apply pattern templates
-- Process various input formats
-```
-
-#### Utilities Module (`utils.py`)
+##### Utilities Module (`shared/utils/helpers.py`)
 ```python
 # Key Functions:
 - get_piped_input() -> Optional[str]
@@ -137,9 +120,11 @@ class MessageBuilder:
 - File validation
 ```
 
-### AI Service Package (`python/ai/`)
+### Core Modules Package (`modules/`)
 
-#### AI Service (`ai_service.py`)
+#### AI Service Package (`modules/ai/`)
+
+##### AI Service (`ai_service.py`)
 ```python
 class AIService:
     def __init__(self, logger: logging.Logger)
@@ -168,7 +153,7 @@ class AIService:
 - Integrate web search capabilities
 ```
 
-#### OpenRouter Client (`openrouter_client.py`)
+##### OpenRouter Client (`openrouter_client.py`)
 ```python
 class OpenRouterClient:
     def __init__(self, config: Dict, logger: logging.Logger)
@@ -193,7 +178,52 @@ class OpenRouterClient:
 - Credit balance tracking
 ```
 
-### CLI Package (`python/cli/`)
+#### Question Processing Package (`modules/questions/`) - NEW
+```python
+class QuestionProcessor:
+    def __init__(self, ai_service: AIService, message_builder: MessageBuilder, logger: logging.Logger)
+
+    def process_question(
+        self,
+        args: argparse.Namespace,
+        config: Dict[str, Any],
+        output_coordinator: OutputCoordinator
+    ) -> None
+
+# Responsibilities:
+- Handle standalone question processing separate from patterns
+- Manage question-specific logic and validation
+- Provide clean separation between pattern and question workflows
+- Support various input formats for questions (text, images, PDFs, URLs)
+```
+
+#### Message Building Package (`modules/messaging/`)
+```python
+class MessageBuilder:
+    def __init__(self, pattern_manager: PatternManager, logger: logging.Logger)
+
+    def build_messages(
+        self,
+        question: Optional[str],
+        file_input: Optional[str],
+        pattern_id: Optional[str],
+        pattern_input: Optional[str],
+        response_format: str,
+        url: Optional[str],
+        image: Optional[str],
+        pdf: Optional[str],
+        image_url: Optional[str],
+        pdf_url: Optional[str]
+    ) -> Tuple[List[Dict], Optional[str]]
+
+# Responsibilities:
+- Construct AI conversation messages
+- Handle multimodal content encoding
+- Apply pattern templates
+- Process various input formats
+```
+
+### Presentation Layer Package (`presentation/cli/`)
 
 #### CLI Parser (`cli_parser.py`)
 ```python
@@ -520,23 +550,43 @@ Enum
 ### Component Composition
 ```
 Application (askai.py)
-├── CLIParser
-├── CommandHandler
-│   ├── PatternManager
-│   ├── ChatManager
-│   └── OpenRouterClient
-├── AIService
-│   └── OpenRouterClient
-├── MessageBuilder
-│   └── PatternManager
-└── OutputCoordinator
-    ├── ContentExtractor
-    ├── PatternProcessor
-    ├── ResponseNormalizer
-    ├── DirectoryManager
-    ├── TerminalFormatter
-    ├── MarkdownFormatter
-    └── FileWriterChain
+├── shared/
+│   ├── config/loader.py (Configuration)
+│   ├── logging/setup.py (Logging)
+│   └── utils/helpers.py (Utilities)
+├── presentation/cli/
+│   ├── CLIParser
+│   ├── CommandHandler
+│   └── BannerArgumentParser
+├── modules/
+│   ├── ai/
+│   │   ├── AIService
+│   │   └── OpenRouterClient
+│   ├── patterns/
+│   │   ├── PatternManager
+│   │   ├── PatternInput
+│   │   ├── PatternOutput
+│   │   └── PatternConfiguration
+│   ├── questions/
+│   │   ├── QuestionProcessor (NEW)
+│   │   └── models
+│   ├── chat/
+│   │   └── ChatManager
+│   └── messaging/
+│       └── MessageBuilder
+└── infrastructure/output/
+    ├── OutputCoordinator
+    ├── processors/
+    │   ├── ContentExtractor
+    │   ├── PatternProcessor
+    │   ├── ResponseNormalizer
+    │   └── DirectoryManager
+    ├── display_formatters/
+    │   ├── TerminalFormatter
+    │   ├── MarkdownFormatter
+    │   └── BaseDisplayFormatter
+    └── file_writers/
+        ├── FileWriterChain
         ├── HTMLWriter
         ├── CSSWriter
         ├── JavaScriptWriter

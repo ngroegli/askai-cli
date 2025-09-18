@@ -5,53 +5,55 @@ This directory contains individual D2 diagrams for the AskAI CLI architecture. E
 ## Available Diagrams
 
 ### [system_overview.d2](system_overview.d2)
-**High-level system architecture overview**
-- Shows the main architectural layers
-- Displays component groupings and relationships
-- Illustrates data flow between major system parts
-- Best for: Understanding overall system structure
+**High-level system architecture overview (Layered Architecture)**
+- Shows the new layered architecture (Shared/Modules/Presentation/Infrastructure)
+- Displays clear separation of concerns between layers
+- Illustrates data flow between architectural layers
+- Best for: Understanding the modern layered system structure
 
 ### [component_relationships.d2](component_relationships.d2)
-**Detailed component dependencies**
-- Maps all major classes and modules
-- Shows dependency relationships between components
-- Color-coded by functional area
-- Best for: Understanding code structure and dependencies
+**Detailed component dependencies (Layered Architecture)**
+- Maps all major classes and modules in their respective layers
+- Shows dependency relationships between components across layers
+- Color-coded by architectural layer (shared, modules, presentation, infrastructure)
+- Highlights the new question processing module
+- Best for: Understanding code structure and layer dependencies
 
 ### [pattern_flow.d2](pattern_flow.d2)
-**Pattern processing workflow**
-- Step-by-step pattern execution flow
-- Shows decision points and error handling
-- Illustrates data transformation at each stage
-- Best for: Understanding pattern-based interactions
+**Pattern processing workflow (Layered Architecture)**
+- Step-by-step pattern execution flow across architectural layers
+- Shows how presentation → modules → infrastructure → external services
+- Illustrates enhanced content extraction and deferred execution
+- Best for: Understanding pattern-based interactions in the layered system
 
 ### [chat_flow.d2](chat_flow.d2)
-**Chat session management workflow**
-- Chat session lifecycle management
-- History loading and context building
-- Session persistence and storage
-- Best for: Understanding chat functionality
+**Chat session management workflow (Layered Architecture)**
+- Chat session lifecycle management across modules and infrastructure layers
+- Shows integration between chat/ module and shared/ persistence services
+- History loading and context building using messaging/ module
+- Best for: Understanding chat functionality in the new architecture
 
 ### [config_flow.d2](config_flow.d2)
-**Configuration and initialization process**
-- Application startup sequence
-- Configuration validation and setup
-- Directory structure creation
-- Best for: Understanding application bootstrap
+**Configuration and initialization process (Layered Architecture)**
+- Application startup sequence using shared/config/ services
+- Layer-by-layer initialization (shared → modules → presentation → infrastructure)
+- Enhanced configuration management with shared/config/loader.py
+- Best for: Understanding application bootstrap in the layered architecture
 
 ### [pattern_architecture.d2](pattern_architecture.d2)
-**Pattern system detailed architecture**
-- Pattern storage and management
-- Component interaction within pattern system
-- Processing pipeline and output handling
-- Best for: Understanding pattern system internals
+**Pattern system detailed architecture (Layered Architecture)**
+- Pattern system organized within modules/patterns/ package
+- Integration with infrastructure/output/ for processing
+- Shows relationship between pattern modules and shared services
+- Best for: Understanding pattern system internals in the new structure
 
 ### [ai_integration.d2](ai_integration.d2)
-**AI service integration architecture**
-- AI provider integration layers
-- Message processing and response handling
-- External service interactions
-- Best for: Understanding AI service architecture
+**AI service integration architecture (Layered Architecture)**
+- AI services organized within modules/ai/ package
+- Integration with modules/messaging/ for message building
+- Shows layered approach to AI service integration
+- Enhanced with infrastructure/output/ for response processing
+- Best for: Understanding AI service architecture in the layered system
 
 ### [error_handling.d2](error_handling.d2)
 **Error handling and recovery system**

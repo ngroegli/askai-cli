@@ -8,17 +8,22 @@ import json
 import os
 import sys
 
+# Add the parent directory to Python path to enable local imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 # Local application imports
-from python.ai import AIService
-from python.chat import ChatManager
-from python.cli import CommandHandler
-from python.logger import setup_logger
-from python.message_builder import MessageBuilder
-from python.output.output_coordinator import OutputCoordinator
-from python.config import load_config
-from python.patterns import PatternManager
-from python.cli.cli_parser import CLIParser
-from python.utils import print_error_or_warnings
+from modules.ai import AIService
+from modules.chat import ChatManager
+from modules.questions import QuestionProcessor
+from presentation.cli import CommandHandler
+from shared.logging import setup_logger
+from modules.messaging import MessageBuilder
+from infrastructure.output.output_coordinator import OutputCoordinator
+from shared.config import load_config
+from modules.patterns import PatternManager
+from presentation.cli.cli_parser import CLIParser
+from shared.utils import print_error_or_warnings
+
 
 def display_help_fast():
     """
@@ -119,7 +124,6 @@ def main():
         args.persistent_chat = None
         args.view_chat = None
         # No chat functionality with patterns
-        chat_id = None
 
     # Create separate flows for pattern vs. chat processing
     if using_pattern:
@@ -164,126 +168,33 @@ def main():
         )
 
         # No chat history for patterns
-        chat_id = None
 
     else:
         # === CHAT/QUESTION MODE ===
-        # Make sure we have the required components
-        if pattern_manager is None:
-            pattern_manager = PatternManager(base_path)
-        if message_builder is None:
-            message_builder = MessageBuilder(pattern_manager, logger)
-        if chat_manager is None:
-            chat_manager = ChatManager(config, logger)
-        if ai_service is None:
-            ai_service = AIService(logger)
+        # Use the dedicated question processor
+        question_processor = QuestionProcessor(config, logger, base_path)
+        response_obj = question_processor.process_question(args)
 
-        # Build messages for chat/question
-        messages, resolved_pattern_id = message_builder.build_messages(
-            question=args.question,
-            file_input=args.file_input,
-            pattern_id=None,  # No pattern in chat mode
-            pattern_input=None,
-            response_format=args.format,
-            url=args.url,
-            image=args.image if hasattr(args, 'image') else None,
-            pdf=args.pdf if hasattr(args, 'pdf') else None,
-            image_url=args.image_url if hasattr(args, 'image_url') else None,
-            pdf_url=args.pdf_url if hasattr(args, 'pdf_url') else None
-        )
+        # The question processor returns a QuestionResponse object
+        formatted_output = response_obj.content
+        created_files = response_obj.created_files
 
-        # Check if message building was cancelled
-        if messages is None:
-            sys.exit(0)
+    # Initialize formatted_output and created_files to avoid unassigned variable errors
+    formatted_output = ""
+    created_files = []
 
-        # Handle persistent chat setup and context loading
-        chat_id, messages = chat_manager.handle_persistent_chat(args, messages)
+    # Process output based on mode
+    if using_pattern:
+        # Get pattern outputs for auto-execution handling
+        if resolved_pattern_id:
+            # Make sure pattern_manager is initialized
+            if pattern_manager is None:
+                pattern_manager = PatternManager(base_path, config)
 
-        # Debug log the final messages
-        logger.debug(json.dumps({"log_message": "Chat messages content", "messages": messages}))
+            pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
+            if pattern_data:
+                _ = pattern_data.get('outputs', [])
 
-        # Determine if web search should be enabled for URL analysis
-        enable_url_search = args.url is not None
-
-        # Get AI response for chat/question
-        response = ai_service.get_ai_response(
-            messages=messages,
-            model_name=args.model,
-            pattern_id=None,  # No pattern in chat mode
-            debug=args.debug,
-            pattern_manager=None,  # No pattern manager needed
-            enable_url_search=enable_url_search
-        )
-
-        # Store chat history if using persistent chat (only in chat/question mode)
-        # Make sure we're not using pattern mode before storing chat
-        if chat_id and not using_pattern:
-            chat_manager.store_chat_conversation(
-                chat_id, messages, response, None, None  # No pattern data in chat mode
-            )
-
-    # Get pattern outputs for auto-execution handling
-    pattern_outputs = None
-    if resolved_pattern_id:
-        # Make sure pattern_manager is initialized
-        if pattern_manager is None:
-            pattern_manager = PatternManager(base_path, config)
-
-        pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
-        if pattern_data:
-            pattern_outputs = pattern_data.get('outputs', [])
-
-    # Handle output
-    console_output = True  # Default to showing console output
-    file_output = args.save if hasattr(args, 'save') else False
-
-    # Enable file output if we have pattern outputs with write_to_file
-    pattern_has_file_output = False
-    if pattern_outputs:
-        for output in pattern_outputs:
-            if output.should_write_to_file():
-                file_output = True
-                pattern_has_file_output = True
-                break
-
-    # Process output
-    # Check if user specified an output file via args.output
-    has_output_arg = hasattr(args, 'output') and args.output is not None and not using_pattern
-
-    # Initialize output configuration
-    output_config = {}
-
-    # Add format to output_config so the handler knows what format to use
-    # But only use the user's format if not using a pattern
-    output_config['format'] = "rawtext" if using_pattern else args.format
-
-    # Add plain_md flag to output_config if it's set and we're using markdown format
-    if hasattr(args, 'plain_md') and args.plain_md and args.format == 'md':
-        output_config['plain_md'] = True
-
-    # Don't override file_output if it was already set by pattern outputs
-    # And don't use args.output if we're using a pattern
-    if has_output_arg and not pattern_has_file_output:
-        file_output = True
-
-        # Use the format specified with -f to determine the output file type
-        output_path = args.output
-
-        # Simple approach: Just set the format and filename based on user's format choice
-        if args.format == 'json':
-            output_config['json_filename'] = os.path.basename(output_path)
-        elif args.format == 'md':
-            output_config['markdown_filename'] = os.path.basename(output_path)
-        else:
-            # Default to markdown for text output (most versatile format)
-            output_config['markdown_filename'] = os.path.basename(output_path)
-
-        # Set output directory to parent directory of output file
-        output_dir = os.path.dirname(os.path.abspath(output_path))
-        output_handler.output_dir = output_dir
-
-    # Use the pattern manager to handle the response if we have a pattern
-    if resolved_pattern_id:
         # Check if the response is already a properly formatted JSON with a 'results' field
         try:
             if isinstance(response, dict) and 'content' in response:
@@ -312,24 +223,21 @@ def main():
             response,
             output_handler
         )
-
-    else:
-        # Default output handling for non-pattern responses
-        formatted_output, created_files = output_handler.process_output(
-            response=response,
-            output_config=output_config,
-            console_output=console_output,
-            file_output=file_output
-        )
+    # For question mode, the output is already processed by QuestionProcessor
+    # No additional processing needed
 
     # Print the formatted output for both pattern and non-pattern responses
     print(formatted_output)
 
     # Execute any pending operations (commands and files) after display is shown
-    additional_files = output_handler.execute_pending_operations()
-
-    # Combine created files from both output processing and pending operations
-    all_created_files = created_files + additional_files
+    # Only for pattern mode - question mode already handles its own output
+    if using_pattern:
+        additional_files = output_handler.execute_pending_operations()
+        # Combine created files from both output processing and pending operations
+        all_created_files = (created_files or []) + additional_files
+    else:
+        # For question mode, files are already handled by QuestionProcessor
+        all_created_files = created_files or []
 
     # Log created files
     if all_created_files:

@@ -1,22 +1,22 @@
-# AskAI CLI - High-Level System Architecture
+# AskAI CLI - High-Level System Architecture (Layered Architecture)
 title: "AskAI CLI - System Overview"
-
-
 
 user: "User" {
   shape: person
   style.fill: "#90CAF9" # Light Blue (core app, user)
 }
 
-cli: "CLI Interface" {
+# Presentation Layer
+presentation: "Presentation Layer" {
   shape: rectangle
   style.fill: "#F3E5F5" # Light Purple (CLI group)
 
-  parser: "CLI Parser" { style.fill: "#CE93D8" }
-  commands: "Command Handler" { style.fill: "#CE93D8" }
-  banner: "Banner Display" { style.fill: "#CE93D8" }
+  cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
+  command_handler: "Command Handler" { style.fill: "#CE93D8" }
+  banner_parser: "Banner Display" { style.fill: "#CE93D8" }
 }
 
+# Application Core
 app: "Application Core" {
   shape: rectangle
   style.fill: "#E3F2FD" # Light Blue (core app group)
@@ -25,26 +25,39 @@ app: "Application Core" {
   workflow: "Workflow Coordinator" { style.fill: "#90CAF9" }
 }
 
-services: "Service Layer" {
+# Modules Layer (Core Business Logic)
+modules: "Modules Layer" {
   shape: rectangle
-  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+  style.fill: "#E8F5E9" # Light Green (business logic group)
 
-  ai_service: "AI Service" { style.fill: "#FFCC80" }
-  pattern_mgr: "Pattern Manager" { style.fill: "#A5D6A7" } # Light Green (data processing)
-  chat_mgr: "Chat Manager" { style.fill: "#A5D6A7" } # Light Green
-  output_coordinator: "Output Coordinator" { style.fill: "#A5D6A7" } # Light Green
-  msg_builder: "Message Builder" { style.fill: "#A5D6A7" } # Light Green
+  ai_module: "AI Services" { style.fill: "#A5D6A7" }
+  patterns_module: "Pattern System" { style.fill: "#A5D6A7" }
+  questions_module: "Question Processing" { style.fill: "#A5D6A7" }
+  chat_module: "Chat Management" { style.fill: "#A5D6A7" }
+  messaging_module: "Message Building" { style.fill: "#A5D6A7" }
 }
 
-infrastructure: "Infrastructure" {
+# Infrastructure Layer
+infrastructure: "Infrastructure Layer" {
   shape: rectangle
-  style.fill: "#FAFAFA" # Light Gray (infra group)
+  style.fill: "#FFF9C4" # Light Yellow (infrastructure group)
+
+  output_infra: "Output Processing" { style.fill: "#FFF176" }
+  file_operations: "File Operations" { style.fill: "#FFF176" }
+  formatters: "Display Formatters" { style.fill: "#FFF176" }
+}
+
+# Shared Layer
+shared: "Shared Layer" {
+  shape: rectangle
+  style.fill: "#FAFAFA" # Light Gray (shared services group)
 
   config: "Configuration" { style.fill: "#BDBDBD" }
   logging: "Logging" { style.fill: "#BDBDBD" }
-  filesystem: "File System" { style.fill: "#BDBDBD" }
+  utils: "Utilities" { style.fill: "#BDBDBD" }
 }
 
+# External Services
 external: "External Services" {
   shape: rectangle
   style.fill: "#FFF3E0" # Light Orange (AI integration group)
@@ -53,13 +66,18 @@ external: "External Services" {
   ai_models: "AI Models" { style.fill: "#FFCC80" }
 }
 
-# Connections
-user -> cli: "Commands & Input"
-cli -> app: "Parsed Arguments"
-app -> services: "Service Calls"
-services -> infrastructure: "System Resources"
-services -> external: "API Requests"
-external -> services: "AI Responses"
-services -> app: "Processed Results"
-app -> cli: "Formatted Output"
-cli -> user: "Results & Feedback"
+# Layer Connections
+user -> presentation: "Commands & Input"
+presentation -> app: "Parsed Arguments"
+app -> modules: "Business Logic Calls"
+modules -> infrastructure: "Output Processing"
+modules -> external: "API Requests"
+external -> modules: "AI Responses"
+infrastructure -> presentation: "Formatted Output"
+presentation -> user: "Results & Feedback"
+
+# Shared services connections (all layers use shared)
+shared -> presentation: "Common Services"
+shared -> app: "Common Services"
+shared -> modules: "Common Services"
+shared -> infrastructure: "Common Services"

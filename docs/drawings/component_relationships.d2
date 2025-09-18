@@ -1,148 +1,107 @@
-# AskAI CLI - Component Dependencies and Relationships
+# AskAI CLI - Component Dependencies and Relationships (Layered Architecture)
 title: "Component Dependencies & Relationships"
 
-# Note: Enhanced architecture with deferred execution pattern
-# ContentExtractor supports malformed JSON with regex fallback
-# OutputCoordinator implements pending operations for proper sequencing
-# PatternProcessor provides single content extraction for reuse
+# Note: Enhanced layered architecture with clear separation of concerns
+# Shared layer provides common services to all other layers
+# Modules layer contains core business logic organized by domain
+# Presentation layer handles user interface
+# Infrastructure layer manages external output processing
 
-# Main Components
-
+# Main Application
 main: "askai.py" {
   style.fill: "#90CAF9" # Light Blue (core app)
   style.stroke: "#1976D2"
 }
 
-# CLI Layer
+# Shared Layer (Common Infrastructure)
+shared_layer: "Shared Layer" {
+  shape: rectangle
+  style.fill: "#F5F5F5" # Light Gray background
+  style.stroke: "#757575"
 
-cli_parser: "CLIParser" {
-  style.fill: "#CE93D8" # Light Purple (CLI)
-}
-command_handler: "CommandHandler" {
-  style.fill: "#CE93D8" # Light Purple
-}
-banner_parser: "BannerArgumentParser" {
-  style.fill: "#CE93D8" # Light Purple
-}
-
-# Service Layer
-
-ai_service: "AIService" {
-  style.fill: "#FFCC80" # Light Orange (AI)
-}
-openrouter_client: "OpenRouterClient" {
-  style.fill: "#FFCC80" # Light Orange
+  config_loader: "config/loader.py" { style.fill: "#BDBDBD" }
+  logging_setup: "logging/setup.py" { style.fill: "#BDBDBD" }
+  utils_helpers: "utils/helpers.py" { style.fill: "#BDBDBD" }
 }
 
+# Presentation Layer
+presentation_layer: "Presentation Layer" {
+  shape: rectangle
+  style.fill: "#F3E5F5" # Light Purple background
+  style.stroke: "#9C27B0"
 
-pattern_manager: "PatternManager" {
-  style.fill: "#A5D6A7" # Light Green (data processing)
-}
-pattern_input: "PatternInput" {
-  style.fill: "#A5D6A7" # Light Green
-}
-pattern_output: "PatternOutput" {
-  style.fill: "#A5D6A7" # Light Green
-}
-chat_manager: "ChatManager" {
-  style.fill: "#A5D6A7" # Light Green
-}
-output_coordinator: "OutputCoordinator" {
-  style.fill: "#A5D6A7" # Light Green
-}
-content_extractor: "ContentExtractor" {
-  style.fill: "#A5D6A7" # Light Green
-}
-pattern_processor: "PatternProcessor" {
-  style.fill: "#A5D6A7" # Light Green
-}
-response_normalizer: "ResponseNormalizer" {
-  style.fill: "#A5D6A7" # Light Green
-}
-directory_manager: "DirectoryManager" {
-  style.fill: "#A5D6A7" # Light Green
-}
-terminal_formatter: "TerminalFormatter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-markdown_formatter: "MarkdownFormatter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-file_writer_chain: "FileWriterChain" {
-  style.fill: "#A5D6A7" # Light Green
-}
-html_writer: "HTMLWriter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-css_writer: "CSSWriter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-js_writer: "JavaScriptWriter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-text_writer: "TextWriter" {
-  style.fill: "#A5D6A7" # Light Green
-}
-message_builder: "MessageBuilder" {
-  style.fill: "#A5D6A7" # Light Green
+  cli_parser: "cli/cli_parser.py" { style.fill: "#CE93D8" }
+  command_handler: "cli/command_handler.py" { style.fill: "#CE93D8" }
+  banner_parser: "cli/banner_argument_parser.py" { style.fill: "#CE93D8" }
 }
 
-# Infrastructure
+# Modules Layer (Core Business Logic)
+modules_layer: "Modules Layer" {
+  shape: rectangle
+  style.fill: "#E8F5E9" # Light Green background
+  style.stroke: "#4CAF50"
 
-config: "Configuration" {
-  style.fill: "#BDBDBD" # Light Gray (infra)
+  # AI Module
+  ai_service: "ai/ai_service.py" { style.fill: "#A5D6A7" }
+  openrouter_client: "ai/openrouter_client.py" { style.fill: "#A5D6A7" }
+
+  # Patterns Module
+  pattern_manager: "patterns/pattern_manager.py" { style.fill: "#A5D6A7" }
+  pattern_input: "patterns/pattern_inputs.py" { style.fill: "#A5D6A7" }
+  pattern_output: "patterns/pattern_outputs.py" { style.fill: "#A5D6A7" }
+  pattern_config: "patterns/pattern_configuration.py" { style.fill: "#A5D6A7" }
+
+  # Questions Module (NEW)
+  question_processor: "questions/processor.py" { style.fill: "#81C784" }
+  question_models: "questions/models.py" { style.fill: "#81C784" }
+
+  # Chat Module
+  chat_manager: "chat/chat_manager.py" { style.fill: "#A5D6A7" }
+
+  # Messaging Module
+  message_builder: "messaging/builder.py" { style.fill: "#A5D6A7" }
 }
-logger: "Logger" {
-  style.fill: "#BDBDBD" # Light Gray
+
+# Infrastructure Layer
+infrastructure_layer: "Infrastructure Layer" {
+  shape: rectangle
+  style.fill: "#FFF9C4" # Light Yellow background
+  style.stroke: "#FF9800"
+
+  output_coordinator: "output/output_coordinator.py" { style.fill: "#FFF176" }
+  content_extractor: "output/processors/content_extractor.py" { style.fill: "#FFF176" }
+  pattern_processor: "output/processors/pattern_processor.py" { style.fill: "#FFF176" }
+  terminal_formatter: "output/display_formatters/terminal_formatter.py" { style.fill: "#FFF176" }
+  file_writer_chain: "output/file_writers/file_writer_chain.py" { style.fill: "#FFF176" }
 }
-utils: "Utils" {
-  style.fill: "#BDBDBD" # Light Gray
-}
 
-# Dependencies
-main -> cli_parser: "Argument Parsing"
-main -> command_handler: "Command Routing"
-main -> ai_service: "AI Interactions"
-main -> pattern_manager: "Pattern Processing"
-main -> chat_manager: "Chat Sessions"
-main -> output_coordinator: "Output Processing"
-main -> message_builder: "Message Construction"
-main -> config: "Configuration Loading"
-main -> logger: "Logging"
+# Main Dependencies (Cross-Layer)
+main -> shared_layer: "Uses shared services"
+main -> presentation_layer: "UI interaction"
+main -> modules_layer: "Business logic"
 
-cli_parser -> banner_parser: "Enhanced Help"
-command_handler -> pattern_manager: "Pattern Commands"
-command_handler -> chat_manager: "Chat Commands"
-command_handler -> openrouter_client: "API Commands"
+# Presentation Layer Dependencies
+presentation_layer -> modules_layer: "Service calls"
+presentation_layer -> shared_layer: "Common services"
 
-ai_service -> openrouter_client: "API Communication"
-ai_service -> config: "Model Configuration"
+# Modules Layer Dependencies
+modules_layer -> infrastructure_layer: "Output processing"
+modules_layer -> shared_layer: "Common services"
 
-pattern_manager -> pattern_input: "Input Validation"
-pattern_manager -> pattern_output: "Output Definition"
-pattern_manager -> config: "Private Patterns"
+# Infrastructure Layer Dependencies
+infrastructure_layer -> shared_layer: "Common services"
 
-output_coordinator -> content_extractor: "Content Processing"
-output_coordinator -> pattern_processor: "Pattern Handling"
-output_coordinator -> response_normalizer: "Content Normalization"
-output_coordinator -> directory_manager: "Directory Management"
-output_coordinator -> terminal_formatter: "Terminal Display"
-output_coordinator -> markdown_formatter: "Markdown Formatting"
-output_coordinator -> file_writer_chain: "File Operations"
-file_writer_chain -> html_writer: "HTML Files"
-file_writer_chain -> css_writer: "CSS Files"
-file_writer_chain -> js_writer: "JS Files"
-file_writer_chain -> text_writer: "Text/Fallback"
-output_coordinator -> pattern_output: "Pattern Outputs"
-
-message_builder -> pattern_manager: "Pattern Templates"
-message_builder -> utils: "Content Processing"
-
-# All components use logger and utils
-cli_parser -> logger
-command_handler -> logger
-ai_service -> logger
-pattern_manager -> logger
-chat_manager -> logger
-output_coordinator -> logger
-message_builder -> logger
+# Specific Component Dependencies
+main -> cli_parser: "Argument parsing"
+main -> question_processor: "Question handling"
+cli_parser -> command_handler: "Command routing"
+command_handler -> pattern_manager: "Pattern operations"
+command_handler -> chat_manager: "Chat operations"
+ai_service -> openrouter_client: "API communication"
+pattern_manager -> pattern_input: "Input validation"
+pattern_manager -> pattern_output: "Output definition"
+output_coordinator -> content_extractor: "Content processing"
+output_coordinator -> file_writer_chain: "File operations"
+message_builder -> pattern_manager: "Template application"
+question_processor -> ai_service: "AI interactions"
+question_processor -> message_builder: "Message construction"

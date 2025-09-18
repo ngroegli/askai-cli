@@ -69,7 +69,19 @@ The system follows a layered architecture pattern with clear separation of conce
 - Manage application lifecycle
 - Integrate pattern and chat processing flows
 
-### 2. CLI Interface Package (`cli/`)
+### 2. Shared Infrastructure Package (`shared/`)
+**Components**:
+- `config/loader.py`: Configuration management and setup wizard
+- `logging/setup.py`: Logging infrastructure and formatting
+- `utils/helpers.py`: File operations, encoding, and utilities
+
+**Responsibilities**:
+- Provide common infrastructure services
+- Manage application configuration and logging
+- Supply shared utilities for file operations and formatting
+- Support application-wide constants and settings
+
+### 3. Presentation Layer Package (`presentation/cli/`)
 **Components**:
 - `CLIParser`: Argument parsing and validation
 - `CommandHandler`: Command execution routing
@@ -79,8 +91,11 @@ The system follows a layered architecture pattern with clear separation of conce
 - Parse and validate command-line arguments
 - Route commands to appropriate handlers
 - Provide comprehensive help and documentation
+- Handle user interaction and interface presentation
 
-### 3. AI Service Package (`ai/`)
+### 4. Core Modules Package (`modules/`)
+
+#### AI Service Module (`modules/ai/`)
 **Components**:
 - `AIService`: High-level AI interaction coordinator
 - `OpenRouterClient`: API client for OpenRouter service
@@ -91,7 +106,7 @@ The system follows a layered architecture pattern with clear separation of conce
 - Support multimodal inputs (text, images, PDFs)
 - Implement web search capabilities
 
-### 4. Pattern Management Package (`patterns/`)
+#### Pattern Management Module (`modules/patterns/`)
 **Components**:
 - `PatternManager`: Pattern lifecycle management
 - `PatternInput`: Input definition and validation
@@ -104,7 +119,37 @@ The system follows a layered architecture pattern with clear separation of conce
 - Define output behaviors and file generation
 - Support both built-in and private patterns
 
-### 5. Output Handling Package (`output/`)
+#### Question Processing Module (`modules/questions/`) - NEW
+**Components**:
+- `QuestionProcessor`: Standalone question processing logic
+- `models.py`: Question data models and structures
+
+**Responsibilities**:
+- Handle standalone question processing separate from patterns
+- Manage question-specific logic and validation
+- Provide clean separation between pattern and question workflows
+- Support various input formats for questions
+
+#### Chat Management Module (`modules/chat/`)
+**Components**:
+- `ChatManager`: Chat session lifecycle management
+
+**Responsibilities**:
+- Maintain persistent conversation history
+- Support chat context loading and storage
+- Provide chat file management utilities
+
+#### Messaging Module (`modules/messaging/`)
+**Components**:
+- `MessageBuilder`: Construct AI conversation messages
+
+**Responsibilities**:
+- Build message structures for different input types
+- Handle multimodal content encoding
+- Apply pattern templates and format instructions
+- Support URL and file content integration
+
+### 5. Infrastructure Layer Package (`infrastructure/output/`)
 **Components**:
 - `OutputCoordinator`: Main facade coordinating all output operations
 - **Processors Package** (`processors/`): Specialized content processing
@@ -129,25 +174,6 @@ The system follows a layered architecture pattern with clear separation of conce
 - **File Writers**: Specialized file creation based on content type using Chain of Responsibility
 - Support both pattern-based and standard output flows
 - Maintain separation of concerns between processing, formatting, and file operations
-
-### 6. Chat Management Package (`chat/`)
-**Components**:
-- `ChatManager`: Chat session lifecycle management
-
-**Responsibilities**:
-- Maintain persistent conversation history
-- Support chat context loading and storage
-- Provide chat file management utilities
-
-### 7. Message Builder (`message_builder.py`)
-**Purpose**: Construct AI conversation messages
-**Responsibilities**:
-- Build message structures for different input types
-- Handle multimodal content encoding
-- Apply pattern templates and format instructions
-- Support URL and file content integration
-
-### 8. Configuration System (`config.py`)
 **Purpose**: Application configuration management
 **Responsibilities**:
 - Load YAML configuration files
@@ -159,39 +185,71 @@ The system follows a layered architecture pattern with clear separation of conce
 
 ### Pattern-Based Processing Flow
 ```
-User Input → CLI Parser → Pattern Selection → Input Collection →
-Message Building → AI Service → OpenRouter API → Response Processing →
-Output Handler → Pattern Output Processing → File Generation/Display
+User Input → CLI Parser (presentation/cli) → Pattern Selection (modules/patterns) →
+Input Collection → Message Building (modules/messaging) → AI Service (modules/ai) →
+OpenRouter API → Response Processing → Output Handler (infrastructure/output) →
+Pattern Output Processing → File Generation/Display
+```
+
+### Question-Based Processing Flow (NEW)
+```
+User Input → CLI Parser (presentation/cli) → Question Processing (modules/questions) →
+Message Building (modules/messaging) → AI Service (modules/ai) → OpenRouter API →
+Response Processing → Output Handler (infrastructure/output) → Standard Formatting → Display
 ```
 
 ### Chat-Based Processing Flow
 ```
-User Input → CLI Parser → Chat Session Setup → Context Loading →
-Message Building → AI Service → OpenRouter API → Response Processing →
-Output Handler → Standard Formatting → Chat History Storage
+User Input → CLI Parser (presentation/cli) → Chat Session Setup (modules/chat) →
+Context Loading → Message Building (modules/messaging) → AI Service (modules/ai) →
+OpenRouter API → Response Processing → Output Handler (infrastructure/output) →
+Standard Formatting → Chat History Storage
 ```
 
 ### Configuration Flow
 ```
-Startup → Directory Check → Config File Check → Setup Wizard (if needed) →
-Configuration Loading → Component Initialization
+Startup → Directory Check (shared/utils) → Config File Check (shared/config) →
+Setup Wizard (if needed) → Configuration Loading → Component Initialization
 ```
+
+### Cross-Layer Communication
+- **Presentation Layer**: Receives user input, routes to appropriate modules
+- **Modules Layer**: Processes business logic, coordinates between AI services and patterns
+- **Infrastructure Layer**: Handles output processing, file operations, and external integrations
+- **Shared Layer**: Provides common services (config, logging, utilities) to all layers
 
 ## Module Dependencies
 
 ### Dependency Hierarchy
 ```
 askai.py (main)
-├── cli/ (CLIParser, CommandHandler)
-├── ai/ (AIService, OpenRouterClient)
-├── patterns/ (PatternManager, PatternInput, PatternOutput)
-├── output/ (OutputCoordinator + processors/, display_formatters/, file_writers/)
-├── chat/ (ChatManager)
-├── message_builder.py
-├── config.py
-├── logger.py
-└── utils.py
+├── shared/
+│   ├── config/loader.py (Configuration management)
+│   ├── logging/setup.py (Logging infrastructure)
+│   └── utils/helpers.py (File operations, utilities)
+├── presentation/cli/
+│   ├── cli_parser.py (Argument parsing)
+│   ├── command_handler.py (Command routing)
+│   └── banner_argument_parser.py (Enhanced help)
+├── modules/
+│   ├── ai/ (AIService, OpenRouterClient)
+│   ├── patterns/ (PatternManager, PatternInput, PatternOutput, PatternConfiguration)
+│   ├── questions/ (QuestionProcessor, models)
+│   ├── chat/ (ChatManager)
+│   └── messaging/ (MessageBuilder)
+└── infrastructure/output/
+    ├── output_coordinator.py (Main facade)
+    ├── processors/ (ContentExtractor, PatternProcessor, ResponseNormalizer, DirectoryManager)
+    ├── display_formatters/ (TerminalFormatter, MarkdownFormatter, BaseDisplayFormatter)
+    └── file_writers/ (FileWriterChain + specialized writers)
 ```
+
+### Layer Dependencies
+- **Presentation** → **Modules** → **Infrastructure**
+- **All Layers** → **Shared** (common infrastructure)
+- **Clear separation**: No circular dependencies
+- **Upward flow**: Presentation calls modules, modules call infrastructure
+- **Shared services**: Configuration, logging, utilities available to all layers
 
 ### External Dependencies
 - **requests**: HTTP API communication
