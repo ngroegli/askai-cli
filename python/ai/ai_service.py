@@ -5,9 +5,9 @@ Manages AI response generation and model configuration logic.
 
 import json
 import threading
-from utils import tqdm_spinner
-from config import load_config
-from patterns.pattern_configuration import ModelConfiguration, ModelProvider
+from python.utils import tqdm_spinner
+from python.config import load_config
+from python.patterns.pattern_configuration import ModelConfiguration, ModelProvider
 from python.ai.openrouter_client import OpenRouterClient
 
 

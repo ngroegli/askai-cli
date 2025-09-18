@@ -1,5 +1,5 @@
 """
-Console formatter for formatting content for terminal output.
+Terminal formatter for formatting content for terminal output.
 """
 
 import re
@@ -10,10 +10,10 @@ import io
 from rich.console import Console
 from rich.markdown import Markdown
 
-from python.output.formatters.base_formatter import BaseFormatter
+from python.output.display_formatters.base_display_formatter import BaseDisplayFormatter
 
 
-class ConsoleFormatter(BaseFormatter):
+class TerminalFormatter(BaseDisplayFormatter):
     """Formatter for terminal/console output with colors and formatting."""
 
     # ANSI color codes
@@ -42,7 +42,7 @@ class ConsoleFormatter(BaseFormatter):
     }
 
     def __init__(self, use_colors: bool = True, logger: Optional[logging.Logger] = None):
-        """Initialize console formatter with color options.
+        """Initialize terminal formatter with color options.
 
         Args:
             use_colors: Whether to use ANSI color codes in output
@@ -53,7 +53,7 @@ class ConsoleFormatter(BaseFormatter):
 
     def format(self, content: str, content_type: str = 'text',
               highlight_code: bool = True, **kwargs) -> str:
-        """Format content for console output with optional syntax highlighting.
+        """Format content for terminal output with optional syntax highlighting.
 
         Args:
             content: Content to format
@@ -62,7 +62,7 @@ class ConsoleFormatter(BaseFormatter):
             kwargs: Additional formatting options
 
         Returns:
-            str: Formatted content for console output
+            str: Formatted content for terminal output
         """
         if not content:
             return ""
@@ -139,13 +139,13 @@ class ConsoleFormatter(BaseFormatter):
         return framed_code
 
     def _format_markdown(self, markdown: str) -> str:
-        """Format markdown content for console display using rich.
+        """Format markdown content for terminal display using rich.
 
         Args:
             markdown: Markdown content
 
         Returns:
-            str: Console-formatted markdown
+            str: Terminal-formatted markdown
         """
         if not markdown:
             return ""

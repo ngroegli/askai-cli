@@ -249,7 +249,7 @@ class PatternManager:
         self,
         pattern_id: str,
         response: Union[str, Dict],
-        output_handler: OutputHandler
+        output_coordinator: OutputCoordinator
     ) -> Tuple[str, List[str]]
 
 # Pattern Discovery:
@@ -335,9 +335,9 @@ class PatternPurpose(Enum):
 
 ### Output Package (`python/output/`)
 
-#### Output Handler (`output_handler.py`)
+#### Output Coordinator (`output_coordinator.py`)
 ```python
-class OutputHandler:
+class OutputCoordinator:
     def __init__(self, output_dir: Optional[str])
 
     def process_output(
@@ -349,17 +349,49 @@ class OutputHandler:
         pattern_outputs: Optional[List[PatternOutput]]
     ) -> Tuple[str, List[str]]
 
-# Processing Methods:
+# Coordination Methods:
 - _handle_standardized_pattern_output()
 - _extract_content_by_patterns()
 - _extract_and_save_content()
 - _handle_command_execution()
 
-# Content Extraction:
-- JSON extraction from AI responses
-- Code block parsing
-- Multi-format content detection
-- Command recognition and validation
+# Content Processing:
+- Delegates to specialized processors
+- Coordinates between formatters and file writers
+- Manages output workflow
+```
+
+#### Content Processors (`processors/`)
+```python
+class ContentExtractor:
+    def extract_content(response: Union[str, Dict]) -> Dict[str, Any]
+    def validate_json_structure(content: Dict) -> bool
+
+class PatternProcessor:
+    def process_pattern_outputs(
+        pattern_outputs: List[PatternOutput],
+        content: Dict[str, Any]
+    ) -> List[str]
+
+class ResponseNormalizer:
+    def normalize_response(response: str) -> str
+    def clean_ai_artifacts(content: str) -> str
+
+class DirectoryManager:
+    def ensure_output_directory(directory: str) -> str
+    def validate_path_security(path: str) -> bool
+```
+
+#### Display Formatters (`display_formatters/`)
+```python
+class TerminalFormatter(BaseDisplayFormatter):
+    def format(content: str, content_type: str, **kwargs) -> str
+    def _format_markdown(markdown: str) -> str
+    def _highlight_code(code: str, language: str) -> str
+
+class MarkdownFormatter(BaseDisplayFormatter):
+    def format(content: str, content_type: str, **kwargs) -> str
+    def _format_as_code_block(code: str, language_tag: str) -> str
 ```
 
 #### File Writers (`file_writers/`)
@@ -475,15 +507,20 @@ Application (askai.py)
 │   └── OpenRouterClient
 ├── MessageBuilder
 │   └── PatternManager
-└── OutputHandler
-    ├── FileWriterChain
-    │   ├── HTMLWriter
-    │   ├── CSSWriter
-    │   ├── JavaScriptWriter
-    │   ├── MarkdownWriter
-    │   ├── JSONWriter
-    │   └── TextWriter
-    └── Formatters[]
+└── OutputCoordinator
+    ├── ContentExtractor
+    ├── PatternProcessor
+    ├── ResponseNormalizer
+    ├── DirectoryManager
+    ├── TerminalFormatter
+    ├── MarkdownFormatter
+    └── FileWriterChain
+        ├── HTMLWriter
+        ├── CSSWriter
+        ├── JavaScriptWriter
+        ├── MarkdownWriter
+        ├── JSONWriter
+        └── TextWriter
 ```
 
 ## API Interfaces

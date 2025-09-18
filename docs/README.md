@@ -77,7 +77,9 @@ d2 -t system_overview architecture_diagrams.d2 system_overview.png
 
 ### Extension Points
 - **Custom Patterns**: Add new patterns in private patterns directory
-- **Output Formatters**: Implement new display and file generation formats
+- **Display Formatters**: Implement new terminal and file display formats in `output/display_formatters/`
+- **File Writers**: Add specialized writers for new file types in `output/file_writers/`
+- **Content Processors**: Extend content processing capabilities in `output/processors/`
 - **AI Providers**: Extend for additional AI service providers
 - **Input Processors**: Add support for new file types and content sources
 

@@ -409,7 +409,7 @@ class CommandHandler:
                 print_error_or_warnings("Failed to create test configuration")
             return True
 
-        elif command == 'show-config-path':
+        if command == 'show-config-path':
             self.logger.info(json.dumps({"log_message": "User requested to show config path"}))
 
             config_path = get_config_path()
@@ -423,7 +423,7 @@ class CommandHandler:
                 print("\nProduction environment")
             return True
 
-        elif command == 'show-structure':
+        if command == 'show-structure':
             self.logger.info(json.dumps({"log_message": "User requested to show directory structure"}))
 
             print("\nAskAI Directory Structure:")
@@ -440,7 +440,6 @@ class CommandHandler:
             print("\n✓ = exists, ✗ = missing")
             return True
 
-        else:
-            print_error_or_warnings(f"Unknown configuration command: {command}")
-            print("Available commands: create-test-config, show-config-path, show-structure")
-            return True
+        print_error_or_warnings(f"Unknown configuration command: {command}")
+        print("Available commands: create-test-config, show-config-path, show-structure")
+        return True

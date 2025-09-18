@@ -12,10 +12,12 @@ Features include:
 
 import json
 from typing import List, Dict, Any, Optional, Callable
-from logger import setup_logger
-from utils import print_error_or_warnings
+
 import requests
-from config import load_config
+
+from python.config import load_config
+from python.logger import setup_logger
+from python.utils import print_error_or_warnings
 
 
 class OpenRouterClient:
@@ -431,7 +433,7 @@ class OpenRouterClient:
             respect_model = model_config is not None
             self._configure_pdf_handling(payload, respect_existing_model=respect_model)
             logger.debug(json.dumps({
-                "log_message": "Configured for PDF URL processing" + 
+                "log_message": "Configured for PDF URL processing" +
                               (" (keeping pattern-specified model)" if respect_model else ""),
                 "model": payload["model"],
                 "plugins": payload["plugins"]

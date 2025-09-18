@@ -1,5 +1,5 @@
 """
-Base class for output formatters.
+Base class for display formatters.
 """
 
 from abc import ABC, abstractmethod
@@ -7,8 +7,8 @@ from typing import Optional
 import logging
 
 
-class BaseFormatter(ABC):
-    """Base class for formatters that format content for different outputs."""
+class BaseDisplayFormatter(ABC):
+    """Base class for formatters that format content for different display outputs."""
 
     def __init__(self, logger: Optional[logging.Logger] = None):
         """Initialize formatter with optional logger.
@@ -20,7 +20,7 @@ class BaseFormatter(ABC):
 
     @abstractmethod
     def format(self, content: str, **kwargs) -> str:
-        """Format content according to specific rules.
+        """Format content according to specific display rules.
 
         Args:
             content: Content to format
