@@ -95,61 +95,110 @@ class BaseUnitTest(ABC):
     def assert_equal(self, expected, actual, test_name: str, message: str = ""):
         """Assert that expected equals actual."""
         passed = expected == actual
+        details = {
+            "expected": expected,
+            "actual": actual,
+            "match": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or f"Values match: {expected}")
+            self.add_result(test_name, True, message or "Values match", details)
         else:
             self.add_result(test_name, False,
-                          message or f"Expected: {expected}, Got: {actual}")
+                          message or "Values do not match", details)
         return passed
 
     def assert_not_equal(self, expected, actual, test_name: str, message: str = ""):
         """Assert that expected does not equal actual."""
         passed = expected != actual
+        details = {
+            "expected_not": expected,
+            "actual": actual,
+            "different": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or "Values differ as expected")
+            self.add_result(test_name, True, message or "Values differ as expected", details)
         else:
             self.add_result(test_name, False,
-                          message or f"Values should not be equal: {expected}")
+                          message or "Values should not be equal", details)
         return passed
 
-    def assert_true(self, condition, test_name: str, message: str = ""):
-        """Assert that condition is True."""
-        passed = bool(condition)
+    def assert_true(self, value, test_name: str, message: str = ""):
+        """Assert that value is True."""
+        passed = bool(value) is True
+        details = {
+            "value": value,
+            "is_true": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or "Condition is True")
+            self.add_result(test_name, True, message or "Value is True", details)
         else:
             self.add_result(test_name, False,
-                          message or f"Expected True, got {condition}")
+                          message or f"Value is not True: {value}", details)
         return passed
 
-    def assert_false(self, condition, test_name: str, message: str = ""):
-        """Assert that condition is False."""
-        passed = not bool(condition)
+    def assert_false(self, value, test_name: str, message: str = ""):
+        """Assert that value is False."""
+        passed = bool(value) is False
+        details = {
+            "value": value,
+            "is_false": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or "Condition is False")
+            self.add_result(test_name, True, message or "Value is False", details)
         else:
             self.add_result(test_name, False,
-                          message or f"Expected False, got {condition}")
+                          message or f"Value is not False: {value}", details)
+        return passed
+
+    def assert_contains(self, container, item, test_name: str, message: str = ""):
+        """Assert that container contains item."""
+        passed = item in container
+        details = {
+            "container": container,
+            "item": item,
+            "contains": passed
+        }
+
+        if passed:
+            self.add_result(test_name, True, message or "Item found in container", details)
+        else:
+            self.add_result(test_name, False,
+                          message or "Item not found in container", details)
         return passed
 
     def assert_in(self, item, container, test_name: str, message: str = ""):
-        """Assert that item is in container."""
+        """Assert that item is in container (alias for assert_contains with swapped parameters)."""
         passed = item in container
+        details = {
+            "item": item,
+            "container": container,
+            "in_container": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or "Item found in container")
+            self.add_result(test_name, True, message or "Item found in container", details)
         else:
             self.add_result(test_name, False,
-                          message or f"Item '{item}' not found in container")
+                          message or "Item not found in container", details)
         return passed
 
     def assert_not_none(self, value, test_name: str, message: str = ""):
         """Assert that value is not None."""
         passed = value is not None
+        details = {
+            "value": value,
+            "is_not_none": passed
+        }
+
         if passed:
-            self.add_result(test_name, True, message or "Value is not None")
+            self.add_result(test_name, True, message or "Value is not None", details)
         else:
             self.add_result(test_name, False,
-                          message or "Value is None")
+                          message or "Value is None", details)
         return passed
 
     def assert_raises(self, exception_class, callable_obj, test_name: str, message: str = ""):
