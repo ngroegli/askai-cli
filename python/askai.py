@@ -8,21 +8,24 @@ import json
 import os
 import sys
 
-# Add the parent directory to Python path to enable local imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Local application imports - grouped by package
+from infrastructure.output.output_coordinator import OutputCoordinator
 
-# Local application imports
 from modules.ai import AIService
 from modules.chat import ChatManager
-from modules.questions import QuestionProcessor
-from presentation.cli import CommandHandler
-from shared.logging import setup_logger
 from modules.messaging import MessageBuilder
-from infrastructure.output.output_coordinator import OutputCoordinator
-from shared.config import load_config
 from modules.patterns import PatternManager
+from modules.questions import QuestionProcessor
+
+from presentation.cli import CommandHandler
 from presentation.cli.cli_parser import CLIParser
+
+from shared.config import load_config
+from shared.logging import setup_logger
 from shared.utils import print_error_or_warnings
+
+# Add the parent directory to Python path to enable local imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def display_help_fast():

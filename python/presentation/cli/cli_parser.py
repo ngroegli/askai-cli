@@ -11,8 +11,8 @@ Ha        chat_group.add_argument(
 
 import sys
 import json
-from .banner_argument_parser import BannerArgumentParser
 from shared.utils import print_error_or_warnings
+from .banner_argument_parser import BannerArgumentParser
 
 
 class CLIParser:
