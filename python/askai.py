@@ -114,6 +114,10 @@ def main():
     # Check if chat functionality is being used
     using_chat = args.persistent_chat is not None or args.view_chat is not None
 
+    # Initialize output variables for both processing paths
+    formatted_output = ""
+    created_files = []
+
     # Warn if trying to use both pattern and chat functionality together
     if using_pattern and using_chat:
         logger.warning(json.dumps({
@@ -181,10 +185,6 @@ def main():
         # The question processor returns a QuestionResponse object
         formatted_output = response_obj.content
         created_files = response_obj.created_files
-
-    # Initialize formatted_output and created_files to avoid unassigned variable errors
-    formatted_output = ""
-    created_files = []
 
     # Process output based on mode
     if using_pattern:

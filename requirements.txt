@@ -5,3 +5,4 @@ rich
 termcolor
 jsonschema
 setuptools
+pytest

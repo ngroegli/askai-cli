@@ -77,7 +77,7 @@ infrastructure -> presentation: "Formatted Output"
 presentation -> user: "Results & Feedback"
 
 # Shared services connections (all layers use shared)
-shared -> presentation: "Common Services"
-shared -> app: "Common Services"
-shared -> modules: "Common Services"
-shared -> infrastructure: "Common Services"
+presentation -> shared: "Common Services"
+app -> shared: "Common Services"
+modules -> shared: "Common Services"
+infrastructure -> shared: "Common Services"

@@ -33,6 +33,8 @@ output_infrastructure: "Infrastructure Layer - Output" {
   output_coordinator: "output/output_coordinator.py" {style.fill: "#FFF176"} # Light Yellow (node)
   content_extractor: "output/processors/content_extractor.py" {style.fill: "#FFF176"}
   response_normalizer: "output/processors/response_normalizer.py" {style.fill: "#FFF176"}
+  pattern_processor: "output/processors/pattern_processor.py" {style.fill: "#FFF176"}
+  directory_manager: "output/processors/directory_manager.py" {style.fill: "#FFF176"}
 }
 
 # Shared Layer
@@ -57,9 +59,9 @@ external: "External Services" {
 app_core -> ai_modules: "AI service calls"
 app_core -> messaging_modules: "Message building"
 ai_modules -> output_infrastructure: "Response processing"
-shared_services -> ai_modules: "Configuration & utilities"
-shared_services -> messaging_modules: "Common services"
-shared_services -> output_infrastructure: "Logging & utilities"
+ai_modules -> shared_services: "Configuration & utilities"
+messaging_modules -> shared_services: "Common services"
+output_infrastructure -> shared_services: "Logging & utilities"
 
 # External Integration
 ai_modules -> external: "API requests"
@@ -84,10 +86,10 @@ output_infrastructure.response_normalizer -> output_infrastructure.output_coordi
 output_infrastructure.output_coordinator -> app_core.main_orchestrator: "Processed results"
 
 # Shared Services Integration
-shared_services.config_loader -> ai_modules.ai_service: "API keys & settings"
-shared_services.utils_helpers -> messaging_modules.message_builder: "File encoding & utilities"
-shared_services.logging_setup -> ai_modules.ai_service: "Logging services"
-shared_services.logging_setup -> output_infrastructure.output_coordinator: "Logging services"
+ai_modules.ai_service -> shared_services.config_loader: "API keys & settings"
+messaging_modules.message_builder -> shared_services.utils_helpers: "File encoding & utilities"
+ai_modules.ai_service -> shared_services.logging_setup: "Logging services"
+output_infrastructure.output_coordinator -> shared_services.logging_setup: "Logging services"
 
 # Multimodal and Web Search
 messaging_modules.content_encoder: {

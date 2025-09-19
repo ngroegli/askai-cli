@@ -6,8 +6,8 @@ storage: "Pattern Storage" {
   shape: cylinder
   style.fill: "#E3F2FD" # Light Blue (core app group)
 
-  builtin: "Built-in Patterns" { style.fill: "#90CAF9" }
-  private: "Private Patterns" { style.fill: "#90CAF9" }
+  builtin: "Built-in Patterns" {style.fill: "#90CAF9"}
+  private: "Private Patterns" {style.fill: "#90CAF9"}
 }
 
 # Modules Layer - Patterns Package
@@ -16,10 +16,10 @@ patterns_module: "modules/patterns/" {
   style.fill: "#E8F5E9" # Light Green (modules layer)
   style.stroke: "#4CAF50"
 
-  pattern_manager: "pattern_manager.py" { style.fill: "#A5D6A7" }
-  pattern_inputs: "pattern_inputs.py" { style.fill: "#A5D6A7" }
-  pattern_outputs: "pattern_outputs.py" { style.fill: "#A5D6A7" }
-  pattern_config: "pattern_configuration.py" { style.fill: "#A5D6A7" }
+  pattern_manager: "pattern_manager.py" {style.fill: "#A5D6A7"}
+  pattern_inputs: "pattern_inputs.py" {style.fill: "#A5D6A7"}
+  pattern_outputs: "pattern_outputs.py" {style.fill: "#A5D6A7"}
+  pattern_config: "pattern_configuration.py" {style.fill: "#A5D6A7"}
 }
 
 # Modules Layer - Messaging
@@ -28,7 +28,7 @@ messaging_module: "modules/messaging/" {
   style.fill: "#E8F5E9" # Light Green (modules layer)
   style.stroke: "#4CAF50"
 
-  message_builder: "builder.py" { style.fill: "#A5D6A7" }
+  message_builder: "builder.py" {style.fill: "#A5D6A7"}
 }
 
 # Infrastructure Layer - Output Processing
@@ -37,26 +37,29 @@ output_infrastructure: "infrastructure/output/" {
   style.fill: "#FFF9C4" # Light Yellow (infrastructure layer)
   style.stroke: "#FF9800"
 
-  output_coordinator: "output_coordinator.py" { style.fill: "#FFF176" }
+  output_coordinator: "output_coordinator.py" {style.fill: "#FFF176"}
 
   processors: "processors/" {
     style.fill: "#FFF176"
-    pattern_processor: "pattern_processor.py" { style.fill: "#FFEB3B" }
-    content_extractor: "content_extractor.py" { style.fill: "#FFEB3B" }
+    pattern_processor: "pattern_processor.py" {style.fill: "#FFEB3B"}
+    content_extractor: "content_extractor.py" {style.fill: "#FFEB3B"}
   }
 
   file_writers: "file_writers/" {
     style.fill: "#FFF176"
-    file_writer_chain: "file_writer_chain.py" { style.fill: "#FFEB3B" }
-    html_writer: "html_writer.py" { style.fill: "#FFEB3B" }
-    css_writer: "css_writer.py" { style.fill: "#FFEB3B" }
-    js_writer: "js_writer.py" { style.fill: "#FFEB3B" }
+    file_writer_chain: "file_writer_chain.py" {style.fill: "#FFEB3B"}
+    html_writer: "html_writer.py" {style.fill: "#FFEB3B"}
+    css_writer: "css_writer.py" {style.fill: "#FFEB3B"}
+    js_writer: "js_writer.py" {style.fill: "#FFEB3B"}
+    json_writer: "json_writer.py" {style.fill: "#FFEB3B"}
+    markdown_writer: "markdown_writer.py" {style.fill: "#FFEB3B"}
+    text_writer: "text_writer.py" {style.fill: "#FFEB3B"}
   }
 
   formatters: "display_formatters/" {
     style.fill: "#FFF176"
-    terminal_formatter: "terminal_formatter.py" { style.fill: "#FFEB3B" }
-    markdown_formatter: "markdown_formatter.py" { style.fill: "#FFEB3B" }
+    terminal_formatter: "terminal_formatter.py" {style.fill: "#FFEB3B"}
+    markdown_formatter: "markdown_formatter.py" {style.fill: "#FFEB3B"}
   }
 }
 
@@ -66,8 +69,9 @@ shared_services: "shared/" {
   style.fill: "#FAFAFA" # Light Gray (shared services)
   style.stroke: "#757575"
 
-  config: "config/loader.py" { style.fill: "#BDBDBD" }
-  utils: "utils/helpers.py" { style.fill: "#BDBDBD" }
+  config: "config/loader.py" {style.fill: "#BDBDBD"}
+  logging: "logging/setup.py" {style.fill: "#BDBDBD"}
+  utils: "utils/helpers.py" {style.fill: "#BDBDBD"}
 }
 
 # External AI Services
@@ -75,16 +79,16 @@ ai_services: "External AI" {
   shape: rectangle
   style.fill: "#FFF3E0" # Light Orange (AI integration group)
 
-  openrouter: "OpenRouter API" { style.fill: "#FFCC80" }
+  openrouter: "OpenRouter API" {style.fill: "#FFCC80"}
 }
 
 # Pattern Processing Flow
-storage -> patterns_module: "Load patterns"
+patterns_module -> storage: "Load patterns"
 patterns_module -> messaging_module: "Apply templates"
 messaging_module -> ai_services: "Send to AI"
 ai_services -> output_infrastructure: "Process responses"
-shared_services -> patterns_module: "Configuration & utilities"
-shared_services -> output_infrastructure: "Common services"
+patterns_module -> shared_services: "Configuration & utilities"
+output_infrastructure -> shared_services: "Common services"
 
 # Detailed component connections
 pattern_manager -> pattern_inputs: "Input validation"
@@ -94,3 +98,10 @@ message_builder -> pattern_manager: "Template application"
 output_coordinator -> processors.pattern_processor: "Pattern handling"
 output_coordinator -> file_writers.file_writer_chain: "File operations"
 output_coordinator -> formatters.terminal_formatter: "Display formatting"
+
+# Shared services integration (including logging)
+pattern_manager -> shared_services.config: "Pattern directories & settings"
+pattern_manager -> shared_services.logging: "Pattern processing logs"
+message_builder -> shared_services.utils: "File encoding & content processing"
+message_builder -> shared_services.logging: "Message building logs"
+output_coordinator -> shared_services.logging: "Output processing logs"
