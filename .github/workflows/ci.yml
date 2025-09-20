@@ -122,6 +122,19 @@ jobs:
           # Configure Python path for the project structure
           echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests" >> $GITHUB_ENV
 
+      - name: Debug environment
+        run: |
+          echo "Python version:"
+          python --version
+          echo "Current directory:"
+          pwd
+          echo "Python path:"
+          python -c "import sys; print('\n'.join(sys.path))"
+          echo "Files in tests directory:"
+          ls -la tests/
+          echo "Files in python directory:"
+          ls -la python/
+
       - name: Run Unit Tests
         id: run-tests
         shell: bash
@@ -131,13 +144,14 @@ jobs:
           # Change to project directory
           cd $GITHUB_WORKSPACE
 
+          # Set up Python path explicitly for the test run
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests"
+
           echo "::group::Running Unit Tests"
 
           # Run the unit tests using the project's test runner
           python tests/run_unit_tests.py > test_output.log 2>&1
-          TEST_EXIT_CODE=$?
-
-          # Display the test output
+          TEST_EXIT_CODE=$?          # Display the test output
           cat test_output.log
 
           echo "::endgroup::"
