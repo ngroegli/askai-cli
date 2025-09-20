@@ -1,5 +1,8 @@
 # Ask AI CLI
 
+[![CI Status](https://github.com/ngroegli/askai-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ngroegli/askai-cli/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/ngroegli/askai-cli/actions/workflows/pylint.yml/badge.svg)](https://github.com/ngroegli/askai-cli/actions/workflows/pylint.yml)
+
 - [Ask AI CLI](#ask-ai-cli)
   - [Features](#features)
   - [Setup Instructions](#setup-instructions)
@@ -229,6 +232,17 @@ Branch structure:
 - `main`: Stable production code
 - `develop`: Integration branch for new features
 - Feature branches: Created from `develop` for individual features
+
+### Architecture Overview
+
+The project follows a modern layered architecture with clear separation of concerns:
+
+- **`shared/`**: Common utilities, configuration, and logging infrastructure
+- **`modules/`**: Core business logic (AI services, patterns, chat, questions, messaging)
+- **`presentation/`**: User interface layer (CLI components)
+- **`infrastructure/`**: External output processing and coordination
+
+This structure promotes maintainability, testability, and clear separation of responsibilities. For detailed architecture information, see [SOFTWARE_ARCHITECTURE.md](./docs/SOFTWARE_ARCHITECTURE.md).
 
 For contributors:
 1. Fork the repository

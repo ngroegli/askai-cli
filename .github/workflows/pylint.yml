@@ -1,10 +1,14 @@
-name: Python Linting
+# Standalone Pylint analysis workflow
+# This workflow provides detailed Pylint analysis for manual triggering
+# and weekly code quality monitoring. For PR checks, see ci.yml workflow.
+name: Pylint Analysis (Standalone)
 
 on:
-  pull_request:
-    branches: ["main", "develop"]
   workflow_dispatch:
-    # Allows manual triggering
+    # Allows manual triggering for standalone pylint analysis
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC for code quality monitoring
+    - cron: "0 2 * * 0"
 
 jobs:
   lint:

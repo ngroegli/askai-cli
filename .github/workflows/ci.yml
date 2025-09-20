@@ -1,0 +1,255 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+  push:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+    # Allows manual triggering
+
+jobs:
+  pylint:
+    name: Code Quality (Pylint)
+    runs-on: ubuntu-latest
+    outputs:
+      pylint-passed: ${{ steps.pylint-check.outputs.passed }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint setuptools
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Set up the environment properly
+          echo "PYTHONPATH=.:$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
+      - name: Run Pylint Analysis
+        id: pylint-check
+        shell: bash
+        run: |
+          # Make sure there are Python files to analyze
+          PYTHON_FILES=$(find ./python -name "*.py" | xargs)
+          if [ -z "$PYTHON_FILES" ]; then
+            echo "No Python files found to analyze! Check the paths and file structure."
+            echo "passed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "::group::Full Pylint Output"
+          # Run pylint using the project's configuration file
+          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
+          PYLINT_EXIT_CODE=$?
+          echo "::endgroup::"
+
+          # Extract disabled warnings from .pylintrc
+          DISABLED_CHECKS=$(grep -oP '^disable=\K.*' .pylintrc || echo "")
+          echo "Applying disabled warnings from .pylintrc: $DISABLED_CHECKS"
+
+          echo "## 🔍 Pylint Code Quality Results" >> $GITHUB_STEP_SUMMARY
+
+          # Check for critical errors (error category) - fail if any are found
+          echo "::group::Checking for Critical Errors"
+          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+
+          # Check if there are actual errors (not just a perfect score message)
+          if echo "$CRITICAL_ERRORS" | grep -E '\[[A-Z][0-9]+.*\(.*\), error\]' > /dev/null; then
+            echo "❌ Critical errors found:"
+            echo "$CRITICAL_ERRORS"
+            echo "### ❌ Critical Errors Found" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$CRITICAL_ERRORS" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::error::Critical Python errors were found! These must be fixed before merging."
+            echo "passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ No critical errors found."
+            echo "### ✅ No Critical Errors" >> $GITHUB_STEP_SUMMARY
+            echo "passed=true" >> $GITHUB_OUTPUT
+          fi
+          echo "::endgroup::"
+
+          # Check for warnings - report but don't fail
+          echo "::group::Checking for Warnings"
+          WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+
+          if echo "$WARNINGS" | grep -E '\[[A-Z][0-9]+.*\(.*\), warning\]' > /dev/null; then
+            echo "⚠️ Warnings found (non-blocking):"
+            echo "$WARNINGS"
+            echo "### ⚠️ Warnings Found (Non-blocking)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$WARNINGS" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No warnings found."
+            echo "### ✅ No Warnings" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "::endgroup::"
+
+          echo "Pylint analysis completed successfully."
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: pylint
+    if: needs.pylint.outputs.pylint-passed == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Install any additional test dependencies if needed
+          pip install setuptools
+
+      - name: Set up Python environment
+        run: |
+          # Configure Python path for the project structure
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests" >> $GITHUB_ENV
+
+      - name: Debug environment
+        run: |
+          echo "Python version:"
+          python --version
+          echo "Current directory:"
+          pwd
+          echo "Python path:"
+          python -c "import sys; print('\n'.join(sys.path))"
+          echo "Files in tests directory:"
+          ls -la tests/
+          echo "Files in python directory:"
+          ls -la python/
+
+      - name: Run Unit Tests
+        id: run-tests
+        shell: bash
+        run: |
+          set +e  # Disable exit on error to handle errors gracefully
+
+          echo "## 🧪 Unit Test Results" >> $GITHUB_STEP_SUMMARY
+
+          # Change to project directory
+          cd $GITHUB_WORKSPACE
+
+          # Set up Python path explicitly for the test run
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests"
+
+          echo "::group::Running Unit Tests"
+          echo "About to run: python tests/run_unit_tests.py"
+          echo "Current directory: $(pwd)"
+          echo "PYTHONPATH: $PYTHONPATH"
+
+          # Run the unit tests using the project's test runner
+          python tests/run_unit_tests.py > test_output.log 2>&1
+          TEST_EXIT_CODE=$?
+
+          echo "Test runner exit code: $TEST_EXIT_CODE"
+
+          # Display the test output
+          echo "Test output:"
+          cat test_output.log
+
+          echo "::endgroup::"
+
+          # Parse test results from the output
+          if [ $TEST_EXIT_CODE -eq 0 ]; then
+            # Extract test summary from output
+            TOTAL_TESTS=$(grep -o "[0-9]\+ passed" test_output.log | tail -1 | cut -d' ' -f1)
+            FAILED_TESTS=$(grep -o "[0-9]\+ failed" test_output.log | tail -1 | cut -d' ' -f1 || echo "0")
+
+            echo "Extracted TOTAL_TESTS: '$TOTAL_TESTS'"
+            echo "Extracted FAILED_TESTS: '$FAILED_TESTS'"
+
+            if [ "$FAILED_TESTS" = "0" ] || [ -z "$FAILED_TESTS" ]; then
+              echo "### ✅ All Tests Passed! ($TOTAL_TESTS tests)" >> $GITHUB_STEP_SUMMARY
+              echo "::notice::All $TOTAL_TESTS unit tests passed successfully!"
+              echo "test-passed=true" >> $GITHUB_OUTPUT
+            else
+              echo "### ❌ Some Tests Failed ($FAILED_TESTS failed, $TOTAL_TESTS total)" >> $GITHUB_STEP_SUMMARY
+              echo "::error::$FAILED_TESTS out of $TOTAL_TESTS unit tests failed!"
+              echo "test-passed=false" >> $GITHUB_OUTPUT
+
+              # Extract failed test details
+              echo "#### Failed Test Details:" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              grep -A 5 -B 5 "FAIL" test_output.log >> $GITHUB_STEP_SUMMARY || echo "Could not extract failure details" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+
+              exit 1
+            fi
+          else
+            echo "### ❌ Test Suite Failed to Run" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat test_output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::error::Unit test suite failed to execute properly (exit code: $TEST_EXIT_CODE)"
+            echo "test-passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test_output.log
+          retention-days: 30
+
+  # Summary job that provides overall CI status
+  ci-status:
+    name: CI Status Summary
+    runs-on: ubuntu-latest
+    needs: [pylint, unit-tests]
+    if: always()
+
+    steps:
+      - name: Determine CI Status
+        run: |
+          echo "## 🎯 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+
+          PYLINT_STATUS="${{ needs.pylint.result }}"
+          TESTS_STATUS="${{ needs.unit-tests.result }}"
+
+          echo "### Job Results:" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$PYLINT_STATUS" = "success" ]; then
+            echo "- ✅ **Pylint**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Pylint**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "$TESTS_STATUS" = "success" ]; then
+            echo "- ✅ **Unit Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "$TESTS_STATUS" = "skipped" ]; then
+            echo "- ⏭️ **Unit Tests**: Skipped (Pylint failed)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Unit Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Overall status
+          if [ "$PYLINT_STATUS" = "success" ] && [ "$TESTS_STATUS" = "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🎉 **Overall Status: PASSED**" >> $GITHUB_STEP_SUMMARY
+            echo "All checks passed! This pull request is ready for review." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ **Overall Status: FAILED**" >> $GITHUB_STEP_SUMMARY
+            echo "Some checks failed. Please review and fix the issues before merging." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
