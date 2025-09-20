@@ -1,5 +1,8 @@
 # Ask AI CLI
 
+[![CI Status](https://github.com/ngroegli/askai-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/ngroegli/askai-cli/actions/workflows/ci.yml)
+[![Code Quality](https://github.com/ngroegli/askai-cli/actions/workflows/pylint.yml/badge.svg)](https://github.com/ngroegli/askai-cli/actions/workflows/pylint.yml)
+
 - [Ask AI CLI](#ask-ai-cli)
   - [Features](#features)
   - [Setup Instructions](#setup-instructions)
