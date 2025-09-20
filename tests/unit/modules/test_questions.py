@@ -78,13 +78,16 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test basic question processing end-to-end."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
+            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
                  patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
 
                 # Configure the mocks to return the expected values
+                mock_pattern_manager = Mock()
+                mock_pattern_class.return_value = mock_pattern_manager
+
                 mock_builder = Mock()
                 mock_builder.build_messages.return_value = ([{"role": "user", "content": "test question"}], None)
                 mock_builder_class.return_value = mock_builder
@@ -115,6 +118,12 @@ class TestQuestionProcessor(BaseUnitTest):
 
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
+                # Explicitly override the processor's instances with our mocks
+                processor.message_builder = mock_builder
+                processor.chat_manager = mock_chat_manager
+                processor.ai_service = mock_ai_service
+                processor.output_coordinator = mock_coordinator
+
                 # Test question processing method
                 test_question = "What is the capital of France?"
 
@@ -130,19 +139,27 @@ class TestQuestionProcessor(BaseUnitTest):
                 )
 
                 if hasattr(processor, 'process_question'):
-                    result = processor.process_question(mock_args)
+                    try:
+                        result = processor.process_question(mock_args)
 
-                    self.assert_not_none(
-                        result,
-                        "question_processing_result",
-                        "Question processing returns result"
-                    )
+                        self.assert_not_none(
+                            result,
+                            "question_processing_result",
+                            "Question processing returns result"
+                        )
 
-                    self.add_result(
-                        "question_processing_ai_called",
-                        True,
-                        "AI service called during question processing"
-                    )
+                        self.add_result(
+                            "question_processing_ai_called",
+                            True,
+                            "AI service called during question processing"
+                        )
+                    except ValueError as e:
+                        if "not enough values to unpack" in str(e):
+                            self.add_result("basic_question_processing_error", False, f"Tuple unpacking error: {e}")
+                        else:
+                            self.add_result("basic_question_processing_error", False, f"Value error: {e}")
+                    except Exception as e:
+                        self.add_result("basic_question_processing_error", False, f"Unexpected error: {e}")
                 else:
                     # Test core processing logic components
                     self.assert_not_none(
@@ -436,7 +453,7 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test complete integration flow of question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
+            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
@@ -456,6 +473,9 @@ class TestQuestionProcessor(BaseUnitTest):
                 ]
 
                 # Configure the mocks to return the expected values
+                mock_pattern_manager = Mock()
+                mock_pattern_class.return_value = mock_pattern_manager
+
                 mock_builder = Mock()
                 mock_builder.build_messages.return_value = (expected_messages, None)
                 mock_builder_class.return_value = mock_builder
@@ -484,31 +504,45 @@ class TestQuestionProcessor(BaseUnitTest):
 
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
+                # Explicitly override the processor's instances with our mocks
+                processor.message_builder = mock_builder
+                processor.chat_manager = mock_chat_manager
+                processor.ai_service = mock_ai_service
+                processor.output_coordinator = mock_coordinator
+
                 # Test complete integration
                 if hasattr(processor, 'process_question'):
-                    # Create mock args for process_question
-                    from argparse import Namespace
-                    mock_args = Namespace(
-                        question=test_question,
-                        format="rawtext",
-                        plain_md=False,
-                        save=False,
-                        output=None,
-                        debug=False
-                    )
-                    processor.process_question(mock_args)
+                    try:
+                        # Create mock args for process_question
+                        from argparse import Namespace
+                        mock_args = Namespace(
+                            question=test_question,
+                            format="rawtext",
+                            plain_md=False,
+                            save=False,
+                            output=None,
+                            debug=False
+                        )
+                        processor.process_question(mock_args)
 
-                    self.add_result(
-                        "integration_flow_complete",
-                        True,
-                        "Complete integration flow executed successfully"
-                    )
+                        self.add_result(
+                            "integration_flow_complete",
+                            True,
+                            "Complete integration flow executed successfully"
+                        )
 
-                    self.add_result(
-                        "integration_flow_messages",
-                        True,
-                        "Messages passed correctly through flow"
-                    )
+                        self.add_result(
+                            "integration_flow_messages",
+                            True,
+                            "Messages passed correctly through flow"
+                        )
+                    except ValueError as e:
+                        if "not enough values to unpack" in str(e):
+                            self.add_result("integration_flow_error", False, f"Tuple unpacking error: {e}")
+                        else:
+                            self.add_result("integration_flow_error", False, f"Value error: {e}")
+                    except Exception as e:
+                        self.add_result("integration_flow_error", False, f"Unexpected error: {e}")
                 else:
                     # Test integration components individually
                     self.assert_not_none(
