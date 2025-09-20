@@ -139,6 +139,8 @@ jobs:
         id: run-tests
         shell: bash
         run: |
+          set +e  # Disable exit on error to handle errors gracefully
+
           echo "## 🧪 Unit Test Results" >> $GITHUB_STEP_SUMMARY
 
           # Change to project directory
@@ -148,12 +150,18 @@ jobs:
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests"
 
           echo "::group::Running Unit Tests"
+          echo "About to run: python tests/run_unit_tests.py"
+          echo "Current directory: $(pwd)"
+          echo "PYTHONPATH: $PYTHONPATH"
 
           # Run the unit tests using the project's test runner
           python tests/run_unit_tests.py > test_output.log 2>&1
           TEST_EXIT_CODE=$?
 
+          echo "Test runner exit code: $TEST_EXIT_CODE"
+
           # Display the test output
+          echo "Test output:"
           cat test_output.log
 
           echo "::endgroup::"
@@ -163,6 +171,9 @@ jobs:
             # Extract test summary from output
             TOTAL_TESTS=$(grep -o "[0-9]\+ passed" test_output.log | tail -1 | cut -d' ' -f1)
             FAILED_TESTS=$(grep -o "[0-9]\+ failed" test_output.log | tail -1 | cut -d' ' -f1 || echo "0")
+
+            echo "Extracted TOTAL_TESTS: '$TOTAL_TESTS'"
+            echo "Extracted FAILED_TESTS: '$FAILED_TESTS'"
 
             if [ "$FAILED_TESTS" = "0" ] || [ -z "$FAILED_TESTS" ]; then
               echo "### ✅ All Tests Passed! ($TOTAL_TESTS tests)" >> $GITHUB_STEP_SUMMARY
@@ -184,7 +195,7 @@ jobs:
           else
             echo "### ❌ Test Suite Failed to Run" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -20 test_output.log >> $GITHUB_STEP_SUMMARY
+            cat test_output.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "::error::Unit test suite failed to execute properly (exit code: $TEST_EXIT_CODE)"
             echo "test-passed=false" >> $GITHUB_OUTPUT
