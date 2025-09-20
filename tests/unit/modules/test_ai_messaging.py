@@ -64,8 +64,11 @@ class TestAIService(BaseUnitTest):
                 'usage': {'prompt_tokens': 10, 'completion_tokens': 20}
             }
 
-            # Mock the OpenRouterClient class
-            with patch('modules.ai.ai_service.OpenRouterClient') as mock_client_class:
+            # Mock the OpenRouterClient class and user input functions
+            with patch('modules.ai.ai_service.OpenRouterClient') as mock_client_class, \
+                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+                 patch('builtins.input', return_value='y'):
+                
                 mock_client = Mock()
                 mock_client.request_completion.return_value = mock_response
                 mock_client_class.return_value = mock_client
@@ -112,8 +115,11 @@ class TestAIService(BaseUnitTest):
             mock_logger = Mock()
             ai_service = AIService(mock_logger)
 
-            # Mock API failure
-            with patch.object(ai_service, 'openrouter_client', create=True) as mock_client:
+            # Mock API failure and user input functions
+            with patch.object(ai_service, 'openrouter_client', create=True) as mock_client, \
+                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+                 patch('builtins.input', return_value='y'):
+                
                 mock_client.get_completion.side_effect = Exception("API Error")
 
                 messages = [{'role': 'user', 'content': 'Test question'}]
