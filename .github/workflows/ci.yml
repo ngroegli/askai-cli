@@ -151,7 +151,9 @@ jobs:
 
           # Run the unit tests using the project's test runner
           python tests/run_unit_tests.py > test_output.log 2>&1
-          TEST_EXIT_CODE=$?          # Display the test output
+          TEST_EXIT_CODE=$?
+
+          # Display the test output
           cat test_output.log
 
           echo "::endgroup::"
