@@ -80,11 +80,13 @@ def main():
             chat_manager = ChatManager(config, logger)
 
         # Create the command handler with only what's needed
+        # Note: question_processor will be created on-demand in the handler if needed for TUI
         command_handler = CommandHandler(pattern_manager, chat_manager, logger)
     else:
         # Full command execution requires all components
         pattern_manager = PatternManager(base_path, config)
         chat_manager = ChatManager(config, logger)
+        # Note: question_processor will be created on-demand in the handler if needed for TUI
         command_handler = CommandHandler(pattern_manager, chat_manager, logger)
         message_builder = MessageBuilder(pattern_manager, logger)
         ai_service = AIService(logger)

@@ -116,6 +116,27 @@ class CLIParser:
                            action='store_true',
                            help='Enable debug logging for this session')
 
+        # TUI (Terminal User Interface) options
+        tui_group = parser.add_argument_group('Interface options')
+        tui_group.add_argument('--interactive', '-i',
+                          action='store_true',
+                          help='Launch full-featured interactive TUI mode')
+        tui_group.add_argument('--tui',
+                          action='store_true',
+                          help='Force TUI mode (overrides config default)')
+        tui_group.add_argument('--cli',
+                          action='store_true',
+                          help='Force CLI mode (overrides config default)')
+        tui_group.add_argument('--tui-patterns',
+                          action='store_true',
+                          help='Use TUI interface for pattern selection only')
+        tui_group.add_argument('--tui-chats',
+                          action='store_true',
+                          help='Use TUI interface for chat management only')
+        tui_group.add_argument('--no-tui',
+                          action='store_true',
+                          help='Disable TUI completely (same as --cli, for backwards compatibility)')
+
         return parser
 
     def parse_arguments(self):
@@ -219,5 +240,26 @@ class CLIParser:
             }))
             print_error_or_warnings(
                 text="--plain-md can only be used with -f md. The parameter --plain-md will be ignored.",
+                warning_only=True
+            )
+
+        # Validate interface mode arguments
+        interface_flags = [args.tui, args.cli, args.no_tui]
+        if sum(interface_flags) > 1:
+            logger.warning(json.dumps({
+                "log_message": "User provided multiple conflicting interface mode flags"
+            }))
+            print_error_or_warnings(
+                text="Multiple interface mode flags provided (--tui, --cli, --no-tui). Using the last one specified.",
+                warning_only=True
+            )
+
+        # If no TUI is forced but TUI-specific options are used, warn about potential conflicts
+        if args.no_tui and (args.tui_patterns or args.tui_chats or args.interactive):
+            logger.warning(json.dumps({
+                "log_message": "User disabled TUI but provided TUI-specific options"
+            }))
+            print_error_or_warnings(
+                text="TUI is disabled (--no-tui) but TUI-specific options were provided. TUI options will be ignored.",
                 warning_only=True
             )

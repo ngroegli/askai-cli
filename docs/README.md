@@ -29,17 +29,49 @@ This document dives deep into the technical implementation details:
 
 **Target Audience**: Developers, DevOps engineers, technical maintainers
 
-### [architecture_diagrams.d2](architecture_diagrams.d2)
+### [TUI_ARCHITECTURE.md](TUI_ARCHITECTURE.md)
+**Terminal User Interface (TUI) architecture and design**
+
+This document provides comprehensive coverage of the modern TUI system:
+- TUI architecture principles and design patterns
+- Unified application design and screen management
+- Component layer structure and shared widgets
+- Navigation system and global shortcuts
+- Workflow integration (Question, Pattern, System management)
+- Error handling and graceful fallback mechanisms
+- Performance considerations and optimization
+- Development guidelines and best practices
+
+**Target Audience**: TUI developers, UX designers, technical maintainers
+
+### [TUI_USER_MANUAL.md](TUI_USER_MANUAL.md)
+**Complete user guide for the Terminal User Interface**
+
+This manual covers all aspects of using the AskAI TUI:
+- Getting started and environment requirements
+- Main interface and workflow navigation
+- Question Logic workflow with context support
+- Pattern Logic workflow with browser and preview
+- System Management workflow and configuration
+- Response viewer and advanced features
+- Keyboard shortcuts and navigation reference
+- Troubleshooting and best practices
+
+**Target Audience**: End users, system administrators, support teams
+
+### [drawings/](drawings/)
 **Visual architecture diagrams using D2 language**
 
-This file contains D2 (declarative diagramming) definitions for:
-- High-level system overview
-- Component relationships and dependencies
-- Data flow patterns (pattern processing, chat sessions)
-- Configuration and initialization flows
-- Pattern system architecture
-- AI service integration
-- Error handling and recovery systems
+This directory contains individual D2 diagrams for different aspects of the system:
+- **system_overview.d2**: High-level layered architecture with CLI and TUI
+- **tui_architecture.d2**: Complete TUI workflow and component structure
+- **component_relationships.d2**: Detailed component dependencies with TUI integration
+- **pattern_flow.d2**: Pattern processing workflow across layers
+- **chat_flow.d2**: Chat session management workflow
+- **config_flow.d2**: Configuration and initialization process
+- **pattern_architecture.d2**: Pattern system detailed architecture
+- **ai_integration.d2**: AI service integration architecture
+- **error_handling.d2**: Error handling and recovery system
 
 **Usage**: Use with D2 CLI or compatible tools to generate visual diagrams
 ```bash
@@ -47,29 +79,33 @@ This file contains D2 (declarative diagramming) definitions for:
 curl -fsSL https://d2lang.com/install.sh | sh -
 
 # Generate PNG diagrams
-d2 architecture_diagrams.d2 architecture_diagrams.png
+d2 docs/drawings/system_overview.d2 docs/drawings/system_overview.png
+d2 docs/drawings/tui_architecture.d2 docs/drawings/tui_architecture.png
 
-# Generate SVG diagrams
-d2 architecture_diagrams.d2 architecture_diagrams.svg
-
-# View specific diagram
-d2 -t system_overview architecture_diagrams.d2 system_overview.png
+# Generate all diagrams
+for file in docs/drawings/*.d2; do
+    d2 "$file" "${file%.d2}.png"
+done
 ```
 
 ## Quick Reference
 
 ### Key Components
 - **Main Application**: `python/askai.py` - Entry point and orchestration
-- **CLI Interface**: `python/cli/` - Command parsing and handling
-- **AI Services**: `python/ai/` - AI model integration via OpenRouter
-- **Pattern System**: `python/patterns/` - Template-based AI interactions
-- **Output Processing**: `python/output/` - Response formatting and file generation
-- **Chat Management**: `python/chat/` - Persistent conversation sessions
-- **Configuration**: `python/config.py` - YAML-based configuration system
+- **CLI Interface**: `python/presentation/cli/` - Command parsing and handling
+- **TUI Interface**: `python/presentation/tui/` - Interactive terminal user interface
+- **AI Services**: `python/modules/ai/` - AI model integration via OpenRouter
+- **Pattern System**: `python/modules/patterns/` - Template-based AI interactions
+- **Question Processing**: `python/modules/questions/` - Interactive question workflows
+- **Output Processing**: `python/infrastructure/output/` - Response formatting and file generation
+- **Chat Management**: `python/modules/chat/` - Persistent conversation sessions
+- **Configuration**: `python/shared/config/` - YAML-based configuration system
 
 ### Architecture Highlights
-- **Layered Architecture**: Clear separation between presentation, application, service, and infrastructure layers
+- **Layered Architecture**: Clear separation between presentation (CLI/TUI), modules, infrastructure, and shared layers
+- **Dual Interface Design**: Traditional CLI and modern TUI interfaces with graceful fallback
 - **Pattern-Based Design**: Extensible template system for structured AI interactions
+- **Unified Application Flow**: Single TUI session managing all workflows with consistent navigation
 - **Multimodal Support**: Text, images, PDFs, and URLs as input
 - **Flexible Output**: Console display, file generation, and command execution
 - **Configuration-Driven**: YAML configuration with interactive setup wizard
@@ -77,11 +113,13 @@ d2 -t system_overview architecture_diagrams.d2 system_overview.png
 
 ### Extension Points
 - **Custom Patterns**: Add new patterns in private patterns directory
-- **Display Formatters**: Implement new terminal and file display formats in `output/display_formatters/`
-- **File Writers**: Add specialized writers for new file types in `output/file_writers/`
-- **Content Processors**: Extend content processing capabilities in `output/processors/`
+- **TUI Screens**: Create new workflow screens using Textual framework
+- **Display Formatters**: Implement new terminal and file display formats in `infrastructure/output/display_formatters/`
+- **File Writers**: Add specialized writers for new file types in `infrastructure/output/file_writers/`
+- **Content Processors**: Extend content processing capabilities in `infrastructure/output/processors/`
 - **AI Providers**: Extend for additional AI service providers
 - **Input Processors**: Add support for new file types and content sources
+- **TUI Components**: Create custom widgets and components for enhanced user experience
 
 ## Project Overview
 

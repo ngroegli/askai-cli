@@ -1,0 +1,1 @@
+"""TUI applications for AskAI."""

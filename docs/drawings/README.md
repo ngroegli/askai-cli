@@ -5,19 +5,27 @@ This directory contains individual D2 diagrams for the AskAI CLI architecture. E
 ## Available Diagrams
 
 ### [system_overview.d2](system_overview.d2)
-**High-level system architecture overview (Layered Architecture)**
+**High-level system architecture overview (Layered Architecture with CLI & TUI)**
 - Shows the new layered architecture (Shared/Modules/Presentation/Infrastructure)
-- Displays clear separation of concerns between layers
-- Illustrates data flow between architectural layers
-- Best for: Understanding the modern layered system structure
+- Displays clear separation between CLI and TUI interfaces
+- Illustrates data flow between architectural layers and interface types
+- Best for: Understanding the modern layered system structure with dual interfaces
+
+### [tui_architecture.d2](tui_architecture.d2)
+**Terminal User Interface (TUI) architecture and workflow**
+- Comprehensive TUI component structure and relationships
+- Shows unified app design with screen-based navigation
+- Illustrates workflow routing between Question, Pattern, and System management
+- Displays integration with shared components and external dependencies
+- Best for: Understanding TUI design patterns and user interaction flows
 
 ### [component_relationships.d2](component_relationships.d2)
-**Detailed component dependencies (Layered Architecture)**
-- Maps all major classes and modules in their respective layers
-- Shows dependency relationships between components across layers
-- Color-coded by architectural layer (shared, modules, presentation, infrastructure)
-- Highlights the new question processing module
-- Best for: Understanding code structure and layer dependencies
+**Detailed component dependencies (Layered Architecture with TUI)**
+- Maps all major classes and modules including TUI components
+- Shows dependency relationships between CLI, TUI, and core layers
+- Color-coded by architectural layer and interface type
+- Highlights integration between traditional CLI and modern TUI interfaces
+- Best for: Understanding complete code structure with both interface types
 
 ### [pattern_flow.d2](pattern_flow.d2)
 **Pattern processing workflow (Layered Architecture)**
@@ -74,10 +82,13 @@ curl -fsSL https://d2lang.com/install.sh | sh -
 
 #### PNG Format (Recommended for documentation)
 ```bash
-# System overview
+# System overview (with CLI & TUI)
 d2 docs/drawings/system_overview.d2 docs/drawings/system_overview.png
 
-# Component relationships
+# TUI architecture
+d2 docs/drawings/tui_architecture.d2 docs/drawings/tui_architecture.png
+
+# Component relationships (with TUI)
 d2 docs/drawings/component_relationships.d2 docs/drawings/component_relationships.png
 
 # Pattern flow
