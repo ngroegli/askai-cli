@@ -6,21 +6,21 @@ unified_app: "UnifiedTUIApp" {
   shape: rectangle
   style.fill: "#0078d7"
   style.font-color: white
-  
+
   main_menu: "Main Menu Screen" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     question_option: "Question Logic"
-    pattern_option: "Pattern Logic"  
+    pattern_option: "Pattern Logic"
     system_option: "System Management"
   }
-  
+
   navigation: "Global Navigation" {
     shape: diamond
     style.fill: "#28a745"
     style.font-color: white
-    
+
     back_shortcut: "Ctrl+B: Back"
     quit_shortcut: "Ctrl+Q: Quit"
     help_shortcut: "F1: Help"
@@ -32,31 +32,31 @@ question_flow: "Question Workflow" {
   shape: rectangle
   style.fill: "#6c757d"
   style.font-color: white
-  
+
   builder: "QuestionBuilder Screen" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     text_input: "Text Input Area"
     action_buttons: "Execute/Clear Buttons"
     status_display: "Status Display"
     file_attachment: "File Attachment"
   }
-  
+
   processing: "AI Processing" {
     shape: cylinder
     style.fill: "#ffc107"
-    
+
     input_validation: "Input Validation"
     context_assembly: "Context Assembly"
     api_call: "AI API Call"
     response_streaming: "Response Streaming"
   }
-  
+
   response: "Response Viewer" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     formatted_display: "Formatted Display"
     scrollable_content: "Scrollable Content"
     navigation_actions: "Navigation Actions"
@@ -69,31 +69,31 @@ pattern_flow: "Pattern Workflow" {
   shape: rectangle
   style.fill: "#6c757d"
   style.font-color: white
-  
+
   browser: "PatternBrowser Screen" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     search_filter: "Search/Filter Bar"
     pattern_list: "Pattern List Pane"
     preview_pane: "Preview Pane"
     action_buttons: "Action Buttons"
   }
-  
+
   execution: "Pattern Execution" {
     shape: cylinder
     style.fill: "#ffc107"
-    
+
     template_loading: "Template Loading"
     variable_substitution: "Variable Substitution"
     prompt_generation: "Prompt Generation"
     ai_processing: "AI Processing"
   }
-  
+
   results: "Results Display" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     formatted_output: "Formatted Output"
     export_options: "Export Options"
     save_results: "Save Results"
@@ -106,21 +106,21 @@ system_flow: "System Management" {
   shape: rectangle
   style.fill: "#6c757d"
   style.font-color: white
-  
+
   dashboard: "System Dashboard" {
     shape: rectangle
     style.fill: "#e8f4f8"
-    
+
     config_editor: "Configuration Editor"
     api_management: "API Key Management"
     logs_viewer: "Logs Viewer"
     health_monitor: "Health Monitor"
   }
-  
+
   config: "Configuration" {
     shape: cylinder
     style.fill: "#ffc107"
-    
+
     tui_preferences: "TUI Preferences"
     ai_model_settings: "AI Model Settings"
     pattern_config: "Pattern Config"
@@ -133,31 +133,31 @@ components: "Shared Components" {
   shape: rectangle
   style.fill: "#dc3545"
   style.font-color: white
-  
+
   loading: "Loading Screen" {
     shape: oval
     style.fill: "#f8d7da"
-    
+
     progress_indicators: "Progress Indicators"
     status_messages: "Status Messages"
     cancellation_support: "Cancellation Support"
     loading_animation: "Loading Animation"
   }
-  
+
   widgets: "Custom Widgets" {
     shape: oval
     style.fill: "#f8d7da"
-    
+
     enhanced_input: "Enhanced Input"
     syntax_display: "Syntax Highlighting"
     file_browser: "File Browser"
     search_components: "Search Components"
   }
-  
+
   utils: "TUI Utils" {
     shape: oval
     style.fill: "#f8d7da"
-    
+
     tui_detection: "TUI Detection"
     graceful_fallback: "Graceful Fallback"
     style_management: "Style Management"
@@ -170,31 +170,31 @@ external: "External Systems" {
   shape: rectangle
   style.fill: "#17a2b8"
   style.font-color: white
-  
+
   textual: "Textual Framework" {
     shape: hexagon
     style.fill: "#d1ecf1"
-    
+
     app_class: "App Class"
     screen_management: "Screen Management"
     widget_library: "Widget Library"
     event_system: "Event System"
   }
-  
+
   ai_apis: "AI APIs" {
     shape: hexagon
     style.fill: "#d1ecf1"
-    
+
     openrouter_api: "OpenRouter API"
     ai_models: "AI Models"
     response_streaming: "Response Streaming"
     context_handling: "Context Handling"
   }
-  
+
   cli: "CLI Fallback" {
     shape: hexagon
     style.fill: "#d1ecf1"
-    
+
     cli_commands: "CLI Commands"
     argument_parsing: "Argument Parsing"
     logic_processors: "Logic Processors"

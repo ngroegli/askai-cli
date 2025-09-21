@@ -35,18 +35,18 @@ presentation_layer: "Presentation Layer" {
     shape: rectangle
     style.fill: "#E1BEE7" # Darker purple for CLI
     style.stroke: "#7B1FA2"
-    
+
     cli_parser: "cli/cli_parser.py" { style.fill: "#CE93D8" }
     command_handler: "cli/command_handler.py" { style.fill: "#CE93D8" }
     banner_parser: "cli/banner_argument_parser.py" { style.fill: "#CE93D8" }
   }
-  
+
   # TUI Components
   tui_group: "TUI Interface" {
     shape: rectangle
     style.fill: "#C8E6C9" # Light green for TUI
     style.stroke: "#388E3C"
-    
+
     unified_tui_app: "tui/apps/unified_tui_app.py" { style.fill: "#A5D6A7" }
     question_builder: "tui/apps/question_builder.py" { style.fill: "#A5D6A7" }
     pattern_browser: "tui/apps/pattern_browser.py" { style.fill: "#A5D6A7" }

@@ -11,13 +11,14 @@ try:
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
-    App = object
 
 
 if TEXTUAL_AVAILABLE:
     class SimplePatternBrowser(App):
         """Simple pattern browser for listing and quick selection."""
-
+else:
+    class SimplePatternBrowser(object):
+        pass
         CSS = """
         ListView {
             height: 1fr;
@@ -110,9 +111,11 @@ if TEXTUAL_AVAILABLE:
             else:
                 self.exit(None)
 
-        def action_quit(self):
+        async def action_quit(self):
             """Quit the application."""
             self.exit(None)
+else:
+    SimplePatternBrowser = None
 
 
 def run_simple_pattern_browser(pattern_manager) -> Optional[dict]:

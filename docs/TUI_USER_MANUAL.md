@@ -35,7 +35,7 @@ Choose your workflow to get started
 Build interactive AI queries with context files, URLs, images, and PDFs
 [Start Question Builder]
 
-📋 Pattern Logic  
+📋 Pattern Logic
 Browse patterns, preview markdown content, and execute with custom inputs
 [Browse Patterns]
 

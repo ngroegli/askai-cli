@@ -31,7 +31,7 @@ The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive termi
 #### UnifiedTUIApp
 **File**: `python/presentation/tui/apps/unified_tui_app.py`
 - **Purpose**: Central application coordinator
-- **Features**: 
+- **Features**:
   - Workflow selection and routing
   - Global navigation management
   - Screen stack coordination

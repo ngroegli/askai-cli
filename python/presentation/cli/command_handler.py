@@ -158,7 +158,7 @@ class CommandHandler:
                             if self.question_processor:
                                 question_result = run_question_builder(self.question_processor)
                                 if question_result:
-                                    print(f"\nQuestion builder completed successfully")
+                                    print("Question builder completed successfully")
                                 else:
                                     print("Question builder cancelled.")
                             else:
@@ -172,7 +172,7 @@ class CommandHandler:
                                 temp_question_processor = QuestionProcessor(config, self.logger, base_path)
                                 question_result = run_question_builder(temp_question_processor)
                                 if question_result:
-                                    print(f"\nQuestion builder completed successfully")
+                                    print("Question builder completed successfully")
                                 else:
                                     print("Question builder cancelled.")
                         except Exception as e:
