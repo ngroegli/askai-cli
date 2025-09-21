@@ -4,17 +4,37 @@ Comprehensive terminal interface that routes between Question Logic,
 Pattern Logic, and Internals Management workflows.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 
 try:
     from textual.app import App
     from textual.containers import Horizontal, Vertical, Container
     from textual.widgets import Header, Footer, Static, Button
-    from textual.binding import Binding, BindingType
+    from textual.binding import Binding
     from textual.screen import ModalScreen
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    if not TYPE_CHECKING:
+        App = object
+        Horizontal = object
+        Vertical = object
+        Container = object
+        Header = object
+        Footer = object
+        Static = object
+        Button = object
+        Binding = object
+        BindingType = object
+        ModalScreen = object
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App
+    from textual.containers import Horizontal, Vertical, Container
+    from textual.widgets import Header, Footer, Static, Button
+    from textual.binding import Binding, BindingType
+    from textual.screen import ModalScreen
 
 
 if TEXTUAL_AVAILABLE:

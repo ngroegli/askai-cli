@@ -2,7 +2,7 @@
 Simple and robust pattern browser for quick listing and selection.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 try:
     from textual.app import App
@@ -11,14 +11,27 @@ try:
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    if not TYPE_CHECKING:
+        App = object
+        Header = object
+        Footer = object
+        Static = object
+        ListView = object
+        ListItem = object
+        Label = object
+        Binding = object
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App
+    from textual.widgets import Header, Footer, Static, ListView, ListItem, Label
+    from textual.binding import Binding
 
 
 if TEXTUAL_AVAILABLE:
     class SimplePatternBrowser(App):
         """Simple pattern browser for listing and quick selection."""
-else:
-    class SimplePatternBrowser(object):
-        pass
+
         CSS = """
         ListView {
             height: 1fr;
@@ -114,8 +127,6 @@ else:
         async def action_quit(self):
             """Quit the application."""
             self.exit(None)
-else:
-    SimplePatternBrowser = None
 
 
 def run_simple_pattern_browser(pattern_manager) -> Optional[dict]:

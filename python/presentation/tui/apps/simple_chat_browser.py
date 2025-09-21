@@ -2,7 +2,7 @@
 Simple and robust chat browser for quick listing and selection.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 try:
     from textual.app import App
@@ -11,7 +11,21 @@ try:
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
-    App = object
+    if not TYPE_CHECKING:
+        App = object
+        Header = object
+        Footer = object
+        Static = object
+        ListView = object
+        ListItem = object
+        Label = object
+        Binding = object
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App
+    from textual.widgets import Header, Footer, Static, ListView, ListItem, Label
+    from textual.binding import Binding
 
 
 if TEXTUAL_AVAILABLE:

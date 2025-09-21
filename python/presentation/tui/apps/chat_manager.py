@@ -7,7 +7,7 @@ with real-time filtering, sorting, and preview capabilities.
 
 import os
 import json
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from datetime import datetime
 
 # Safe imports with fallbacks
@@ -22,8 +22,18 @@ try:
 except ImportError:
     # Fallback classes for when textual is not available
     TEXTUAL_AVAILABLE = False
-    App = object
-    Container = object
+    if not TYPE_CHECKING:
+        App = object
+        Container = object
+        DataTable = object
+        Binding = object
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App
+    from textual.containers import Container
+    from textual.widgets import DataTable
+    from textual.binding import Binding
 
 
 class ChatItem:

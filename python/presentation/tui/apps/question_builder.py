@@ -2,17 +2,37 @@
 Question Builder TUI for interactive question creation and execution.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 try:
     from textual.app import App
     from textual.screen import Screen
     from textual.containers import Vertical, Horizontal
-    from textual.widgets import Header, Footer, Static, Button, TextArea
+    from textual.widgets import Header, Footer, Static, Button, TextArea, Select
     from textual import work
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    if not TYPE_CHECKING:
+        App = object
+        Screen = object
+        Vertical = object
+        Horizontal = object
+        Header = object
+        Footer = object
+        Static = object
+        Button = object
+        TextArea = object
+        Select = object
+        work = lambda x: x  # Simple fallback for work decorator
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App
+    from textual.screen import Screen
+    from textual.containers import Vertical, Horizontal
+    from textual.widgets import Header, Footer, Static, Button, TextArea, Select
+    from textual import work
 
 
 if TEXTUAL_AVAILABLE:
@@ -37,6 +57,11 @@ if TEXTUAL_AVAILABLE:
             margin: 1 0;
         }
 
+        #format-select {
+            width: 60%;
+            margin: 1;
+        }
+
         #status {
             color: $accent;
             text-style: italic;
@@ -45,8 +70,13 @@ if TEXTUAL_AVAILABLE:
         }
 
         Button {
-            width: 30%;
-            margin: 1;
+            width: 20;
+            margin: 0 1;
+        }
+
+        #button-container {
+            width: 100%;
+            height: auto;
         }
 
         .title {
@@ -60,7 +90,9 @@ if TEXTUAL_AVAILABLE:
             super().__init__(**kwargs)
             self.question_processor = question_processor
             self.question_text = ""
+            self.selected_format = "md"  # Default to markdown
             self.loading_active = False
+            self.unified_app: Optional[object] = None  # Reference to unified app for navigation
 
         def compose(self):
             """Compose the question builder interface."""
@@ -74,17 +106,55 @@ if TEXTUAL_AVAILABLE:
                     placeholder="Enter your question here...",
                     id="question-input"
                 )
+
+                yield Static("Select output format:")
+                yield Select(
+                    options=[
+                        ("md", "Markdown (default)"),
+                        ("rawtext", "Raw Text"),
+                        ("json", "JSON")
+                    ],
+                    id="format-select"
+                )
+
                 yield Static("", id="status")
 
-                with Horizontal():
+                with Horizontal(id="button-container"):
+                    yield Static("")  # Spacer
                     yield Button("Execute Question", id="execute", variant="success")
                     yield Button("Quit", id="quit", variant="error")
+                    yield Static("")  # Spacer
 
             yield Footer()
 
         def on_mount(self):
             """Called when mounted."""
-            self.call_after_refresh(self.focus_input)
+            self.call_after_refresh(self.setup_defaults)
+
+        def setup_defaults(self):
+            """Set up default values and focus after UI is ready."""
+            try:
+                # Focus the input first
+                question_input = self.query_one("#question-input", TextArea)
+                question_input.focus()
+
+                # Set default format selection with a small delay
+                self.call_later(self.set_default_format)
+
+                status = self.query_one("#status", Static)
+                status.update("✅ Ready! Format: Markdown (default)")
+            except Exception as e:
+                status = self.query_one("#status", Static)
+                status.update(f"❌ Setup failed: {e}")
+
+        def set_default_format(self):
+            """Set the default format selection."""
+            try:
+                format_select = self.query_one("#format-select", Select)
+                format_select.value = "md"
+            except Exception:
+                # Silently fail if widget isn't ready yet
+                pass
 
         def focus_input(self):
             """Focus the input after UI is ready."""
@@ -92,7 +162,7 @@ if TEXTUAL_AVAILABLE:
                 question_input = self.query_one("#question-input", TextArea)
                 question_input.focus()
                 status = self.query_one("#status", Static)
-                status.update("✅ Input focused - you can type now!")
+                status.update("✅ Ready! Format: Markdown (default)")
             except Exception as e:
                 status = self.query_one("#status", Static)
                 status.update(f"❌ Focus failed: {e}")
@@ -103,6 +173,15 @@ if TEXTUAL_AVAILABLE:
                 self.question_text = event.text_area.text
                 status = self.query_one("#status", Static)
                 status.update(f"Question updated: {len(self.question_text)} chars")
+
+        async def on_select_changed(self, event: Select.Changed) -> None:
+            """Handle format selection changes."""
+            if event.select.id == "format-select":
+                self.selected_format = str(event.value)
+                status = self.query_one("#status", Static)
+                format_names = {"md": "Markdown", "rawtext": "Raw Text", "json": "JSON"}
+                format_name = format_names.get(self.selected_format, self.selected_format)
+                status.update(f"📝 Format selected: {format_name}")
 
         async def on_button_pressed(self, event: Button.Pressed) -> None:
             """Handle button presses."""
@@ -219,9 +298,15 @@ if TEXTUAL_AVAILABLE:
 
             Usage:
             • Type your question in the text area
+            • Select output format: Markdown (default), Raw Text, or JSON
             • Press Execute button or Ctrl+R to process
             • Loading animation shows progress
             • Response opens in dedicated viewer
+
+            Output Formats:
+            • Markdown: Rich formatted text with headers, lists, etc.
+            • Raw Text: Plain text without formatting
+            • JSON: Structured data format
 
             Global Shortcuts:
             • Ctrl+B: Back to main menu
@@ -232,7 +317,7 @@ if TEXTUAL_AVAILABLE:
             Tips:
             • You can enter multi-line questions
             • Questions are processed with AI analysis
-            • Responses include markdown formatting
+            • Responses include formatting based on selected format
             """
             self.notify(help_text, severity="information")
 
@@ -273,7 +358,7 @@ if TEXTUAL_AVAILABLE:
             def process_sync():
                 # Create mock args
                 class MockArgs:
-                    def __init__(self, question):
+                    def __init__(self, question, format_type):
                         self.question = question
                         self.file_input = None
                         self.url = None
@@ -281,7 +366,7 @@ if TEXTUAL_AVAILABLE:
                         self.pdf = None
                         self.image_url = None
                         self.pdf_url = None
-                        self.format = 'rawtext'
+                        self.format = format_type
                         self.model = None
                         self.debug = False
                         self.save = False
@@ -290,7 +375,7 @@ if TEXTUAL_AVAILABLE:
                         self.use_pattern = None
                         self.plain_md = False
 
-                mock_args = MockArgs(self.question_text)
+                mock_args = MockArgs(self.question_text, self.selected_format)
                 return self.question_processor.process_question(mock_args)
 
             # Run in thread pool to avoid blocking the UI
@@ -305,7 +390,7 @@ if TEXTUAL_AVAILABLE:
             try:
                 # Create mock args
                 class MockArgs:
-                    def __init__(self, question):
+                    def __init__(self, question, format_type):
                         self.question = question
                         self.file_input = None
                         self.url = None
@@ -313,7 +398,7 @@ if TEXTUAL_AVAILABLE:
                         self.pdf = None
                         self.image_url = None
                         self.pdf_url = None
-                        self.format = 'rawtext'
+                        self.format = format_type
                         self.model = None
                         self.debug = False
                         self.save = False
@@ -322,7 +407,7 @@ if TEXTUAL_AVAILABLE:
                         self.use_pattern = None
                         self.plain_md = False
 
-                mock_args = MockArgs(self.question_text)
+                mock_args = MockArgs(self.question_text, self.selected_format)
                 response = self.question_processor.process_question(mock_args)
 
                 # Show result

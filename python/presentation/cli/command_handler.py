@@ -6,6 +6,8 @@ Handles all CLI commands like listing, viewing systems and chats.
 import json
 import os
 from modules.ai import OpenRouterClient
+from modules.questions.processor import QuestionProcessor
+from shared.config.loader import load_config
 from shared.utils import print_error_or_warnings
 from shared.config import (
     ASKAI_DIR, CONFIG_PATH, CHATS_DIR, LOGS_DIR, TEST_DIR,
@@ -24,6 +26,12 @@ try:
 except ImportError:
     TUI_IMPORTS_AVAILABLE = False
     def is_tui_available() -> bool:
+        """
+        Fallback function when TUI imports are not available.
+
+        Returns:
+            bool: Always False when TUI dependencies are missing
+        """
         return False
 
 
@@ -51,7 +59,6 @@ class CommandHandler:
         # Load config if not provided
         if config is None:
             try:
-                from shared.config.loader import load_config
                 config = load_config()
             except Exception:
                 config = {}
@@ -109,10 +116,7 @@ class CommandHandler:
             question_processor = self.question_processor
             if question_processor is None:
                 # Create a question processor on-demand
-                from modules.questions.processor import QuestionProcessor
-                from shared.config.loader import load_config
                 config = load_config()
-                import os
                 base_path = os.path.abspath('.')
                 question_processor = QuestionProcessor(config, self.logger, base_path)
                 self.logger.info(json.dumps({"log_message": "Created question processor for TUI mode"}))
@@ -164,10 +168,7 @@ class CommandHandler:
                             else:
                                 print("Question processor not available. Creating one now...")
                                 # Create a temporary question processor for TUI mode
-                                from modules.questions.processor import QuestionProcessor
-                                from shared.config.loader import load_config
                                 config = load_config()
-                                import os
                                 base_path = os.path.abspath('.')
                                 temp_question_processor = QuestionProcessor(config, self.logger, base_path)
                                 question_result = run_question_builder(temp_question_processor)

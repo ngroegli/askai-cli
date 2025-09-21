@@ -4,18 +4,34 @@ Custom widgets for enhanced user experience including credit display,
 model information, and enhanced browsing capabilities.
 """
 
-from typing import Optional, List, Dict, Any, Union
+import re
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 try:
-    from textual.widgets import Static, ListView, ListItem, Label, DataTable, Tree
-    from textual.containers import Horizontal, Vertical, Container
+    from textual.widgets import Static, ListView, ListItem, Label, DataTable
+    from textual.containers import Container
     from textual.reactive import reactive
     from textual.screen import ModalScreen
-    from textual.app import ComposeResult
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    if not TYPE_CHECKING:
+        Container = object
+        Static = object
+        ListView = object
+        ListItem = object
+        Label = object
+        DataTable = object
+        ModalScreen = object
+        reactive = lambda x: x  # Simple fallback for reactive
     ComposeResult = Any
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.containers import Container
+    from textual.widgets import Static, ListView, ListItem, Label, DataTable
+    from textual.screen import ModalScreen
+    from textual.reactive import reactive
 
 
 if TEXTUAL_AVAILABLE:
@@ -128,7 +144,6 @@ if TEXTUAL_AVAILABLE:
                 return text
 
             # Simple highlighting - in a real implementation, you might use more sophisticated highlighting
-            import re
             pattern = re.compile(re.escape(search_term), re.IGNORECASE)
             return pattern.sub(f"[yellow]{search_term}[/yellow]", text)
 

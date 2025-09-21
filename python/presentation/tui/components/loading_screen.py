@@ -2,7 +2,7 @@
 Shared loading screen component for TUI applications.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 try:
     from textual.containers import Center, Middle, Vertical
@@ -13,6 +13,23 @@ try:
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    if not TYPE_CHECKING:
+        Center = object
+        Middle = object
+        Vertical = object
+        Static = object
+        ProgressBar = object
+        ModalScreen = object
+        Screen = object
+        work = lambda x: x
+    import asyncio
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.containers import Center, Middle, Vertical
+    from textual.widgets import Static, ProgressBar
+    from textual.screen import ModalScreen, Screen
+    from textual import work
 
 
 if TEXTUAL_AVAILABLE:
@@ -21,8 +38,8 @@ if TEXTUAL_AVAILABLE:
 
         def __init__(self, title: str = "Processing", message: str = "Please wait...", **kwargs):
             super().__init__(**kwargs)
-            self.title = title or "Processing"
-            self.message = message or "Please wait..."
+            self.title: str = title or "Processing"
+            self.message: str = message or "Please wait..."
             self.is_loading = True
 
         def compose(self):
@@ -70,19 +87,13 @@ if TEXTUAL_AVAILABLE:
 
         def update_message(self, message: str) -> None:
             """Update the loading message."""
-            try:
-                message_widget = self.query_one("#loading-message", Static)
-                message_widget.update(message)
-            except:
-                pass
+            message_widget = self.query_one("#loading-message", Static)
+            message_widget.update(message)
 
         def update_status(self, status: str) -> None:
             """Update the status message."""
-            try:
-                status_widget = self.query_one("#loading-status", Static)
-                status_widget.update(status)
-            except:
-                pass
+            status_widget = self.query_one("#loading-status", Static)
+            status_widget.update(status)
 
         def stop_loading(self) -> None:
             """Stop the loading animation."""
@@ -210,9 +221,6 @@ if TEXTUAL_AVAILABLE:
         """Dedicated screen for displaying question responses with navigation options."""
 
         def __init__(self, response_content: str, title: str = "Question Response", app_instance=None):
-            from textual.containers import Vertical, Horizontal, ScrollableContainer
-            from textual.widgets import Header, Footer, Static, Button, TextArea
-
             self.response_content = response_content
             self.title = title or "Question Response"
             self.app_instance = app_instance
@@ -222,7 +230,6 @@ if TEXTUAL_AVAILABLE:
             from textual.screen import Screen
             from textual.containers import Vertical, Horizontal, ScrollableContainer
             from textual.widgets import Header, Footer, Static, Button, TextArea
-            from textual.binding import Binding
 
             response_content = self.response_content
             title = self.title

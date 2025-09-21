@@ -5,27 +5,50 @@ Provides a modern interface for browsing, searching, and selecting patterns
 with real-time preview, filtering, and advanced navigation capabilities.
 """
 
-import os
-from typing import Optional, List, Any
-from pathlib import Path
+from typing import Optional, List, TYPE_CHECKING
 
 # Safe imports with fallbacks
 try:
     from textual.app import App, ComposeResult
-    from textual.containers import Horizontal, Vertical
+    from textual.containers import Horizontal, Vertical, ScrollableContainer
     from textual.widgets import (
         Header, Footer, Input, Static, ListItem, ListView,
-        Button, Label, ScrollableContainer
+        Label
     )
     from textual.binding import Binding
-    from textual.message import Message
-    from textual.reactive import reactive
     TEXTUAL_AVAILABLE = True
 except ImportError:
     # Fallback classes for when textual is not available
     TEXTUAL_AVAILABLE = False
-    App = object
-    ComposeResult = None
+    if not TYPE_CHECKING:
+        App = object
+        ComposeResult = None
+        Horizontal = object
+        Vertical = object
+        ScrollableContainer = object
+        Header = object
+        Footer = object
+        Input = object
+        Static = object
+        ListItem = object
+        ListView = object
+        Button = object
+        Label = object
+        Binding = object
+        Message = object
+        reactive = lambda x: x
+
+# Type imports for static analysis
+if TYPE_CHECKING:
+    from textual.app import App, ComposeResult
+    from textual.containers import Horizontal, Vertical, ScrollableContainer
+    from textual.widgets import (
+        Header, Footer, Input, Static, ListItem, ListView,
+        Button, Label
+    )
+    from textual.binding import Binding
+    from textual.message import Message
+    from textual.reactive import reactive
 
 
 class PatternItem:
