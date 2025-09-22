@@ -156,16 +156,16 @@ class TestAIService(BaseUnitTest):
                                 enable_url_search=False
                             )
 
-                        # If no exception is raised, response should be None or empty
-                        self.add_result("ai_response_failure_handling", True,
-                                      "AI service handles API failure gracefully")
+                            # If no exception is raised, response should be None or empty
+                            self.add_result("ai_response_failure_handling", True,
+                                        "AI service handles API failure gracefully")
 
-                    except Exception:
-                        # If exception is raised, that's also acceptable
-                        self.add_result("ai_response_failure_exception", True,
-                                      "AI service raises exception for API failure")
-                else:
-                    self.add_result("ai_response_failure_method_check", True, "AI service method check completed")
+                        except Exception:
+                            # If exception is raised, that's also acceptable
+                            self.add_result("ai_response_failure_exception", True,
+                                        "AI service raises exception for API failure")
+                    else:
+                        self.add_result("ai_response_failure_method_check", True, "AI service method check completed")
 
         except Exception as e:
             self.add_result("ai_response_failure_test_error", False, f"Failure test setup error: {e}")

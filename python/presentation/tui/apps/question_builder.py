@@ -1,5 +1,6 @@
 """
 Question Builder TUI for interactive question creation and execution.
+Refactored to use modular styling system.
 """
 
 from typing import Optional, TYPE_CHECKING
@@ -34,10 +35,32 @@ if TYPE_CHECKING:
     from textual.widgets import Header, Footer, Static, Button, TextArea, Select
     from textual import work
 
+# Import the modular styling system
+try:
+    from ..styles import DEFAULT_THEME
+    from ..styles.styled_components import (
+        TitleText, CaptionText, StatusText,
+        SuccessButton, DangerButton,
+        create_textarea, StyledSelect, ButtonGroup
+    )
+    STYLES_AVAILABLE = True
+except ImportError:
+    STYLES_AVAILABLE = False
+    if not TYPE_CHECKING:
+        DEFAULT_THEME = None
+        TitleText = object
+        CaptionText = object
+        StatusText = object
+        SuccessButton = object
+        DangerButton = object
+        create_textarea = lambda *args, **kwargs: None
+        StyledSelect = object
+        ButtonGroup = object
+
 
 if TEXTUAL_AVAILABLE:
     class QuestionBuilder(Screen):
-        """Interactive Question Builder TUI Screen."""
+        """Interactive Question Builder TUI Screen with modular styling."""
 
         BINDINGS = [
             ("ctrl+b", "back_to_main", "Back"),
@@ -46,45 +69,8 @@ if TEXTUAL_AVAILABLE:
             ("ctrl+r", "execute", "Execute"),
         ]
 
-        CSS = """
-        Static {
-            text-align: center;
-            margin: 1 0;
-        }
-
-        #question-input {
-            height: 10;
-            margin: 1 0;
-        }
-
-        #format-select {
-            width: 60%;
-            margin: 1;
-        }
-
-        #status {
-            color: $accent;
-            text-style: italic;
-            height: 3;
-            text-align: center;
-        }
-
-        Button {
-            width: 20;
-            margin: 0 1;
-        }
-
-        #button-container {
-            width: 100%;
-            height: auto;
-        }
-
-        .title {
-            text-style: bold;
-            color: $primary;
-            text-align: center;
-        }
-        """
+        # Use centralized CSS instead of scattered inline styles
+        CSS = DEFAULT_THEME.get_complete_css() if DEFAULT_THEME else ""
 
         def __init__(self, question_processor, **kwargs):
             super().__init__(**kwargs)
@@ -95,35 +81,39 @@ if TEXTUAL_AVAILABLE:
             self.unified_app: Optional[object] = None  # Reference to unified app for navigation
 
         def compose(self):
-            """Compose the question builder interface."""
+            """Compose the question builder interface using styled components."""
             yield Header(show_clock=True)
 
-            with Vertical():
-                yield Static("🤔 Question Builder", classes="title")
-                yield Static("Type your question below:")
-                yield TextArea(
-                    text="",
+            with Vertical(classes="container"):
+                # Use semantic text components
+                yield TitleText("🤔 Question Builder")
+                yield CaptionText("Type your question below:")
+
+                # Use styled textarea
+                yield create_textarea(
                     placeholder="Enter your question here...",
-                    id="question-input"
+                    id="question-input",
+                    classes="question-input"
                 )
 
-                yield Static("Select output format:")
-                yield Select(
+                yield CaptionText("Select output format:")
+                yield StyledSelect(
                     options=[
                         ("md", "Markdown (default)"),
                         ("rawtext", "Raw Text"),
                         ("json", "JSON")
                     ],
-                    id="format-select"
+                    id="format-select",
+                    classes="format-select"
                 )
 
-                yield Static("", id="status")
+                # Use styled status component
+                yield StatusText("", id="status", classes="question-status")
 
-                with Horizontal(id="button-container"):
-                    yield Static("")  # Spacer
-                    yield Button("Execute Question", id="execute", variant="success")
-                    yield Button("Quit", id="quit", variant="error")
-                    yield Static("")  # Spacer
+                # Use styled button group
+                with ButtonGroup():
+                    yield SuccessButton("Execute Question", id="execute")
+                    yield DangerButton("Quit", id="quit")
 
             yield Footer()
 

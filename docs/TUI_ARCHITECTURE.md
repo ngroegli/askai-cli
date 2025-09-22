@@ -55,11 +55,14 @@ The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive termi
   - Pattern metadata display
   - Quick execution capabilities
 
-#### Legacy Apps
+#### Selector Apps (CLI Integration)
+- `pattern_selector.py`: Lightweight pattern selection for CLI workflows
+- `chat_selector.py`: Lightweight chat selection for CLI workflows
+- `chat_manager.py`: Full-featured chat history management
+
+#### Legacy/Alternative Apps
 - `main_tui_app.py`: Original workflow launcher (deprecated)
-- `simple_pattern_browser.py`: Simplified pattern interface
-- `chat_manager.py`: Chat history management
-- `minimal_question_builder.py`: Lightweight question interface
+- `unified_tui_app.py`: Alternative unified interface
 
 ### Component Layer (`components/`)
 

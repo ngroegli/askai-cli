@@ -3,9 +3,8 @@ Unit tests for TUI fallback utilities.
 """
 
 import os
-import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from tests.test_base import TestBase
 
 # Import the module under test

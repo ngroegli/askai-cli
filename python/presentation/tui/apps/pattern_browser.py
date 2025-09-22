@@ -1,5 +1,6 @@
 """
 Interactive pattern browser using Textual TUI framework.
+Refactored to use modular styling system.
 
 Provides a modern interface for browsing, searching, and selecting patterns
 with real-time preview, filtering, and advanced navigation capabilities.
@@ -12,7 +13,7 @@ try:
     from textual.app import App, ComposeResult
     from textual.containers import Horizontal, Vertical, ScrollableContainer
     from textual.widgets import (
-        Header, Footer, Input, Static, ListItem, ListView,
+        Header, Footer, Input, ListItem, ListView,
         Label
     )
     from textual.binding import Binding
@@ -49,6 +50,22 @@ if TYPE_CHECKING:
     from textual.binding import Binding
     from textual.message import Message
     from textual.reactive import reactive
+
+# Import the modular styling system
+try:
+    from ..styles import DEFAULT_THEME
+    from ..styles.styled_components import (
+        TitleText, CaptionText, create_input, StyledStatic
+    )
+    STYLES_AVAILABLE = True
+except ImportError:
+    STYLES_AVAILABLE = False
+    if not TYPE_CHECKING:
+        DEFAULT_THEME = None
+        TitleText = object
+        CaptionText = object
+        create_input = lambda *args, **kwargs: None
+        StyledStatic = object
 
 
 class PatternItem:
@@ -94,17 +111,17 @@ if TEXTUAL_AVAILABLE:
             self.remove_children()
 
             if pattern is None:
-                self.mount(Static("Select a pattern to preview", classes="preview-placeholder"))
+                self.mount(CaptionText("Select a pattern to preview", classes="center-content"))
             else:
-                # Show pattern metadata
-                self.mount(Static(f"Pattern: {pattern.name}", classes="preview-title"))
+                # Show pattern metadata using styled components
+                self.mount(TitleText(f"Pattern: {pattern.name}"))
                 if pattern.description:
-                    self.mount(Static(f"Description: {pattern.description}", classes="preview-description"))
-                self.mount(Static("─" * 50, classes="preview-separator"))
+                    self.mount(CaptionText(f"Description: {pattern.description}"))
+                self.mount(StyledStatic("─" * 50, classes="preview-separator"))
 
                 # Show content
                 content = pattern.get_preview(50)  # Show more lines in preview
-                self.mount(Static(content, classes="preview-content"))
+                self.mount(StyledStatic(content, classes="preview-content"))
 
 
     class PatternList(ListView):
@@ -146,10 +163,35 @@ if TEXTUAL_AVAILABLE:
             return self.filtered_patterns[self.index]
 
 
-    class PatternBrowser(App):
-        """Main application for browsing patterns."""
+    class PatternBrowserApp(App):
+        """Main application for browsing patterns with modular styling."""
 
-        CSS = """
+        # Use centralized CSS instead of scattered inline styles
+        CSS = DEFAULT_THEME.get_app_css(additional_css="""
+        /* App-specific overrides */
+        Screen {
+            layout: horizontal;
+        }
+
+        #sidebar {
+            width: 50%;
+            border-right: thick $surface;
+        }
+
+        #preview {
+            width: 50%;
+            padding: 1;
+        }
+
+        .preview-separator {
+            color: $surface;
+            margin-bottom: 1;
+        }
+
+        .preview-content {
+            margin-top: 1;
+        }
+        """) if DEFAULT_THEME else """
         Screen {
             layout: horizontal;
         }
@@ -212,7 +254,7 @@ if TEXTUAL_AVAILABLE:
             self.preview_visible = True
 
         def compose(self) -> ComposeResult:
-            """Compose the application layout."""
+            """Compose the application layout using styled components."""
             yield Header(show_clock=True)
 
             # Load patterns
@@ -220,7 +262,7 @@ if TEXTUAL_AVAILABLE:
 
             with Horizontal():
                 with Vertical(id="sidebar"):
-                    yield Input(placeholder="Search patterns...", id="search")
+                    yield create_input(placeholder="Search patterns...", id="search")
                     yield PatternList(self.patterns, id="pattern-list")
 
                 yield PatternPreview(id="preview")

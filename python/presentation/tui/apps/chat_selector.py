@@ -1,5 +1,6 @@
 """
-Simple and robust chat browser for quick listing and selection.
+Chat Selector TUI for quick chat selection in CLI workflows.
+Lightweight interface designed for returning selected chats to command handlers.
 """
 
 from typing import Optional, TYPE_CHECKING
@@ -29,8 +30,8 @@ if TYPE_CHECKING:
 
 
 if TEXTUAL_AVAILABLE:
-    class SimpleChatBrowser(App):
-        """Simple chat browser for listing and quick selection."""
+    class ChatSelector(App):
+        """Chat selector for CLI workflows - quick listing and selection."""
 
         CSS = """
         ListView {
@@ -144,15 +145,16 @@ if TEXTUAL_AVAILABLE:
             self.exit(None)
 
 
-def run_simple_chat_browser(chat_manager) -> Optional[dict]:
+def run_chat_selector(chat_manager) -> Optional[dict]:
     """
-    Run the simple chat browser and return the selected chat.
+    Run the chat selector and return the selected chat.
+    Designed for CLI integration where a chat selection is needed.
     """
     if not TEXTUAL_AVAILABLE:
         return None
 
     try:
-        app = SimpleChatBrowser(chat_manager)
+        app = ChatSelector(chat_manager)
         result = app.run()
         return result
     except Exception:
@@ -160,4 +162,4 @@ def run_simple_chat_browser(chat_manager) -> Optional[dict]:
         return None
 
 
-__all__ = ['SimpleChatBrowser', 'run_simple_chat_browser']
+__all__ = ['ChatSelector', 'run_chat_selector']

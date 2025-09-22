@@ -18,9 +18,9 @@ from shared.config import (
 # TUI imports with fallback
 try:
     from presentation.tui import is_tui_available
-    from presentation.tui.apps.simple_pattern_browser import run_simple_pattern_browser
-    from presentation.tui.apps.simple_chat_browser import run_simple_chat_browser
-    from presentation.tui.apps.unified_tui_app import run_unified_tui
+    from presentation.tui.apps.pattern_selector import run_pattern_selector
+    from presentation.tui.apps.chat_selector import run_chat_selector
+    from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
     from presentation.tui.apps.question_builder import run_question_builder
     TUI_IMPORTS_AVAILABLE = True
 except ImportError:
@@ -121,7 +121,8 @@ class CommandHandler:
                 question_processor = QuestionProcessor(config, self.logger, base_path)
                 self.logger.info(json.dumps({"log_message": "Created question processor for TUI mode"}))
 
-            result = run_unified_tui(
+            # Use the new tabbed TUI interface instead of unified TUI
+            result = run_tabbed_tui(
                 pattern_manager=self.pattern_manager,
                 chat_manager=self.chat_manager,
                 question_processor=question_processor
@@ -137,7 +138,7 @@ class CommandHandler:
                         # Launch the pattern browser
                         print("\n🔍 Launching Pattern Browser...")
                         try:
-                            pattern_result = run_simple_pattern_browser(self.pattern_manager)
+                            pattern_result = run_pattern_selector(self.pattern_manager)
                             if pattern_result:
                                 print(f"\nSelected pattern: {pattern_result.get('name', 'Unknown')}")
                                 pattern_id = pattern_result.get('pattern_id', pattern_result.get('name'))
@@ -256,7 +257,7 @@ class CommandHandler:
                 try:
                     # Add timeout and better error handling for TUI
                     self.logger.info(json.dumps({"log_message": "Launching TUI pattern browser"}))
-                    selected_pattern = run_simple_pattern_browser(self.pattern_manager)
+                    selected_pattern = run_pattern_selector(self.pattern_manager)
                     if selected_pattern:
                         print(f"Selected pattern: {selected_pattern.get('name', 'Unknown')}")
                         # Show the selected pattern content
@@ -294,7 +295,7 @@ class CommandHandler:
             if args.view_pattern == '' and should_use_tui:
                 # Use TUI for pattern selection
                 try:
-                    selected_pattern = run_simple_pattern_browser(self.pattern_manager)
+                    selected_pattern = run_pattern_selector(self.pattern_manager)
                     if selected_pattern:
                         pattern_id = selected_pattern.get('pattern_id', selected_pattern.get('name'))
                     else:
@@ -361,7 +362,7 @@ class CommandHandler:
             # Use TUI if requested and available
             if should_use_tui:
                 try:
-                    selected_chat = run_simple_chat_browser(self.chat_manager)
+                    selected_chat = run_chat_selector(self.chat_manager)
                     if selected_chat:
                         print(f"Selected chat: {selected_chat.get('chat_id', 'Unknown')}")
                         if not selected_chat.get('corrupted', False):

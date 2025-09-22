@@ -1,5 +1,6 @@
 """
 Main TUI Application for AskAI CLI.
+Refactored to use modular styling system.
 Comprehensive terminal interface that routes between Question Logic,
 Pattern Logic, and Internals Management workflows.
 """
@@ -36,29 +37,46 @@ if TYPE_CHECKING:
     from textual.binding import Binding, BindingType
     from textual.screen import ModalScreen
 
+# Import the modular styling system
+try:
+    from ..styles import DEFAULT_THEME
+    from ..styles.styled_components import (
+        TitleText, CaptionText, PrimaryButton, DangerButton, ButtonGroup
+    )
+    STYLES_AVAILABLE = True
+except ImportError:
+    STYLES_AVAILABLE = False
+    if not TYPE_CHECKING:
+        DEFAULT_THEME = None
+        TitleText = object
+        CaptionText = object
+        PrimaryButton = object
+        DangerButton = object
+        ButtonGroup = object
+
 
 if TEXTUAL_AVAILABLE:
     class WorkflowSelectionModal(ModalScreen):
-        """Modal for selecting the main workflow."""
+        """Modal for selecting the main workflow using styled components."""
 
         def compose(self):
             """Compose the workflow selection modal."""
-            with Container(id="workflow-dialog"):
-                yield Static("Select AskAI Workflow", classes="modal-title")
-                yield Static("Choose the type of operation you want to perform:", classes="modal-description")
+            with Container(id="workflow-dialog", classes="modal-container"):
+                yield TitleText("Select AskAI Workflow")
+                yield CaptionText("Choose the type of operation you want to perform:")
 
                 with Vertical(classes="workflow-options"):
-                    yield Button("🤔 Ask Question", id="question-workflow", variant="primary", classes="workflow-btn")
-                    yield Static("Interactive question builder with context files, URLs, images, and PDFs", classes="workflow-desc")
+                    yield PrimaryButton("Ask Question", id="question-workflow", classes="workflow-btn")
+                    yield CaptionText("Interactive question builder with context files, URLs, images, and PDFs")
 
-                    yield Button("📋 Use Pattern", id="pattern-workflow", variant="primary", classes="workflow-btn")
-                    yield Static("Browse patterns, preview content, configure inputs, and execute", classes="workflow-desc")
+                    yield PrimaryButton("Use Pattern", id="pattern-workflow", classes="workflow-btn")
+                    yield CaptionText("Browse patterns, preview content, configure inputs, and execute")
 
-                    yield Button("⚙️ System Management", id="internals-workflow", variant="primary", classes="workflow-btn")
-                    yield Static("OpenRouter management, configuration, and system operations", classes="workflow-desc")
+                    yield PrimaryButton("System Management", id="internals-workflow", classes="workflow-btn")
+                    yield CaptionText("OpenRouter management, configuration, and system operations")
 
-                with Horizontal(classes="modal-actions"):
-                    yield Button("Cancel", id="cancel", variant="error")
+                with ButtonGroup(classes="modal-actions"):
+                    yield DangerButton("Cancel", id="cancel")
 
         def on_button_pressed(self, event: Button.Pressed) -> None:
             """Handle workflow selection."""
@@ -71,12 +89,13 @@ if TEXTUAL_AVAILABLE:
             elif event.button.id == "cancel":
                 self.dismiss(None)
 
-        CSS = """
+        # Use modular CSS system for the modal
+        CSS = DEFAULT_THEME.get_component_only_css("modals", "buttons") if DEFAULT_THEME else """
         #workflow-dialog {
             width: 80%;
             height: 70%;
             background: $surface;
-            border: thick $primary;
+            border: thick #00FFFF;
             padding: 2;
         }
 
@@ -117,9 +136,10 @@ if TEXTUAL_AVAILABLE:
 
 
     class MainTUIApp(App):
-        """Main AskAI TUI Application with workflow routing."""
+        """Main AskAI TUI Application with workflow routing and modular styling."""
 
-        CSS = """
+        # Use centralized CSS instead of scattered inline styles
+        CSS = DEFAULT_THEME.get_complete_css() if DEFAULT_THEME else """
         .welcome-title {
             text-style: bold;
             color: $primary;

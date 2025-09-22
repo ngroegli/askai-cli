@@ -1,5 +1,6 @@
 """
 Interactive chat manager using Textual TUI framework.
+Refactored to use modular styling system.
 
 Provides a modern interface for browsing, managing, and viewing chat history
 with real-time filtering, sorting, and preview capabilities.
@@ -34,6 +35,27 @@ if TYPE_CHECKING:
     from textual.containers import Container
     from textual.widgets import DataTable
     from textual.binding import Binding
+
+# Import the modular styling system
+try:
+    from ..styles import DEFAULT_THEME
+    from ..styles.styled_components import (
+        TitleText, CaptionText, ErrorText, create_input,
+        PrimaryButton, SecondaryButton, DangerButton, StyledStatic
+    )
+    STYLES_AVAILABLE = True
+except ImportError:
+    STYLES_AVAILABLE = False
+    if not TYPE_CHECKING:
+        DEFAULT_THEME = None
+        TitleText = object
+        CaptionText = object
+        ErrorText = object
+        create_input = lambda *args, **kwargs: None
+        PrimaryButton = object
+        SecondaryButton = object
+        DangerButton = object
+        StyledStatic = object
 
 
 class ChatItem:
@@ -212,9 +234,43 @@ if TEXTUAL_AVAILABLE:
 
 
     class ChatManager(App):
-        """Main application for managing chats."""
+        """Main application for managing chats with modular styling."""
 
-        CSS = """
+        # Use centralized CSS instead of scattered inline styles
+        CSS = DEFAULT_THEME.get_app_css(additional_css="""
+        /* App-specific overrides for chat manager */
+        Screen {
+            layout: horizontal;
+        }
+
+        #chat-panel {
+            width: 60%;
+            border-right: thick $surface;
+        }
+
+        #preview-panel {
+            width: 40%;
+            padding: 1;
+        }
+
+        #actions {
+            height: 3;
+            margin: 1;
+        }
+
+        .preview-separator {
+            color: $surface;
+            margin-bottom: 1;
+        }
+
+        .preview-content {
+            margin-top: 1;
+        }
+
+        .action-buttons {
+            layout: horizontal;
+        }
+        """) if DEFAULT_THEME else """
         Screen {
             layout: horizontal;
         }

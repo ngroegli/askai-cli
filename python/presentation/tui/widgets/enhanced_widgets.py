@@ -191,7 +191,7 @@ if TEXTUAL_AVAILABLE:
             width: 80%;
             height: 80%;
             background: $surface;
-            border: thick $primary;
+            border: thick #00FFFF;
             padding: 2;
         }
 

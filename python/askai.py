@@ -97,7 +97,9 @@ def main():
     # Check for incompatible combinations of pattern and chat commands
     using_pattern = args.use_pattern is not None
 
-    # Handle commands in priority order - patterns first
+    # Handle commands in priority order - interactive mode first, then patterns
+    if command_handler.handle_interactive_mode(args):
+        sys.exit(0)
     if command_handler.handle_pattern_commands(args):
         sys.exit(0)
     if command_handler.handle_chat_commands(args):

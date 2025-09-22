@@ -1,5 +1,6 @@
 """
-Simple and robust pattern browser for quick listing and selection.
+Pattern Selector TUI for quick pattern selection in CLI workflows.
+Lightweight interface designed for returning selected patterns to command handlers.
 """
 
 from typing import Optional, TYPE_CHECKING
@@ -29,8 +30,8 @@ if TYPE_CHECKING:
 
 
 if TEXTUAL_AVAILABLE:
-    class SimplePatternBrowser(App):
-        """Simple pattern browser for listing and quick selection."""
+    class PatternSelector(App):
+        """Pattern selector for CLI workflows - quick listing and selection."""
 
         CSS = """
         ListView {
@@ -129,15 +130,16 @@ if TEXTUAL_AVAILABLE:
             self.exit(None)
 
 
-def run_simple_pattern_browser(pattern_manager) -> Optional[dict]:
+def run_pattern_selector(pattern_manager) -> Optional[dict]:
     """
-    Run the simple pattern browser and return the selected pattern.
+    Run the pattern selector and return the selected pattern.
+    Designed for CLI integration where a pattern selection is needed.
     """
     if not TEXTUAL_AVAILABLE:
         return None
 
     try:
-        app = SimplePatternBrowser(pattern_manager)
+        app = PatternSelector(pattern_manager)
         result = app.run()
         return result
     except Exception:
@@ -145,4 +147,4 @@ def run_simple_pattern_browser(pattern_manager) -> Optional[dict]:
         return None
 
 
-__all__ = ['SimplePatternBrowser', 'run_simple_pattern_browser']
+__all__ = ['PatternSelector', 'run_pattern_selector']

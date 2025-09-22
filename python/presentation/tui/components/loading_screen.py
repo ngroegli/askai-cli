@@ -113,7 +113,7 @@ if TEXTUAL_AVAILABLE:
             width: 60%;
             height: 20%;
             background: $surface;
-            border: thick $primary;
+            border: thick #00FFFF;
             padding: 3;
         }
 
@@ -184,7 +184,7 @@ if TEXTUAL_AVAILABLE:
 
         #response-container {
             background: $surface;
-            border: thick $primary;
+            border: thick #00FFFF;
             width: 80%;
             height: 80%;
             padding: 1;
@@ -206,7 +206,7 @@ if TEXTUAL_AVAILABLE:
 
         #response-content {
             height: 30;
-            border: solid $accent;
+            border: solid #87CEEB;
             margin-bottom: 1;
         }
 
@@ -265,8 +265,8 @@ if TEXTUAL_AVAILABLE:
 
                         # Action buttons
                         with Horizontal(classes="button-row"):
-                            yield Button("🔄 Ask Another Question", id="ask-another", variant="primary")
-                            yield Button("🏠 Back to Main Menu", id="back-main", variant="success")
+                            yield Button("Ask Another Question", id="ask-another", variant="primary")
+                            yield Button("Back to Main Menu", id="back-main", variant="success")
 
                     yield Footer()
 
@@ -334,7 +334,7 @@ if TEXTUAL_AVAILABLE:
                     text-align: center;
                     margin: 1 0;
                     background: $surface;
-                    border: solid $accent;
+                    border: solid #87CEEB;
                     padding: 1;
                 }
 
@@ -347,7 +347,7 @@ if TEXTUAL_AVAILABLE:
 
                 #response-scroll {
                     height: 25;
-                    border: thick $primary;
+                    border: thick #00FFFF;
                     margin: 1 0;
                 }
 
@@ -386,6 +386,16 @@ def create_response_viewer(response_content: str, title: str = "AI Response") ->
     return ResponseViewerScreen(response_content, title)
 
 
+def create_pattern_response_screen(response_content: str, title: str = "Pattern Response", app_instance=None):
+    """Create a dedicated pattern response screen."""
+    if not TEXTUAL_AVAILABLE:
+        return None
+
+    # Reuse the QuestionResponseScreen but with pattern-specific styling
+    response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
+    return response_screen_builder.create_screen_class()
+
+
 def create_question_response_screen(response_content: str, title: str = "Question Response", app_instance=None):
     """Create a dedicated question response screen."""
     if not TEXTUAL_AVAILABLE:
@@ -396,4 +406,4 @@ def create_question_response_screen(response_content: str, title: str = "Questio
 
 
 __all__ = ['LoadingScreen', 'ResponseViewerScreen', 'QuestionResponseScreen',
-           'create_loading_screen', 'create_response_viewer', 'create_question_response_screen']
+           'create_loading_screen', 'create_response_viewer', 'create_question_response_screen', 'create_pattern_response_screen']
