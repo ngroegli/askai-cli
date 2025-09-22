@@ -21,7 +21,7 @@ class ModelBrowserScreen(BaseScreen):
     CSS = """
         .model-browser-container {
             height: 1fr;
-            padding: 2;
+            padding: 1;
         }
 
         .model-list-panel {
@@ -30,6 +30,7 @@ class ModelBrowserScreen(BaseScreen):
             padding: 2;
             margin-right: 2;
             background: $surface;
+            height: 1fr;
         }
 
         .model-details-panel {
@@ -37,19 +38,20 @@ class ModelBrowserScreen(BaseScreen):
             border: round #00FFFF;
             padding: 2;
             background: $surface;
+            height: 1fr;
         }
 
         .model-list {
             height: 1fr;
             border: solid #87CEEB;
             background: $background;
+            margin-bottom: 1;
         }
 
         .model-details-content {
             height: 1fr;
             border: solid #87CEEB;
-            margin-top: 1;
-            margin-bottom: 2;
+            margin-top: 0;
             padding: 1;
             background: $background;
             overflow-x: hidden;
@@ -57,22 +59,23 @@ class ModelBrowserScreen(BaseScreen):
         }
 
         .filter-input {
-            margin: 1 0;
+            margin: 0;
             height: 3;
             border: solid #87CEEB;
         }
 
         .filter-input:focus {
-            border: solid #00FFFF;
+            border: solid #87CEEB;
         }
 
-        .status-text {
-            color: $text-muted;
-            text-align: center;
-            height: 3;
-            padding: 1;
-            background: $surface;
-            border: solid #008B8B;
+        .status-caption {
+            color: #87CEEB;
+            background: transparent;
+            height: 1;
+            padding: 0 1;
+            text-align: left;
+            text-style: dim;
+            margin-bottom: 0;
         }
 
         .success-text {
@@ -92,16 +95,16 @@ class ModelBrowserScreen(BaseScreen):
             text-style: bold;
             color: $primary;
             text-align: center;
-            margin-bottom: 1;
+            margin-bottom: 0;
             background: $background;
-            padding: 1 2;
+            padding: 0 1;
             border: solid #87CEEB;
         }
 
         .button-container {
             height: auto;
-            padding: 1;
-            margin-top: 1;
+            padding: 0;
+            margin-top: 0;
             background: $surface;
             border: solid #87CEEB;
             text-align: center;
@@ -115,6 +118,11 @@ class ModelBrowserScreen(BaseScreen):
         ListView {
             overflow-x: hidden;
             overflow-y: auto;
+            height: 1fr;
+        }
+
+        .model-list {
+            max-height: 80%;
         }
 
         /* Model list items */
@@ -123,14 +131,23 @@ class ModelBrowserScreen(BaseScreen):
         }
 
         /* Button styling to ensure proper colors */
-        Button.primary, Button.secondary {
+        Button {
+            width: 10;
+            height: 3;
+            align: center middle;
+            text-align: center;
             background: $primary;
             color: $text;
-            border: none;
-            text-style: bold;
-            width: 12;
-            height: 3;
-            margin: 1;
+            border: solid $primary;
+        }
+
+        Button:hover {
+            background: $primary 80%;
+            border: solid $primary 80%;
+        }
+
+        Button:focus {
+            border: thick #00FFFF;
         }
 
         Button.primary:hover, Button.secondary:hover {
@@ -139,6 +156,21 @@ class ModelBrowserScreen(BaseScreen):
 
         Button.primary:focus, Button.secondary:focus {
             border: thick #00FFFF;
+        }
+
+        /* Override syntax highlighting for numbers */
+        .tok-m, .tok-mf, .tok-mi, .tok-mo {
+            color: #00FFFF !important;
+        }
+
+        /* Number literal styling */
+        Number {
+            color: #00FFFF;
+        }
+
+        /* Status caption number override */
+        .status-caption Number, .status-caption .tok-m, .status-caption .tok-mi {
+            color: #00FFFF !important;
         }
     """
 
@@ -155,7 +187,7 @@ class ModelBrowserScreen(BaseScreen):
 
         with Container(classes="model-browser-container"):
             with Horizontal():
-                # Left panel - model list and filter
+                # Left panel - model list, filter, and buttons
                 with Vertical(classes="model-list-panel"):
                     yield StyledStatic("Model Browser", classes="panel-title")
                     yield StyledInput(
@@ -163,10 +195,18 @@ class ModelBrowserScreen(BaseScreen):
                         id="model-filter",
                         classes="filter-input"
                     )
-                    yield ListView(id="model-list", classes="model-list")
-                    yield StyledStatic("Loading models...", id="status", classes="status-text")
 
-                # Right panel - model details
+                    # Status as small caption above the list
+                    yield Static("[cyan]Models: Loading...[/cyan]", id="status", classes="status-caption")
+
+                    yield ListView(id="model-list", classes="model-list")
+
+                    # Buttons moved to left panel
+                    with Horizontal(classes="button-container"):
+                        yield StyledButton("Refresh", id="refresh-models", variant="primary")
+                        yield StyledButton("Back", id="back-button", variant="primary")
+
+                # Right panel - model details (full height)
                 with Vertical(classes="model-details-panel"):
                     yield StyledStatic("Model Details", classes="panel-title")
                     yield RichLog(
@@ -176,10 +216,6 @@ class ModelBrowserScreen(BaseScreen):
                         markup=True,
                         wrap=True
                     )
-
-            with Horizontal(classes="button-container"):
-                yield StyledButton("Refresh", id="refresh-models", variant="primary")
-                yield StyledButton("Back", id="back-button", variant="primary")
 
         yield Footer()
 
@@ -214,7 +250,7 @@ class ModelBrowserScreen(BaseScreen):
         """Load available models from OpenRouter."""
         try:
             status_widget = self.query_one("#status", Static)
-            status_widget.update("[cyan]Loading models...[/cyan]")
+            status_widget.update("[cyan]Models: Loading...[/cyan]")
             status_widget.add_class("loading-text")
 
             # Import and create OpenRouter client
@@ -228,7 +264,11 @@ class ModelBrowserScreen(BaseScreen):
 
             status_widget.remove_class("loading-text")
             status_widget.add_class("success-text")
-            status_widget.update(f"[green]Loaded {len(self.models)} models[/green]")
+            total_count = len(self.models)
+            status_widget.update(f"[cyan]Models: {total_count} of {total_count}[/cyan]")
+
+            # Also call update_status to ensure consistency
+            self.update_status()
 
         except Exception as e:
             status_widget = self.query_one("#status", Static)
@@ -259,6 +299,30 @@ class ModelBrowserScreen(BaseScreen):
             self.model_index_map[index] = model
             await model_list.append(list_item)
 
+        # Update status to show current filter state
+        self.update_status()
+
+    def update_status(self) -> None:
+        """Update the status widget with current model count."""
+        try:
+            status_widget = self.query_one("#status", Static)
+            if self.filtered_models:
+                # Use Rich markup for entire text to avoid syntax highlighting
+                filtered_count = len(self.filtered_models)
+                total_count = len(self.models)
+                text = f"[cyan]Models: {filtered_count} of {total_count}[/cyan]"
+                status_widget.update(text)
+                status_widget.remove_class("error-text")
+                status_widget.add_class("success-text")
+            else:
+                text = "[cyan]No models match your filter[/cyan]"
+                status_widget.update(text)
+                status_widget.remove_class("success-text")
+                status_widget.add_class("error-text")
+        except Exception as e:
+            # Debug: print any errors
+            print(f"Status update error: {e}")
+
     async def on_input_changed(self, event: Input.Changed) -> None:
         """Handle filter input changes."""
         if event.input.id == "model-filter":
@@ -274,17 +338,6 @@ class ModelBrowserScreen(BaseScreen):
                 ]
 
             await self.populate_model_list()
-
-            # Update status
-            status_widget = self.query_one("#status", Static)
-            if self.filtered_models:
-                status_widget.update(f"[cyan]Showing {len(self.filtered_models)} of {len(self.models)} models[/cyan]")
-                status_widget.remove_class("error-text")
-                status_widget.add_class("success-text")
-            else:
-                status_widget.update("[yellow]No models match your filter[/yellow]")
-                status_widget.remove_class("success-text")
-                status_widget.add_class("error-text")
 
     async def on_list_view_selected(self, _event: ListView.Selected) -> None:
         """Handle model selection."""

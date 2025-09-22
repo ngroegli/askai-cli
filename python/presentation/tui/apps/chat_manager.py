@@ -39,10 +39,7 @@ if TYPE_CHECKING:
 # Import the modular styling system
 try:
     from ..styles import DEFAULT_THEME
-    from ..styles.styled_components import (
-        TitleText, CaptionText, ErrorText, create_input,
-        PrimaryButton, SecondaryButton, DangerButton, StyledStatic
-    )
+
     STYLES_AVAILABLE = True
 except ImportError:
     STYLES_AVAILABLE = False

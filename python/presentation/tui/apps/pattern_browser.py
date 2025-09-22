@@ -1,6 +1,6 @@
 """
 Interactive pattern browser using Textual TUI framework.
-Refactored to use modular styling system.
+Professional two-panel design matching the model browser blueprint.
 
 Provides a modern interface for browsing, searching, and selecting patterns
 with real-time preview, filtering, and advanced navigation capabilities.
@@ -11,10 +11,10 @@ from typing import Optional, List, TYPE_CHECKING
 # Safe imports with fallbacks
 try:
     from textual.app import App, ComposeResult
-    from textual.containers import Horizontal, Vertical, ScrollableContainer
+    from textual.containers import Horizontal, Vertical, Container
     from textual.widgets import (
         Header, Footer, Input, ListItem, ListView,
-        Label
+        Label, Static, RichLog, Button
     )
     from textual.binding import Binding
     TEXTUAL_AVAILABLE = True
@@ -26,46 +26,42 @@ except ImportError:
         ComposeResult = None
         Horizontal = object
         Vertical = object
-        ScrollableContainer = object
+        Container = object
         Header = object
         Footer = object
         Input = object
         Static = object
         ListItem = object
         ListView = object
-        Button = object
         Label = object
         Binding = object
-        Message = object
-        reactive = lambda x: x
+        RichLog = object
+        Button = object
 
 # Type imports for static analysis
 if TYPE_CHECKING:
     from textual.app import App, ComposeResult
-    from textual.containers import Horizontal, Vertical, ScrollableContainer
+    from textual.containers import Horizontal, Vertical, Container
     from textual.widgets import (
         Header, Footer, Input, Static, ListItem, ListView,
-        Button, Label
+        Label, RichLog
     )
     from textual.binding import Binding
-    from textual.message import Message
-    from textual.reactive import reactive
 
-# Import the modular styling system
+# Import styled components
 try:
-    from ..styles import DEFAULT_THEME
-    from ..styles.styled_components import (
-        TitleText, CaptionText, create_input, StyledStatic
-    )
+    from ..styles.styled_components import StyledButton, StyledStatic, StyledInput
     STYLES_AVAILABLE = True
 except ImportError:
     STYLES_AVAILABLE = False
     if not TYPE_CHECKING:
-        DEFAULT_THEME = None
-        TitleText = object
-        CaptionText = object
-        create_input = lambda *args, **kwargs: None
-        StyledStatic = object
+        # Use base textual widgets when styled components not available
+        try:
+            from textual.widgets import Button as StyledButton, Static as StyledStatic, Input as StyledInput
+        except ImportError:
+            StyledButton = object
+            StyledStatic = object
+            StyledInput = object
 
 
 class PatternItem:
@@ -98,141 +94,164 @@ class PatternItem:
 
 
 if TEXTUAL_AVAILABLE:
-    class PatternPreview(ScrollableContainer):
-        """Widget for displaying pattern content preview."""
-
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            self.pattern: Optional[PatternItem] = None
-
-        def update_preview(self, pattern: Optional[PatternItem]):
-            """Update the preview with new pattern content."""
-            self.pattern = pattern
-            self.remove_children()
-
-            if pattern is None:
-                self.mount(CaptionText("Select a pattern to preview", classes="center-content"))
-            else:
-                # Show pattern metadata using styled components
-                self.mount(TitleText(f"Pattern: {pattern.name}"))
-                if pattern.description:
-                    self.mount(CaptionText(f"Description: {pattern.description}"))
-                self.mount(StyledStatic("─" * 50, classes="preview-separator"))
-
-                # Show content
-                content = pattern.get_preview(50)  # Show more lines in preview
-                self.mount(StyledStatic(content, classes="preview-content"))
-
-
-    class PatternList(ListView):
-        """Custom ListView for patterns with search functionality."""
-
-        def __init__(self, patterns: List[PatternItem], **kwargs):
-            super().__init__(**kwargs)
-            self.all_patterns = patterns
-            self.filtered_patterns = patterns.copy()
-            self.populate_list()
-
-        def populate_list(self):
-            """Populate the list with current filtered patterns."""
-            self.clear()
-            for pattern in self.filtered_patterns:
-                label = f"{pattern.name}"
-                if pattern.category:
-                    label += f" ({pattern.category})"
-                self.append(ListItem(Label(label), name=pattern.name))
-
-        def filter_patterns(self, search_term: str):
-            """Filter patterns based on search term."""
-            search_term = search_term.lower().strip()
-            if not search_term:
-                self.filtered_patterns = self.all_patterns.copy()
-            else:
-                self.filtered_patterns = [
-                    pattern for pattern in self.all_patterns
-                    if (search_term in pattern.name.lower() or
-                        search_term in pattern.description.lower() or
-                        search_term in pattern.category.lower())
-                ]
-            self.populate_list()
-
-        def get_selected_pattern(self) -> Optional[PatternItem]:
-            """Get the currently selected pattern."""
-            if self.index is None or self.index >= len(self.filtered_patterns):
-                return None
-            return self.filtered_patterns[self.index]
-
-
     class PatternBrowserApp(App):
-        """Main application for browsing patterns with modular styling."""
+        """Pattern browser with professional two-panel design matching model browser."""
 
-        # Use centralized CSS instead of scattered inline styles
-        CSS = DEFAULT_THEME.get_app_css(additional_css="""
-        /* App-specific overrides */
-        Screen {
-            layout: horizontal;
-        }
-
-        #sidebar {
-            width: 50%;
-            border-right: thick $surface;
-        }
-
-        #preview {
-            width: 50%;
+        CSS = """
+        .pattern-browser-container {
+            height: 1fr;
             padding: 1;
         }
 
-        .preview-separator {
-            color: $surface;
+        .pattern-list-panel {
+            width: 1fr;
+            border: round #00FFFF;
+            padding: 2;
+            margin-right: 2;
+            background: $surface;
+            height: 1fr;
+        }
+
+        .pattern-details-panel {
+            width: 2fr;
+            border: round #00FFFF;
+            padding: 2;
+            background: $surface;
+            height: 1fr;
+        }
+
+        .pattern-list {
+            height: 1fr;
+            border: solid #87CEEB;
+            background: $background;
             margin-bottom: 1;
         }
 
-        .preview-content {
-            margin-top: 1;
-        }
-        """) if DEFAULT_THEME else """
-        Screen {
-            layout: horizontal;
-        }
-
-        #sidebar {
-            width: 50%;
-            border-right: thick $surface;
-        }
-
-        #preview {
-            width: 50%;
+        .pattern-details-content {
+            height: 1fr;
+            border: solid #87CEEB;
+            margin-top: 0;
             padding: 1;
+            background: $background;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        #search {
-            margin: 1;
+        .filter-input {
+            margin: 0;
+            height: 3;
+            border: solid #87CEEB;
         }
 
-        .preview-title {
+        .filter-input:focus {
+            border: solid #87CEEB;
+        }
+
+        .status-caption {
+            color: #87CEEB;
+            background: transparent;
+            height: 1;
+            padding: 0 1;
+            text-align: left;
+            text-style: dim;
+            margin-bottom: 0;
+        }
+
+        .success-text {
+            color: $success;
+        }
+
+        .error-text {
+            color: $error;
+        }
+
+        .loading-text {
+            color: $accent;
+            text-style: italic;
+        }
+
+        .panel-title {
             text-style: bold;
             color: $primary;
-        }
-
-        .preview-description {
-            color: $secondary;
-            margin-bottom: 1;
-        }
-
-        .preview-separator {
-            color: $surface;
-            margin-bottom: 1;
-        }
-
-        .preview-content {
-            margin-top: 1;
-        }
-
-        .preview-placeholder {
-            color: $secondary;
             text-align: center;
-            margin-top: 5;
+            margin-bottom: 0;
+            background: $background;
+            padding: 0 1;
+            border: solid #87CEEB;
+        }
+
+        .button-container {
+            height: auto;
+            padding: 0;
+            margin-top: 0;
+            background: $surface;
+            border: solid #87CEEB;
+            text-align: center;
+        }
+
+        RichLog {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        ListView {
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: 1fr;
+        }
+
+        .pattern-list {
+            max-height: 80%;
+        }
+
+        /* Pattern list items */
+        .pattern-item {
+            text-overflow: ellipsis;
+        }
+
+        /* Button styling to ensure proper colors */
+        Button, StyledButton {
+            width: 10;
+            height: 3;
+            align: center middle;
+            text-align: center;
+            background: $primary;
+            color: $text;
+            border: solid $primary;
+        }
+
+        Button:hover, StyledButton:hover {
+            background: $primary 80%;
+            border: solid $primary 80%;
+        }
+
+        Button:focus, StyledButton:focus {
+            border: thick #00FFFF;
+        }
+
+        Button.primary:hover, Button.secondary:hover,
+        StyledButton.primary:hover, StyledButton.secondary:hover {
+            background: $primary 80%;
+        }
+
+        Button.primary:focus, Button.secondary:focus,
+        StyledButton.primary:focus, StyledButton.secondary:focus {
+            border: thick #00FFFF;
+        }
+
+        /* Override syntax highlighting for numbers */
+        .tok-m, .tok-mf, .tok-mi, .tok-mo {
+            color: #00FFFF !important;
+        }
+
+        /* Number literal styling */
+        Number {
+            color: #00FFFF;
+        }
+
+        /* Status caption number override */
+        .status-caption Number, .status-caption .tok-m, .status-caption .tok-mi {
+            color: #00FFFF !important;
         }
         """
 
@@ -240,40 +259,95 @@ if TEXTUAL_AVAILABLE:
             Binding("ctrl+q", "quit", "Quit"),
             Binding("ctrl+c", "quit", "Quit"),
             Binding("escape", "quit", "Quit"),
-            Binding("ctrl+f", "focus_search", "Search"),
-            Binding("/", "focus_search", "Search"),
-            Binding("enter", "select_pattern", "Select"),
-            Binding("ctrl+p", "toggle_preview", "Toggle Preview"),
+            Binding("r", "refresh", "Refresh", show=True),
+            Binding("/", "focus_search", "Search", show=True),
+            Binding("enter", "select_pattern", "Select", show=True),
         ]
 
         def __init__(self, pattern_manager, **kwargs):
             super().__init__(**kwargs)
             self.pattern_manager = pattern_manager
             self.patterns: List[PatternItem] = []
+            self.filtered_patterns: List[PatternItem] = []
             self.selected_pattern: Optional[PatternItem] = None
-            self.preview_visible = True
+            self.pattern_index_map = {}  # Maps list item index to pattern data
 
         def compose(self) -> ComposeResult:
-            """Compose the application layout using styled components."""
+            """Create child widgets for the app."""
             yield Header(show_clock=True)
 
-            # Load patterns
-            self.load_patterns()
+            with Container(classes="pattern-browser-container"):
+                with Horizontal():
+                    # Left panel - pattern list, filter, and buttons
+                    with Vertical(classes="pattern-list-panel"):
+                        yield StyledStatic("Pattern Browser", classes="panel-title")
+                        yield StyledInput(
+                            placeholder="Filter patterns (e.g., analysis, generation, cli)...",
+                            id="pattern-filter",
+                            classes="filter-input"
+                        )
 
-            with Horizontal():
-                with Vertical(id="sidebar"):
-                    yield create_input(placeholder="Search patterns...", id="search")
-                    yield PatternList(self.patterns, id="pattern-list")
+                        # Status as small caption above the list
+                        yield Static("[cyan]Patterns: Loading...[/cyan]", id="status", classes="status-caption")
 
-                yield PatternPreview(id="preview")
+                        yield ListView(id="pattern-list", classes="pattern-list")
+
+                        # Buttons moved to left panel
+                        with Horizontal(classes="button-container"):
+                            yield StyledButton("Refresh", id="refresh-patterns", variant="primary")
+                            yield StyledButton("Back", id="back-button", variant="primary")
+
+                    # Right panel - pattern details (full height)
+                    with Vertical(classes="pattern-details-panel"):
+                        yield StyledStatic("Pattern Details", classes="panel-title")
+                        yield RichLog(
+                            id="pattern-details",
+                            classes="pattern-details-content",
+                            auto_scroll=False,
+                            markup=True,
+                            wrap=True
+                        )
 
             yield Footer()
 
-        def load_patterns(self):
-            """Load patterns from the pattern manager."""
+        async def on_mount(self) -> None:
+            """Initialize the screen when mounted."""
+            await self.load_patterns()
+            # Display initial guidance message
+            details_widget = self.query_one("#pattern-details", RichLog)
+            details_widget.write("[dim cyan]Select a pattern from the list to view details[/dim cyan]")
+
+        async def action_refresh(self) -> None:
+            """Refresh pattern data."""
+            await self.load_patterns()
+
+        async def action_focus_search(self) -> None:
+            """Focus the filter input."""
+            filter_input = self.query_one("#pattern-filter", Input)
+            filter_input.focus()
+
+        async def action_select_pattern(self) -> None:
+            """Select the currently highlighted pattern."""
+            pattern_list = self.query_one("#pattern-list", ListView)
+            if pattern_list.highlighted_child:
+                # Get the highlighted index and trigger selection manually
+                selected_index = pattern_list.index
+                pattern_data = self.pattern_index_map.get(selected_index)
+                if pattern_data:
+                    self.selected_pattern = pattern_data
+                    await self.display_pattern_details()
+                    self.exit(self.selected_pattern)
+
+        async def load_patterns(self) -> None:
+            """Load available patterns from the pattern manager."""
             try:
+                status_widget = self.query_one("#status", Static)
+                status_widget.update("[cyan]Patterns: Loading...[/cyan]")
+                status_widget.add_class("loading-text")
+
                 # Get patterns from the pattern manager
                 pattern_data = self.pattern_manager.list_patterns()
+                self.patterns = []
 
                 for pattern_info in pattern_data:
                     name = pattern_info.get('name', 'Unknown')
@@ -289,64 +363,150 @@ if TEXTUAL_AVAILABLE:
                     )
                     self.patterns.append(pattern)
 
+                self.filtered_patterns = self.patterns.copy()
+                await self.populate_pattern_list()
+
+                status_widget.remove_class("loading-text")
+                status_widget.add_class("success-text")
+                total_count = len(self.patterns)
+                status_widget.update(f"[cyan]Patterns: {total_count} of {total_count}[/cyan]")
+
+                # Also call update_status to ensure consistency
+                self.update_status()
+
             except Exception as e:
-                # Fallback for testing or when pattern manager is not available
-                self.patterns = [
-                    PatternItem(
-                        name="example_pattern",
-                        path="/tmp/example.md",
-                        description="Example pattern for testing",
-                        category="built-in"
-                    )
-                ]
+                status_widget = self.query_one("#status", Static)
+                status_widget.remove_class("loading-text")
+                status_widget.add_class("error-text")
+                status_widget.update(f"[red]Error loading patterns: {str(e)}[/red]")
 
-        def on_mount(self):
-            """Called when the app is mounted."""
-            search_input = self.query_one("#search", Input)
-            search_input.focus()
+        async def populate_pattern_list(self) -> None:
+            """Populate the pattern list with filtered patterns."""
+            pattern_list = self.query_one("#pattern-list", ListView)
+            await pattern_list.clear()
+            self.pattern_index_map.clear()
 
-        def on_input_changed(self, event: Input.Changed):
-            """Handle search input changes."""
-            if event.input.id == "search":
-                pattern_list = self.query_one("#pattern-list", PatternList)
-                pattern_list.filter_patterns(event.value)
+            for index, pattern in enumerate(self.filtered_patterns):
+                pattern_name = pattern.name
+                pattern_category = pattern.category
 
-        def on_list_view_selected(self, event: ListView.Selected):
+                # Create a display name that fits well in the list
+                display_name = pattern_name
+                if pattern_category:
+                    display_name += f"\n({pattern_category})"
+
+                if pattern.description:
+                    # Add truncated description for better overview
+                    desc = pattern.description
+                    if len(desc) > 60:
+                        desc = desc[:57] + "..."
+                    display_name += f"\n{desc}"
+
+                list_item = ListItem(Label(display_name), classes="pattern-item")
+                self.pattern_index_map[index] = pattern
+                await pattern_list.append(list_item)
+
+            # Update status to show current filter state
+            self.update_status()
+
+        async def on_input_changed(self, event: Input.Changed) -> None:
+            """Handle filter input changes."""
+            if event.input.id == "pattern-filter":
+                filter_text = event.value.lower()
+
+                if not filter_text:
+                    self.filtered_patterns = self.patterns.copy()
+                else:
+                    self.filtered_patterns = [
+                        pattern for pattern in self.patterns
+                        if (filter_text in pattern.name.lower() or
+                            filter_text in pattern.description.lower() or
+                            filter_text in pattern.category.lower())
+                    ]
+
+                await self.populate_pattern_list()
+
+        def update_status(self) -> None:
+            """Update the status widget with current pattern count."""
+            try:
+                status_widget = self.query_one("#status", Static)
+                if self.filtered_patterns:
+                    # Use Rich markup for entire text to avoid syntax highlighting
+                    filtered_count = len(self.filtered_patterns)
+                    total_count = len(self.patterns)
+                    text = f"[cyan]Patterns: {filtered_count} of {total_count}[/cyan]"
+                    status_widget.update(text)
+                    status_widget.remove_class("error-text")
+                    status_widget.add_class("success-text")
+                else:
+                    text = "[cyan]No patterns match your filter[/cyan]"
+                    status_widget.update(text)
+                    status_widget.remove_class("success-text")
+                    status_widget.add_class("error-text")
+            except Exception as e:
+                # Debug: print any errors
+                print(f"Status update error: {e}")
+
+        async def on_list_view_selected(self, event: ListView.Selected) -> None:
             """Handle pattern selection."""
             if event.list_view.id == "pattern-list":
-                pattern_list = self.query_one("#pattern-list", PatternList)
-                selected_pattern = pattern_list.get_selected_pattern()
+                try:
+                    selected_index = event.list_view.index
+                    pattern_data = self.pattern_index_map.get(selected_index)
+                    if pattern_data:
+                        self.selected_pattern = pattern_data
+                        await self.display_pattern_details()
+                except Exception as e:
+                    print(f"Selection error: {e}")
 
-                if selected_pattern:
-                    self.selected_pattern = selected_pattern
-                    preview = self.query_one("#preview", PatternPreview)
-                    preview.update_preview(selected_pattern)
+        async def display_pattern_details(self) -> None:
+            """Display detailed information about the selected pattern."""
+            if not self.selected_pattern:
+                return
 
-        def action_focus_search(self):
-            """Focus the search input."""
-            search_input = self.query_one("#search", Input)
-            search_input.focus()
+            try:
+                details_widget = self.query_one("#pattern-details", RichLog)
+                details_widget.clear()
 
-        def action_select_pattern(self):
-            """Select the current pattern and exit."""
-            if self.selected_pattern:
-                self.exit(self.selected_pattern)
-            else:
-                # If no pattern selected, try to select the first one
-                pattern_list = self.query_one("#pattern-list", PatternList)
-                if pattern_list.filtered_patterns:
-                    self.exit(pattern_list.filtered_patterns[0])
+                pattern = self.selected_pattern
 
-        def action_toggle_preview(self):
-            """Toggle preview pane visibility."""
-            preview = self.query_one("#preview")
-            self.preview_visible = not self.preview_visible
-            if self.preview_visible:
-                preview.display = True
-            else:
-                preview.display = False
+                # Pattern header with styling
+                details_widget.write(f"[bold cyan]{pattern.name}[/bold cyan]")
+                details_widget.write("")
 
-        def action_quit(self):
+                # Pattern metadata
+                if pattern.category:
+                    details_widget.write(f"[dim]Category:[/dim] [cyan]{pattern.category}[/cyan]")
+
+                if pattern.description:
+                    details_widget.write(f"[dim]Description:[/dim] {pattern.description}")
+
+                if pattern.path:
+                    details_widget.write(f"[dim]Path:[/dim] [cyan]{pattern.path}[/cyan]")
+
+                details_widget.write("")
+                details_widget.write("[dim]" + "─" * 50 + "[/dim]")
+                details_widget.write("")
+
+                # Pattern content preview
+                details_widget.write("[bold]Pattern Content:[/bold]")
+                details_widget.write("")
+
+                try:
+                    content = pattern.load_content()
+                    # Limit content display to prevent overwhelming
+                    lines = content.split('\n')
+                    if len(lines) > 100:
+                        content = '\n'.join(lines[:100]) + '\n\n[dim]... (content truncated)[/dim]'
+
+                    details_widget.write(content)
+                except Exception as e:
+                    details_widget.write(f"[red]Error loading pattern content: {str(e)}[/red]")
+
+            except Exception as e:
+                print(f"Error displaying pattern details: {e}")
+
+        async def action_quit(self) -> None:
             """Quit the application."""
             self.exit(None)
 
@@ -362,9 +522,9 @@ def run_pattern_browser(pattern_manager) -> Optional[PatternItem]:
         Selected PatternItem or None if cancelled
     """
     if not TEXTUAL_AVAILABLE:
-        return None
+        return pattern_browser_fallback(pattern_manager)
 
-    app = PatternBrowser(pattern_manager)
+    app = PatternBrowserApp(pattern_manager)
     result = app.run()
     return result
 
@@ -409,4 +569,4 @@ def pattern_browser_fallback(pattern_manager):
         return None
 
 
-__all__ = ['PatternBrowser', 'PatternItem', 'run_pattern_browser', 'pattern_browser_fallback']
+__all__ = ['PatternBrowserApp', 'PatternItem', 'run_pattern_browser', 'pattern_browser_fallback']
