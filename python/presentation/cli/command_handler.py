@@ -15,13 +15,10 @@ from shared.config import (
     get_config_path, is_test_environment, create_test_config_from_production
 )
 
-# TUI imports with fallback
+# TUI imports only for interactive mode
 try:
     from presentation.tui import is_tui_available
-    from presentation.tui.apps.pattern_selector import run_pattern_selector
-    from presentation.tui.apps.chat_selector import run_chat_selector
     from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
-    from presentation.tui.apps.question_builder import run_question_builder
     TUI_IMPORTS_AVAILABLE = True
 except ImportError:
     TUI_IMPORTS_AVAILABLE = False
@@ -44,53 +41,6 @@ class CommandHandler:
         self.chat_manager = chat_manager
         self.logger = logger
         self.question_processor = question_processor
-
-    def determine_interface_mode(self, args, config=None):
-        """
-        Determine which interface mode to use based on arguments and configuration.
-
-        Args:
-            args: Parsed command line arguments
-            config: Optional config dict (loaded automatically if not provided)
-
-        Returns:
-            str: 'tui' or 'cli'
-        """
-        # Load config if not provided
-        if config is None:
-            try:
-                config = load_config()
-            except Exception:
-                config = {}
-
-        # Check explicit override arguments (highest priority)
-        if getattr(args, 'cli', False) or getattr(args, 'no_tui', False):
-            return 'cli'
-        if getattr(args, 'tui', False):
-            return 'tui'
-
-        # Check if TUI functionality is available
-        if not TUI_IMPORTS_AVAILABLE or not is_tui_available():
-            return 'cli'
-
-        # Check configuration default
-        interface_config = config.get('interface', {})
-        tui_features = interface_config.get('tui_features', {})
-
-        # If TUI is disabled in config
-        if not tui_features.get('enabled', True):
-            return 'cli'
-
-        # Get default mode from config
-        default_mode = interface_config.get('default_mode', 'cli')
-
-        # Override for specific operations if requested
-        if getattr(args, 'interactive', False):
-            return 'tui'
-        if getattr(args, 'tui_patterns', False) or getattr(args, 'tui_chats', False):
-            return 'tui'  # For specific TUI operations
-
-        return default_mode
 
     def handle_interactive_mode(self, args):
         """
@@ -121,106 +71,14 @@ class CommandHandler:
                 question_processor = QuestionProcessor(config, self.logger, base_path)
                 self.logger.info(json.dumps({"log_message": "Created question processor for TUI mode"}))
 
-            # Use the new tabbed TUI interface instead of unified TUI
-            result = run_tabbed_tui(
+            # Launch the tabbed TUI interface
+            run_tabbed_tui(
                 pattern_manager=self.pattern_manager,
                 chat_manager=self.chat_manager,
                 question_processor=question_processor
             )
 
-            if result and isinstance(result, dict):
-                result_type = result.get('type')
-                result_data = result.get('data')
-
-                if result_type == 'pattern' and result_data:
-                    # Check if this is a workflow selection or an actual pattern
-                    if result_data.get('workflow') == 'pattern_browser':
-                        # Launch the pattern browser
-                        print("\n🔍 Launching Pattern Browser...")
-                        try:
-                            pattern_result = run_pattern_selector(self.pattern_manager)
-                            if pattern_result:
-                                print(f"\nSelected pattern: {pattern_result.get('name', 'Unknown')}")
-                                pattern_id = pattern_result.get('pattern_id', pattern_result.get('name'))
-                                if pattern_id:
-                                    self.pattern_manager.display_pattern(pattern_id)
-                            else:
-                                print("Pattern browser cancelled.")
-                        except Exception as e:
-                            print(f"Pattern browser failed: {e}")
-                    else:
-                        # Handle direct pattern selection (legacy behavior)
-                        print(f"\nSelected pattern: {result_data.get('name', 'Unknown')}")
-                        pattern_id = result_data.get('pattern_id', result_data.get('name'))
-                        if pattern_id:
-                            self.pattern_manager.display_pattern(pattern_id)
-
-                elif result_type == 'question' and result_data:
-                    # Handle question workflow selection
-                    if result_data.get('workflow') == 'question_builder':
-                        print("\n🤔 Launching Question Builder...")
-                        try:
-                            if self.question_processor:
-                                question_result = run_question_builder(self.question_processor)
-                                if question_result:
-                                    print("Question builder completed successfully")
-                                else:
-                                    print("Question builder cancelled.")
-                            else:
-                                print("Question processor not available. Creating one now...")
-                                # Create a temporary question processor for TUI mode
-                                config = load_config()
-                                base_path = os.path.abspath('.')
-                                temp_question_processor = QuestionProcessor(config, self.logger, base_path)
-                                question_result = run_question_builder(temp_question_processor)
-                                if question_result:
-                                    print("Question builder completed successfully")
-                                else:
-                                    print("Question builder cancelled.")
-                        except Exception as e:
-                            print(f"Question builder failed: {e}")
-                            self.logger.error(f"Question builder error: {e}")
-                    else:
-                        print(f"\nQuestion workflow result: {result_data}")
-
-                elif result_type == 'internals' and result_data:
-                    # Handle internals workflow selection
-                    if result_data.get('workflow') == 'internals_management':
-                        print("\n⚙️ Internals Management Workflow")
-                        print("This would launch the internals management interface.")
-                        print("For now, use CLI options like --openrouter, --list-patterns, --list-chats.")
-                    else:
-                        print(f"\nInternals workflow result: {result_data}")
-
-                elif result_type == 'chat' and result_data:
-                    print(f"\nSelected chat: {result_data.get('chat_id', 'Unknown')}")
-                    if not result_data.get('corrupted', False):
-                        print(f"Created: {result_data.get('created_at', 'Unknown')}")
-                        print(f"Messages: {result_data.get('conversation_count', 0)}")
-                    else:
-                        print("This chat file is corrupted and cannot be displayed.")
-
-                elif result_type == 'model' and result_data:
-                    print(f"\nSelected model: {result_data}")
-
-                elif result_type == 'new_chat':
-                    print("\nStarting new chat session...")
-                    # This would trigger chat creation logic
-
-                elif result_type == 'delete_chat' and result_data:
-                    chat_id = result_data.get('chat_id', 'Unknown')
-                    confirm = input(f"Are you sure you want to delete chat '{chat_id}'? (y/n): ").lower()
-                    if confirm == 'y':
-                        if self.chat_manager.delete_chat(chat_id):
-                            print(f"Successfully deleted chat: {chat_id}")
-                        else:
-                            print(f"Failed to delete chat: {chat_id}")
-                    else:
-                        print("Deletion cancelled.")
-            else:
-                # Unified TUI app exited normally (user chose to quit)
-                print("Interactive session ended.")
-
+            print("Interactive session ended.")
             return True
 
         except Exception as e:
@@ -231,50 +89,14 @@ class CommandHandler:
             return False
 
     def handle_pattern_commands(self, args):
-        """Handle pattern-related commands."""
-        # Check if interactive TUI mode should be used
-        if self.handle_interactive_mode(args):
-            return True
-
-        # Determine interface mode for this operation
-        interface_mode = self.determine_interface_mode(args)
-
-        # Check if TUI should be used for pattern operations
-        should_use_tui = (
-            interface_mode == 'tui' and
-            TUI_IMPORTS_AVAILABLE and
-            is_tui_available() and
-            (getattr(args, 'tui_patterns', False) or
-             getattr(args, 'list_patterns', False) or
-             getattr(args, 'view_pattern', None) is not None)
-        )
+        """Handle pattern-related commands (CLI only, except for interactive mode)."""
+        if not args.list_patterns and args.view_pattern is None:
+            return False
 
         if args.list_patterns:
             self.logger.info(json.dumps({"log_message": "User requested to list all available pattern files"}))
 
-            # Use TUI if requested and available
-            if should_use_tui:
-                try:
-                    # Add timeout and better error handling for TUI
-                    self.logger.info(json.dumps({"log_message": "Launching TUI pattern browser"}))
-                    selected_pattern = run_pattern_selector(self.pattern_manager)
-                    if selected_pattern:
-                        print(f"Selected pattern: {selected_pattern.get('name', 'Unknown')}")
-                        # Show the selected pattern content
-                        pattern_id = selected_pattern.get('pattern_id', selected_pattern.get('name'))
-                        if pattern_id:
-                            self.pattern_manager.display_pattern(pattern_id)
-                    else:
-                        print("Pattern browser closed.")
-                    return True
-                except Exception as e:
-                    self.logger.warning(json.dumps({
-                        "log_message": f"TUI pattern browser failed, falling back to CLI: {e}"
-                    }))
-                    print(f"TUI not available ({str(e)}), using traditional interface...")
-                    # Fall through to traditional CLI listing
-
-            # Traditional CLI listing
+            # CLI listing only
             patterns = self.pattern_manager.list_patterns()
             if not patterns:
                 print("No pattern files found.")
@@ -292,22 +114,7 @@ class CommandHandler:
 
         if args.view_pattern is not None:  # -vp was used
             # If no specific pattern ID was provided, show selection
-            if args.view_pattern == '' and should_use_tui:
-                # Use TUI for pattern selection
-                try:
-                    selected_pattern = run_pattern_selector(self.pattern_manager)
-                    if selected_pattern:
-                        pattern_id = selected_pattern.get('pattern_id', selected_pattern.get('name'))
-                    else:
-                        print("Pattern selection cancelled.")
-                        return True
-                except Exception as e:
-                    self.logger.warning(json.dumps({
-                        "log_message": f"TUI pattern browser failed, falling back to CLI: {e}"
-                    }))
-                    pattern_id = self.pattern_manager.select_pattern()
-            else:
-                pattern_id = args.view_pattern or self.pattern_manager.select_pattern()
+            pattern_id = args.view_pattern or self.pattern_manager.select_pattern()
 
             if pattern_id is None:
                 print("Pattern selection cancelled.")
@@ -326,7 +133,7 @@ class CommandHandler:
         return False
 
     def handle_chat_commands(self, args):
-        """Handle chat-related commands."""
+        """Handle chat-related commands (CLI only, except for interactive mode)."""
         # Check if interactive TUI mode should be used
         if self.handle_interactive_mode(args):
             return True
@@ -343,45 +150,10 @@ class CommandHandler:
             self.logger.warning(json.dumps({"log_message": "User attempted to use chat functionality with patterns"}))
             return False
 
-        # Determine interface mode for this operation
-        interface_mode = self.determine_interface_mode(args)
-
-        # Check if TUI should be used for chat operations
-        should_use_tui = (
-            interface_mode == 'tui' and
-            TUI_IMPORTS_AVAILABLE and
-            is_tui_available() and
-            (getattr(args, 'tui_chats', False) or
-             getattr(args, 'list_chats', False) or
-             getattr(args, 'view_chat', None) is not None)
-        )
-
         if args.list_chats:
             self.logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
 
-            # Use TUI if requested and available
-            if should_use_tui:
-                try:
-                    selected_chat = run_chat_selector(self.chat_manager)
-                    if selected_chat:
-                        print(f"Selected chat: {selected_chat.get('chat_id', 'Unknown')}")
-                        if not selected_chat.get('corrupted', False):
-                            # Show basic chat info
-                            print(f"Created: {selected_chat.get('created_at', 'Unknown')}")
-                            print(f"Messages: {selected_chat.get('conversation_count', 0)}")
-                        else:
-                            print("This chat file is corrupted and cannot be displayed.")
-                    else:
-                        print("Chat browser closed.")
-                    return True
-                except Exception as e:
-                    self.logger.warning(json.dumps({
-                        "log_message": f"TUI chat manager failed, falling back to CLI: {e}"
-                    }))
-                    print(f"TUI not available ({str(e)}), using traditional interface...")
-                    # Fall through to traditional CLI listing
-
-            # Traditional CLI listing
+            # CLI listing only
             chats = self.chat_manager.list_chats()
 
             # Also check for corrupted files

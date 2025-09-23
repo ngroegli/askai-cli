@@ -16,7 +16,7 @@ main: "askai.py" {
 # Shared Layer (Common Infrastructure)
 shared_layer: "Shared Layer" {
   shape: rectangle
-  style.fill: "#F5F5F5" # Light Gray background
+  style.fill: "#FAFAFA" # Light Gray background for Infrastructure
   style.stroke: "#757575"
 
   config_loader: "config/loader.py" { style.fill: "#BDBDBD" }
@@ -41,26 +41,24 @@ presentation_layer: "Presentation Layer" {
     banner_parser: "cli/banner_argument_parser.py" { style.fill: "#CE93D8" }
   }
 
-  # TUI Components
-  tui_group: "TUI Interface" {
+  # TUI Components - Simplified Tabbed Architecture
+  tui_interface: "TUI Interface" {
     shape: rectangle
-    style.fill: "#C8E6C9" # Light green for TUI
-    style.stroke: "#388E3C"
+    style.fill: "#F3E5F5" # Light purple background for UI
+    style.stroke: "#9C27B0"
 
-    unified_tui_app: "tui/apps/unified_tui_app.py" { style.fill: "#A5D6A7" }
-    question_builder: "tui/apps/question_builder.py" { style.fill: "#A5D6A7" }
-    pattern_browser: "tui/apps/pattern_browser.py" { style.fill: "#A5D6A7" }
-    main_tui_app: "tui/apps/main_tui_app.py" { style.fill: "#81C784" }
-    loading_screen: "tui/components/loading_screen.py" { style.fill: "#A5D6A7" }
-    tui_widgets: "tui/widgets/" { style.fill: "#A5D6A7" }
-    tui_utils: "tui/utils/" { style.fill: "#A5D6A7" }
+    question_tab: "Question Tab" { style.fill: "#CE93D8" }
+    pattern_tab: "Pattern Tab" { style.fill: "#CE93D8" }
+    chat_tab: "Chat Tab" { style.fill: "#CE93D8" }
+    model_tab: "Model Tab" { style.fill: "#CE93D8" }
+    credits_tab: "Credits Tab" { style.fill: "#CE93D8" }
   }
 }
 
 # Modules Layer (Core Business Logic)
 modules_layer: "Modules Layer" {
   shape: rectangle
-  style.fill: "#E8F5E9" # Light Green background
+  style.fill: "#E8F5E9" # Light Green background for Data Processing
   style.stroke: "#4CAF50"
 
   # AI Module
@@ -74,8 +72,8 @@ modules_layer: "Modules Layer" {
   pattern_config: "patterns/pattern_configuration.py" { style.fill: "#A5D6A7" }
 
   # Questions Module (NEW)
-  question_processor: "questions/processor.py" { style.fill: "#81C784" }
-  question_models: "questions/models.py" { style.fill: "#81C784" }
+  question_processor: "questions/processor.py" { style.fill: "#A5D6A7" }
+  question_models: "questions/models.py" { style.fill: "#A5D6A7" }
 
   # Chat Module
   chat_manager: "chat/chat_manager.py" { style.fill: "#A5D6A7" }
@@ -87,16 +85,16 @@ modules_layer: "Modules Layer" {
 # Infrastructure Layer
 infrastructure_layer: "Infrastructure Layer" {
   shape: rectangle
-  style.fill: "#FFF9C4" # Light Yellow background
-  style.stroke: "#FF9800"
+  style.fill: "#FAFAFA" # Light Gray background for Infrastructure
+  style.stroke: "#757575"
 
-  output_coordinator: "output/output_coordinator.py" { style.fill: "#FFF176" }
-  content_extractor: "output/processors/content_extractor.py" { style.fill: "#FFF176" }
-  response_normalizer: "output/processors/response_normalizer.py" { style.fill: "#FFF176" }
-  pattern_processor: "output/processors/pattern_processor.py" { style.fill: "#FFF176" }
-  directory_manager: "output/processors/directory_manager.py" { style.fill: "#FFF176" }
-  terminal_formatter: "output/display_formatters/terminal_formatter.py" { style.fill: "#FFF176" }
-  file_writer_chain: "output/file_writers/file_writer_chain.py" { style.fill: "#FFF176" }
+  output_coordinator: "output/output_coordinator.py" { style.fill: "#BDBDBD" }
+  content_extractor: "output/processors/content_extractor.py" { style.fill: "#BDBDBD" }
+  response_normalizer: "output/processors/response_normalizer.py" { style.fill: "#BDBDBD" }
+  pattern_processor: "output/processors/pattern_processor.py" { style.fill: "#BDBDBD" }
+  directory_manager: "output/processors/directory_manager.py" { style.fill: "#BDBDBD" }
+  terminal_formatter: "output/display_formatters/terminal_formatter.py" { style.fill: "#BDBDBD" }
+  file_writer_chain: "output/file_writers/file_writer_chain.py" { style.fill: "#BDBDBD" }
 }
 
 # Main Dependencies (Cross-Layer)
@@ -114,27 +112,3 @@ modules_layer -> shared_layer: "Common services"
 
 # Infrastructure Layer Dependencies
 infrastructure_layer -> shared_layer: "Common services"
-
-# Specific Component Dependencies
-main -> cli_parser: "Argument parsing"
-main -> unified_tui_app: "TUI mode entry"
-main -> question_processor: "Question handling"
-cli_parser -> command_handler: "Command routing"
-command_handler -> pattern_manager: "Pattern operations"
-command_handler -> chat_manager: "Chat operations"
-command_handler -> unified_tui_app: "Interactive mode"
-unified_tui_app -> question_builder: "Question workflow"
-unified_tui_app -> pattern_browser: "Pattern workflow"
-question_builder -> question_processor: "Question execution"
-pattern_browser -> pattern_manager: "Pattern operations"
-loading_screen -> ai_service: "Progress feedback"
-ai_service -> openrouter_client: "API communication"
-pattern_manager -> pattern_input: "Input validation"
-pattern_manager -> pattern_output: "Output definition"
-output_coordinator -> content_extractor: "Content processing"
-output_coordinator -> file_writer_chain: "File operations"
-message_builder -> pattern_manager: "Template application"
-question_processor -> ai_service: "AI interactions"
-question_processor -> message_builder: "Message construction"
-tui_group -> modules_layer: "Business logic calls"
-tui_utils -> shared_layer: "TUI compatibility"

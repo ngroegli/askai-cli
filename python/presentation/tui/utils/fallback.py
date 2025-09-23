@@ -177,9 +177,8 @@ def print_tui_setup_help():
         print("  • Modern keyboard navigation and shortcuts")
 
         print("\nUsage:")
-        print("  askai --list-patterns --tui-patterns")
-        print("  askai --list-chats --tui-chats")
         print("  askai --interactive")
+        print("  askai -i")
 
         print("\nCustomization:")
         print("  export ASKAI_TUI_THEME=dark    # or 'light'")

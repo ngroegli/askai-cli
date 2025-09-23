@@ -38,7 +38,6 @@ class BaseScreen(Screen):
 
     async def action_focus_search(self) -> None:
         """Focus search/filter input - override in subclasses."""
-        pass
 
     def get_help_text(self) -> str:
         """Get help text for this screen - override in subclasses."""

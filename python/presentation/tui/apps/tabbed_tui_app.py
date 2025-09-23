@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 """
-Tabbed TUI Application that integrates all workflows in a single tabbed interface.
-Starts directly with question builder and provides tab navigation.
+Simplified Tabbed TUI Application using component-based architecture.
+Each tab is now a separate, reusable component.
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 try:
     from textual.app import App
-    from textual.containers import Vertical, Horizontal
-    from textual.widgets import Header, Footer, Static, Button, TextArea, Select, TabbedContent, TabPane, ListView, ListItem, Label, Input
-    from textual.binding import Binding
-    from textual import work
+    from textual.widgets import Header, Footer, TabbedContent, TabPane
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
@@ -22,1180 +19,529 @@ except ImportError:
         Header = object
         Footer = object
         Static = object
-        Button = object
-        TextArea = object
-        Select = object
         TabbedContent = object
         TabPane = object
-        ListView = object
-        ListItem = object
-        Label = object
         Binding = object
-        work = lambda x: x
 
 # Type imports for static analysis
 if TYPE_CHECKING:
     from textual.app import App
     from textual.containers import Vertical, Horizontal
-    from textual.widgets import Header, Footer, Static, Button, TextArea, Select, TabbedContent, TabPane, ListView, ListItem, Label
+    from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
     from textual.binding import Binding
-    from textual import work
+
+# Import our components
+from ..components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
 
 
 if TEXTUAL_AVAILABLE:
     class TabbedTUIApp(App):
-        """Tabbed TUI application with integrated workflows."""
+        """Simplified tabbed TUI application using components."""
 
         BINDINGS = [
             ("ctrl+q", "quit", "Quit"),
             ("f1", "help", "Help"),
-            ("ctrl+r", "execute_question", "Execute"),
-            ("ctrl+1", "focus_tab_1", "Question"),
-            ("ctrl+2", "focus_tab_2", "Patterns"),
-            ("ctrl+3", "focus_tab_3", "Chat"),
-            ("ctrl+4", "focus_tab_4", "Settings"),
-            ("/", "focus_pattern_filter", "Filter"),
+            ("f2", "focus_question", "Question"),
+            ("f3", "focus_patterns", "Patterns"),
+            ("f4", "focus_chats", "Chats"),
+            ("f5", "focus_models", "Models"),
+            ("f6", "focus_credits", "Credits"),
         ]
 
         CSS = """
-        TabbedContent {
-            background: $surface;
+        /* Main Application Styles */
+        Screen {
+            background: #0f172a;
         }
 
-        TabPane {
-            padding: 1;
-        }
-
-        #question-input {
-            height: 8;
-            margin: 1 0;
-        }
-
-        #format-select {
-            width: 60%;
-            margin: 1;
-        }
-
-        #status {
-            color: $accent;
-            text-style: italic;
-            height: 2;
-            text-align: center;
-        }
-
-        Button {
-            margin: 1;
-        }
-
-        .title {
-            text-style: bold;
-            color: $primary;
-            text-align: center;
-            margin: 1;
-        }
-
-        .center-content {
-            text-align: center;
-            color: $text-muted;
-            margin: 2;
-        }
-
-        /* Pattern Browser Styles */
-        #pattern-list-container {
-            width: 50%;
-            border-right: thick $surface;
-            padding: 1;
-        }
-
-        #pattern-details-container {
-            width: 50%;
-            padding: 1;
-        }
-
-        .pattern-list {
-            height: 1fr;
-            border: solid #87CEEB;
-            margin-bottom: 1;
-            background: $background;
-        }
-
-        .pattern-browser-container {
-            height: 1fr;
-            padding: 2;
-        }
-
-        .pattern-list-panel {
-            width: 1fr;
-            border: round #00FFFF;
-            padding: 2;
-            margin-right: 2;
-            background: $surface;
-        }
-
-        .pattern-details-panel {
-            width: 2fr;
-            border: round #00FFFF;
-            padding: 2;
-            background: $surface;
-        }
-
-                .model-details-content {
-            height: 1fr;
-            padding: 2;
-            background: $background;
-            overflow-y: auto;
-            border: solid #87CEEB;
-        }
-
-        #pattern-info {
-            height: 1fr;
-            margin: 0;
-            padding: 2;
-            background: $background;
-            overflow-y: auto;
-            border: solid #87CEEB;
-        }
-
-        #pattern-actions {
-            height: auto;
-        }
-
-        /* Additional styles for pattern screens */
-        .subtitle {
-            text-style: bold;
-            margin: 1 0;
-        }
-
-        .input-desc {
-            color: $text-muted;
-            margin-bottom: 1;
-        }
-
-        Input {
-            margin: 1 0;
-        }
-
-        #execution-status {
-            color: $accent;
-            text-style: italic;
-            height: 2;
-            text-align: center;
-            margin: 1;
-        }
-
-        /* Pattern Filter Styles */
-        .filter-input {
-            margin: 1 0;
+        Header {
+            background: #1e293b;
+            color: #00FFFF;
+            dock: top;
             height: 3;
         }
 
+        Footer {
+            background: #1e293b;
+            color: #87CEEB;
+            dock: bottom;
+            height: 3;
+        }
+
+        /* Tab Content Styles */
+        TabbedContent {
+            background: #0f172a;
+            margin: 1;
+        }
+
+        TabPane {
+            background: #0f172a;
+            padding: 1;
+        }
+
+        /* Panel Title Styles */
+        .panel-title {
+            color: #00FFFF;
+            text-style: bold;
+            margin-bottom: 1;
+        }
+
+        .panel-subtitle {
+            color: #87CEEB;
+            text-style: bold;
+            margin-bottom: 1;
+        }
+
+        /* Status Text */
         .status-text {
-            color: $text-muted;
-            text-align: center;
-            margin: 1 0;
+            color: #87CEEB;
+            margin-top: 1;
         }
 
-        .loading-text {
-            color: $accent;
-            text-style: italic;
+        /* Button Styles */
+        Button {
+            margin: 1;
+            min-width: 12;
         }
 
-        .success-text {
-            color: $success;
+        .button-row {
+            align: center middle;
+            margin-top: 1;
+            height: 4;
         }
 
-        .error-text {
-            color: $error;
+        /* List Styles */
+        ListView {
+            background: #1e293b;
+            border: solid #00FFFF;
+            height: 100%;
+        }
+
+        ListItem {
+            background: #1e293b;
+            color: #ffffff;
+        }
+
+        ListItem:hover {
+            background: #334155;
+        }
+
+        ListItem.-highlight {
+            background: #0ea5e9;
+            color: #ffffff;
+        }
+
+        /* Input and TextArea Styles */
+        Input {
+            background: #1e293b;
+            border: solid #00FFFF;
+            color: #ffffff;
+        }
+
+        TextArea {
+            background: #1e293b;
+            border: solid #00FFFF;
+            color: #ffffff;
+        }
+
+        .question-input {
+            height: 4;
+            max-height: 4;
+        }
+
+        Select {
+            background: #1e293b;
+            border: solid #00FFFF;
+            color: #ffffff;
+        }
+
+        /* Layout Containers */
+        .question-form {
+            margin: 1;
+        }
+
+        .question-main-layout {
+            height: 100%;
+        }
+
+        .question-form-panel {
+            width: 1fr;
+            margin-right: 1;
+        }
+
+        .answer-panel {
+            width: 1fr;
+            margin-left: 1;
+        }
+
+        .input-row, .select-row {
+            height: auto;
+            margin: 0;
+        }
+
+        .input-column, .select-column {
+            margin: 0 1;
+        }
+
+        .pattern-browser-container,
+        .chat-browser-container,
+        .model-browser-container {
+            height: 100%;
+        }
+
+        .pattern-list-panel,
+        .chat-list-panel,
+        .model-list-panel {
+            width: 1fr;
+            margin-right: 1;
+        }
+
+        .pattern-details-panel,
+        .chat-details-panel,
+        .model-details-panel {
+            width: 2fr;
+        }
+
+        /* Input Field Styles */
+        .input-label {
+            color: #94a3b8;
+            margin-top: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        Input, TextArea {
+            margin-bottom: 1;
+        }
+
+        /* Pattern Details Box */
+        .pattern-details-box {
+            background: #1e293b;
+            border: solid #00FFFF;
+            height: 1fr;
+            padding: 1;
+        }
+
+        /* Pattern List Box */
+        .pattern-list-box {
+            background: #1e293b;
+            border: solid #00FFFF;
+            height: 1fr;
+        }
+
+        /* Remove border from ListView when inside ScrollableContainer */
+        .pattern-list-box ListView {
+            border: none;
+            background: transparent;
         }
         """
 
-        def __init__(self, pattern_manager=None, chat_manager=None, question_processor=None, **kwargs):
-            super().__init__(**kwargs)
+        def __init__(self, pattern_manager=None, chat_manager=None, question_processor=None):
+            super().__init__()
             self.pattern_manager = pattern_manager
             self.chat_manager = chat_manager
             self.question_processor = question_processor
-            self.question_text = ""
-            self.selected_format = "md"
-            self.loading_active = False
 
-            # Pattern browser state
-            self.patterns = []
-            self.filtered_patterns = []
-            self.selected_pattern = None
-            self.selected_pattern_data = None
+            # Component instances
+            self.question_tab = None
+            self.pattern_tab = None
+            self.chat_tab = None
+            self.model_tab = None
+            self.credits_tab = None
 
         def compose(self):
-            """Compose the tabbed interface."""
-            yield Header(show_clock=True)
+            """Compose the main application layout."""
+            yield Header()
 
             with TabbedContent(initial="question-tab"):
                 # Question Builder Tab
-                with TabPane("🤔 Question Builder", id="question-tab"):
-                    yield Static("Ask questions with AI assistance", classes="title")
-                    yield Static("Type your question below:")
-                    yield TextArea(
-                        text="",
-                        placeholder="Enter your question here...",
-                        id="question-input"
+                with TabPane("Question Builder", id="question-tab"):
+                    self.question_tab = QuestionTab(
+                        question_processor=self.question_processor,
+                        id="question-component"
                     )
-
-                    yield Static("Select output format:")
-                    yield Select(
-                        options=[
-                            ("md", "Markdown (default)"),
-                            ("rawtext", "Raw Text"),
-                            ("json", "JSON")
-                        ],
-                        id="format-select"
-                    )
-
-                    yield Static("", id="status")
-
-                    with Horizontal():
-                        yield Button("Execute Question", id="execute", variant="success")
-                        yield Button("Clear", id="clear", variant="warning")
+                    yield self.question_tab
 
                 # Pattern Browser Tab
-                with TabPane("📋 Pattern Browser", id="pattern-tab"):
-                    with Horizontal(classes="pattern-browser-container"):
-                        # Left side - Pattern List with Filter
-                        with Vertical(classes="pattern-list-panel"):
-                            yield Static("📋 Available Patterns", classes="panel-title")
-                            yield Input(
-                                placeholder="🔍 Filter patterns (e.g., log, data, analysis)...",
-                                id="pattern-filter",
-                                classes="filter-input"
-                            )
-                            yield ListView(id="pattern-list", classes="pattern-list")
-                            yield Static("Loading patterns...", id="pattern-status", classes="status-text")
+                with TabPane("Pattern Browser", id="pattern-tab"):
+                    self.pattern_tab = PatternTab(
+                        pattern_manager=self.pattern_manager,
+                        id="pattern-component"
+                    )
+                    yield self.pattern_tab
 
-                        # Right side - Pattern Details/Actions
-                        with Vertical(classes="pattern-details-panel"):
-                            yield Static("📖 Pattern Details", classes="panel-title")
-                            yield Static(
-                                "💡 Select a pattern from the list to view detailed information.\n\n"
-                                "Use the filter box to search by pattern name or description.\n"
-                                "Press '/' to focus the search box quickly.",
-                                id="pattern-info",
-                                classes="pattern-details-content"
-                            )
+                # Chat Browser Tab
+                with TabPane("Chat Browser", id="chat-tab"):
+                    self.chat_tab = ChatTab(
+                        chat_manager=self.chat_manager,
+                        id="chat-component"
+                    )
+                    yield self.chat_tab
 
-                            with Horizontal(classes="button-container"):
-                                yield Button("View", id="view-pattern", variant="primary", disabled=True)
-                                yield Button("Execute", id="execute-pattern", variant="success", disabled=True)
+                # Model Browser Tab
+                with TabPane("Model Browser", id="model-tab"):
+                    self.model_tab = ModelTab(id="model-component")
+                    yield self.model_tab
 
-                # Chat Manager Tab
-                with TabPane("💬 Chat Manager", id="chat-tab"):
-                    yield Static("Manage your chat history", classes="title")
-                    yield Static("Chat management interface will be integrated here", classes="center-content")
-                    yield Button("Browse Chats", id="browse-chats", variant="primary")
-
-                # Settings Tab
-                with TabPane("⚙️ Settings", id="settings-tab"):
-                    yield Static("Application configuration", classes="title")
-                    yield Static("Settings and system management", classes="center-content")
-                    yield Button("Open Settings", id="open-settings", variant="primary")
-
-                # Admin/System Tab
-                with TabPane("🔧 System", id="system-tab"):
-                    yield Static("System Information & Management", classes="title")
-                    with Horizontal():
-                        with Vertical():
-                            yield Static("🤖 AI Models", classes="subtitle")
-                            yield Button("Browse Available Models", id="browse-models", variant="primary")
-                            yield Static("View all OpenRouter models and their capabilities", classes="center-content")
-                        with Vertical():
-                            yield Static("💳 Account", classes="subtitle")
-                            yield Button("Check Credit Balance", id="check-credits", variant="success")
-                            yield Static("View your OpenRouter account balance and usage", classes="center-content")
+                # Credits Tab
+                with TabPane("Credits", id="credits-tab"):
+                    self.credits_tab = CreditsTab(id="credits-component")
+                    yield self.credits_tab
 
             yield Footer()
 
-        def on_mount(self):
-            """Called when mounted."""
-            self.call_after_refresh(self.setup_defaults)
-            self.call_after_refresh(self.load_patterns)
+        async def on_mount(self) -> None:
+            """Called when the app mounts."""
+            self.title = "AskAI - Interactive Terminal UI"
+            self.sub_title = "Question Builder | Pattern Browser | Chat Manager | Model Browser | Credits"
 
-        def setup_defaults(self):
-            """Set up default values and focus after UI is ready."""
-            try:
-                # Focus the input first
-                question_input = self.query_one("#question-input", TextArea)
-                question_input.focus()
+            # Initialize all component tabs
+            if hasattr(self, 'question_tab') and self.question_tab:
+                await self.question_tab.initialize()
+            if hasattr(self, 'pattern_tab') and self.pattern_tab:
+                await self.pattern_tab.initialize()
+            if hasattr(self, 'chat_tab') and self.chat_tab:
+                await self.chat_tab.initialize()
+            if hasattr(self, 'model_tab') and self.model_tab:
+                await self.model_tab.initialize()
+            if hasattr(self, 'credits_tab') and self.credits_tab:
+                await self.credits_tab.initialize()
 
-                # Set default format selection with a small delay
-                self.call_later(self.set_default_format)
+        # Message handlers for component interactions
+        async def on_question_tab_question_submitted(self, event) -> None:
+            """Handle question submission from QuestionTab."""
+            question_data = event.question_data
 
-                status = self.query_one("#status", Static)
-                status.update("✅ Ready! Format: Markdown (default)")
-            except Exception as e:
-                status = self.query_one("#status", Static)
-                status.update(f"❌ Setup failed: {e}")
-
-        def set_default_format(self):
-            """Set the default format selection."""
-            try:
-                format_select = self.query_one("#format-select", Select)
-                format_select.value = "md"
-            except Exception:
-                # Silently fail if widget isn't ready yet
-                pass
-
-        def load_patterns(self):
-            """Load patterns into the pattern browser."""
-            if not self.pattern_manager:
-                return
+            # Update status
+            if self.question_tab:
+                self.question_tab.update_status("🔄 Processing question...")
 
             try:
-                # Get patterns from pattern manager
-                pattern_data = self.pattern_manager.list_patterns()
-                self.patterns = pattern_data
-                self.filtered_patterns = self.patterns.copy()
-
-                # Update status
-                try:
-                    status_widget = self.query_one("#pattern-status", Static)
-                    status_widget.update(f"✅ {len(self.patterns)} patterns loaded")
-                    status_widget.remove_class("loading-text")
-                except Exception:
-                    pass  # Status widget might not exist yet
-
-                # Populate the ListView
-                self.populate_pattern_list()
-
-            except Exception as e:
-                # Handle gracefully if pattern loading fails
-                print(f"Error loading patterns: {e}")
-                try:
-                    status_widget = self.query_one("#pattern-status", Static)
-                    status_widget.update(f"❌ Error loading patterns: {e}")
-                except Exception:
-                    pass
-
-        def populate_pattern_list(self):
-            """Populate the pattern list with current filtered patterns."""
-            try:
-                pattern_list = self.query_one("#pattern-list", ListView)
-                pattern_list.clear()
-
-                for pattern in self.filtered_patterns:
-                    name = pattern.get('name', 'Unknown')
-                    description = pattern.get('description', '')
-
-                    # Add icons based on pattern type/name
-                    if 'log' in name.lower() or 'log' in description.lower():
-                        icon = "📋"
-                    elif 'data' in name.lower() or 'visualization' in name.lower():
-                        icon = "📊"
-                    elif 'analysis' in name.lower() or 'interpret' in name.lower():
-                        icon = "�"
-                    elif 'generation' in name.lower() or 'create' in name.lower():
-                        icon = "⚡"
-                    elif 'summary' in name.lower() or 'summarize' in name.lower():
-                        icon = "📝"
-                    elif 'query' in name.lower() or 'kql' in name.lower() or 'spl' in name.lower():
-                        icon = "🔎"
-                    elif 'website' in name.lower() or 'content' in name.lower():
-                        icon = "🌐"
-                    elif 'image' in name.lower():
-                        icon = "🖼️"
-                    elif 'market' in name.lower() or 'solution' in name.lower():
-                        icon = "💼"
-                    else:
-                        icon = "�🔒" if pattern.get('is_private', False) else "📦"
-
-                    # Create enhanced label with description if available
-                    label = f"{icon} {name}"
-                    if description:
-                        # Truncate description for list view
-                        desc = description[:50] + "..." if len(description) > 50 else description
-                        label += f"\n   {desc}"
-
-                    list_item = ListItem(Label(label), name=pattern.get('pattern_id', name), classes="pattern-item")
-                    pattern_list.append(list_item)
-
-            except Exception as e:
-                print(f"Error populating pattern list: {e}")
-
-        def filter_patterns(self, filter_text: str):
-            """Filter patterns based on search text."""
-            if not filter_text.strip():
-                self.filtered_patterns = self.patterns.copy()
-            else:
-                filter_lower = filter_text.lower()
-                self.filtered_patterns = [
-                    pattern for pattern in self.patterns
-                    if (filter_lower in pattern.get('name', '').lower() or
-                        filter_lower in pattern.get('description', '').lower())
-                ]
-
-            # Update the list display
-            self.populate_pattern_list()
-
-            # Update status with enhanced feedback
-            try:
-                status_widget = self.query_one("#pattern-status", Static)
-                if filter_text.strip():
-                    if self.filtered_patterns:
-                        status_widget.update(f"� Showing {len(self.filtered_patterns)} of {len(self.patterns)} patterns")
-                        status_widget.remove_class("error-text")
-                        status_widget.add_class("success-text")
-                    else:
-                        status_widget.update("❌ No patterns match your filter")
-                        status_widget.remove_class("success-text")
-                        status_widget.add_class("error-text")
-                else:
-                    status_widget.update(f"✅ {len(self.patterns)} patterns loaded")
-                    status_widget.remove_class("error-text")
-                    status_widget.add_class("success-text")
-            except Exception:
-                pass
-
-        async def on_list_view_selected(self, event: ListView.Selected) -> None:
-            """Handle pattern selection."""
-            if event.list_view.id == "pattern-list" and self.filtered_patterns and self.pattern_manager:
-                try:
-                    # Find the selected pattern from filtered list
-                    selected_index = event.list_view.index
-                    if selected_index is not None and selected_index < len(self.filtered_patterns):
-                        self.selected_pattern = self.filtered_patterns[selected_index]
-                        pattern_id = self.selected_pattern.get('pattern_id')
-
-                        if pattern_id:
-                            # Load pattern details
-                            self.selected_pattern_data = self.pattern_manager.get_pattern_content(pattern_id)
-                            await self.update_pattern_info()
-
-                            # Enable action buttons
-                            view_btn = self.query_one("#view-pattern", Button)
-                            execute_btn = self.query_one("#execute-pattern", Button)
-                            view_btn.disabled = False
-                            execute_btn.disabled = False
-
-                except Exception as e:
-                    print(f"Error selecting pattern: {e}")
-
-        async def update_pattern_info(self):
-            """Update the pattern information display."""
-            if not self.selected_pattern_data or not self.selected_pattern:
-                return
-
-            try:
-                pattern_info = self.query_one("#pattern-info", Static)
-
-                # Build info display
-                name = self.selected_pattern.get('name', 'Unknown')
-                source = self.selected_pattern.get('source', 'built-in')
-
-                info_text = f"📋 Pattern: {name}\n"
-                info_text += f"📁 Source: {source}\n"
-
-                if 'configuration' in self.selected_pattern_data:
-                    config = self.selected_pattern_data['configuration']
-                    if config and hasattr(config, 'purpose'):
-                        purpose = config.purpose
-                        if hasattr(purpose, 'description'):
-                            info_text += f"📝 Purpose: {purpose.description[:100]}...\n"
-
-                # Show input requirements
-                inputs = self.selected_pattern_data.get('inputs', [])
-                if inputs:
-                    required_inputs = [inp for inp in inputs if inp.required]
-                    optional_inputs = [inp for inp in inputs if not inp.required]
-
-                    info_text += f"\n📥 Inputs:\n"
-                    info_text += f"  Required: {len(required_inputs)}\n"
-                    info_text += f"  Optional: {len(optional_inputs)}\n"
-
-                pattern_info.update(info_text)
-
-            except Exception as e:
-                print(f"Error updating pattern info: {e}")
-
-        async def on_text_area_changed(self, event: TextArea.Changed) -> None:
-            """Handle text area changes."""
-            if event.text_area.id == "question-input":
-                self.question_text = event.text_area.text
-                status = self.query_one("#status", Static)
-                status.update(f"Question updated: {len(self.question_text)} chars")
-
-        async def on_select_changed(self, event: Select.Changed) -> None:
-            """Handle format selection changes."""
-            if event.select.id == "format-select":
-                self.selected_format = str(event.value)
-                status = self.query_one("#status", Static)
-                format_names = {"md": "Markdown", "rawtext": "Raw Text", "json": "JSON"}
-                format_name = format_names.get(self.selected_format, self.selected_format)
-                status.update(f"📝 Format selected: {format_name}")
-
-        async def on_button_pressed(self, event: Button.Pressed) -> None:
-            """Handle button presses."""
-            if event.button.id == "execute":
-                await self.execute_question_action()
-            elif event.button.id == "clear":
-                await self.action_clear_question()
-            elif event.button.id == "view-pattern":
-                await self.action_view_pattern()
-            elif event.button.id == "execute-pattern":
-                await self.action_execute_pattern()
-            elif event.button.id == "browse-chats":
-                await self.action_browse_chats()
-            elif event.button.id == "open-settings":
-                await self.action_open_settings()
-            elif event.button.id == "browse-models":
-                await self.action_browse_models()
-            elif event.button.id == "check-credits":
-                await self.action_check_credits()
-
-        async def on_input_changed(self, event: Input.Changed) -> None:
-            """Handle input changes for filtering."""
-            if event.input.id == "pattern-filter":
-                # Filter patterns as user types
-                self.filter_patterns(event.value)
-
-        async def execute_question_action(self) -> None:
-            """Execute the question with loading indication."""
-            if not self.question_text.strip():
-                status = self.query_one("#status", Static)
-                status.update("❌ Please enter a question first")
-                return
-
-            if not self.question_processor:
-                status = self.query_one("#status", Static)
-                status.update("❌ Question processor not available")
-                return
-
-            # Start the loading animation
-            self.start_loading_animation()
-
-            # Disable the execute button during processing
-            execute_btn = self.query_one("#execute", Button)
-            execute_btn.disabled = True
-
-            try:
-                # Execute the question processing
-                response = await self.process_question_async()
-
-                # Stop loading animation
-                self.stop_loading_animation()
-
-                # Re-enable the execute button
-                execute_btn.disabled = False
-
-                # Show response in dedicated screen
-                if response and hasattr(response, 'content'):
-                    # Update status first
-                    status = self.query_one("#status", Static)
-                    status.update("✅ Question executed! Switching to response view...")
-
-                    # Switch to dedicated response screen
-                    try:
-                        from ..components.loading_screen import create_question_response_screen
-                        response_screen_class = create_question_response_screen(
-                            response_content=response.content,
-                            title="Question Response",
-                            app_instance=self
-                        )
-                        if response_screen_class:
-                            # Switch to the response screen
-                            response_screen = response_screen_class()
-                            await self.push_screen(response_screen)
-                    except Exception as screen_error:
-                        # Fallback: show in status if screen fails
-                        status.update(f"✅ Response ready! Length: {len(response.content)} chars")
-                        print(f"Screen error: {screen_error}")
-                else:
-                    status = self.query_one("#status", Static)
-                    status.update("❌ No response received")
-
-            except Exception as e:
-                # Stop loading animation
-                self.stop_loading_animation()
-
-                # Re-enable the execute button
-                execute_btn.disabled = False
-
-                # Show error
-                status = self.query_one("#status", Static)
-                status.update(f"❌ Error: {e}")
-                import traceback
-                traceback.print_exc()
-
-        async def action_clear_question(self) -> None:
-            """Clear the question input."""
-            question_input = self.query_one("#question-input", TextArea)
-            question_input.text = ""
-            self.question_text = ""
-
-            status = self.query_one("#status", Static)
-            status.update("🗑️ Question cleared")
-
-            question_input.focus()
-
-        async def action_view_pattern(self) -> None:
-            """View the selected pattern in markdown format."""
-            if not self.selected_pattern_data:
-                self.notify("No pattern selected", severity="error")
-                return
-
-            try:
-                # Get the pattern file content
-                file_path = self.selected_pattern_data.get('file_path')
-                if file_path:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-
-                    # Create a screen to display the pattern content
-                    from textual.screen import Screen
-                    from textual.widgets import Markdown
-                    from textual.containers import ScrollableContainer
-
-                    class PatternViewScreen(Screen):
-                        BINDINGS = [
-                            ("escape", "go_back", "Back"),
-                            ("q", "go_back", "Back"),
-                            ("ctrl+e", "execute_pattern", "Execute"),
-                        ]
-
-                        def __init__(self, pattern_data, pattern_id, pattern_manager, app_instance):
-                            super().__init__()
-                            self.pattern_data = pattern_data
-                            self.pattern_id = pattern_id
-                            self.pattern_manager = pattern_manager
-                            self.app_instance = app_instance
-
-                        def compose(self):
-                            yield Header()
-
-                            with Vertical():
-                                # Pattern title
-                                pattern_name = self.pattern_data.get('name', self.pattern_id)
-                                yield Static(f"📋 Pattern: {pattern_name}", classes="title")
-
-                                # Action buttons
-                                with Horizontal():
-                                    yield Button("Back", id="back-btn", variant="default")
-                                    yield Button("Execute", id="execute-btn", variant="success")
-
-                                # Pattern content
-                                with ScrollableContainer():
-                                    yield Markdown(content)
-
-                            yield Footer()
-
-                        async def on_button_pressed(self, event: Button.Pressed):
-                            if event.button.id == "back-btn":
-                                await self.action_go_back()
-                            elif event.button.id == "execute-btn":
-                                await self.action_execute_pattern()
-
-                        async def action_go_back(self):
-                            """Go back to pattern browser."""
-                            self.app.pop_screen()
-
-                        async def action_execute_pattern(self):
-                            """Execute the pattern from view screen."""
-                            # Close this screen first
-                            self.app.pop_screen()
-                            # Then trigger pattern execution on the main app
-                            await self.app_instance.action_execute_pattern()
-
-                        def on_key(self, event):
-                            if event.key == 'escape' or event.key == 'q':
-                                self.app.pop_screen()
-
-                    pattern_screen = PatternViewScreen(
-                        self.selected_pattern_data,
-                        self.selected_pattern.get('pattern_id') if self.selected_pattern else None,
-                        self.pattern_manager,
-                        self
-                    )
-                    await self.push_screen(pattern_screen)
-                else:
-                    self.notify("Pattern file not found", severity="error")
-
-            except Exception as e:
-                self.notify(f"Error viewing pattern: {e}", severity="error")
-
-        async def action_execute_pattern(self) -> None:
-            """Execute the selected pattern with input form."""
-            if not self.selected_pattern_data or not self.selected_pattern:
-                self.notify("No pattern selected", severity="error")
-                return
-
-            try:
-                # Create pattern execution screen
-                from textual.screen import Screen
-                from textual.widgets import Input
-
-                inputs = self.selected_pattern_data.get('inputs', [])
-                pattern_id = self.selected_pattern.get('pattern_id')
-
-                class PatternExecuteScreen(Screen):
-                    BINDINGS = [
-                        ("escape", "cancel_execute", "Cancel"),
-                        ("ctrl+e", "execute_now", "Execute"),
-                    ]
-
-                    def __init__(self, pattern_data, pattern_id, pattern_manager, app_instance):
-                        super().__init__()
-                        self.pattern_data = pattern_data
-                        self.pattern_id = pattern_id
-                        self.pattern_manager = pattern_manager
-                        self.app_instance = app_instance
-                        self.input_values = {}
-                        self.loading_active = False
-
-                    def compose(self):
-                        yield Header()
-
-                        with Vertical():
-                            name = self.pattern_data.get('name', self.pattern_id)
-                            yield Static(f"Execute Pattern: {name}", classes="title")
-
-                            # Show inputs
-                            inputs = self.pattern_data.get('inputs', [])
-                            if inputs:
-                                yield Static("Pattern Inputs:", classes="subtitle")
-
-                                for inp in inputs:
-                                    label = inp.name
-                                    if inp.required:
-                                        label += " (required)"
-                                    else:
-                                        label += " (optional)"
-
-                                    yield Static(label)
-                                    yield Static(inp.description, classes="input-desc")
-
-                                    placeholder = f"Enter {inp.name}..."
-                                    if hasattr(inp, 'default') and inp.default:
-                                        placeholder += f" (default: {inp.default})"
-
-                                    yield Input(
-                                        placeholder=placeholder,
-                                        id=f"input-{inp.name}"
-                                    )
-                            else:
-                                yield Static("This pattern requires no inputs.")
-
-                            # Status for loading animation
-                            yield Static("", id="execution-status")
-
-                            with Horizontal():
-                                yield Button("Execute", id="execute-now", variant="success")
-                                yield Button("Cancel", id="cancel-execute", variant="error")
-
-                        yield Footer()
-
-                    async def on_button_pressed(self, event: Button.Pressed):
-                        if event.button.id == "execute-now":
-                            await self.action_execute_now()
-                        elif event.button.id == "cancel-execute":
-                            await self.action_cancel_execute()
-
-                    async def action_execute_now(self):
-                        """Execute the pattern with collected inputs."""
-                        # Collect input values
-                        inputs = self.pattern_data.get('inputs', [])
-                        input_values = {}
-
-                        for inp in inputs:
-                            try:
-                                input_widget = self.query_one(f"#input-{inp.name}", Input)
-                                value = input_widget.value.strip()
-
-                                if value:
-                                    input_values[inp.name] = value
-                                elif inp.required:
-                                    self.notify(f"Required field '{inp.name}' is missing", severity="error")
-                                    return
-                            except Exception:
-                                pass
-
-                        # Start loading animation
-                        await self.start_pattern_execution(input_values)
-
-                    async def action_cancel_execute(self):
-                        """Cancel pattern execution."""
-                        self.app.pop_screen()
-
-                    async def start_pattern_execution(self, input_values):
-                        """Start pattern execution with loading animation."""
-                        # Disable execute button and show loading
-                        execute_btn = self.query_one("#execute-now", Button)
-                        execute_btn.disabled = True
-
-                        status = self.query_one("#execution-status", Static)
-
-                        # Start loading animation
-                        self.loading_active = True
-                        self.animate_execution_status()
-
-                        try:
-                            # Execute pattern asynchronously
-                            response = await self.execute_pattern_async(input_values)
-
-                            # Stop loading animation
-                            self.loading_active = False
-
-                            # Show response screen
-                            if response:
-                                # Handle different response formats
-                                if hasattr(response, 'content'):
-                                    response_content = response.content
-                                elif isinstance(response, dict) and 'content' in response:
-                                    response_content = response['content']
-                                elif isinstance(response, str):
-                                    response_content = response
-                                else:
-                                    response_content = str(response)
-
-                                status.update("✅ Pattern executed! Showing response...")
-
-                                # Switch to response screen
-                                try:
-                                    from ..components.loading_screen import create_pattern_response_screen
-                                    response_screen_class = create_pattern_response_screen(
-                                        response_content=response_content,
-                                        title=f"Pattern Response: {self.pattern_data.get('name', self.pattern_id)}",
-                                        app_instance=self.app_instance
-                                    )
-                                    if response_screen_class:
-                                        response_screen = response_screen_class()
-                                        # Pop this screen and push response screen
-                                        self.app.pop_screen()
-                                        await self.app.push_screen(response_screen)
-                                except Exception as screen_error:
-                                    # Fallback: show simple response
-                                    status.update(f"✅ Response ready! Length: {len(response_content)} chars")
-                                    self.notify(f"Pattern executed successfully. Response length: {len(response_content)} chars", severity="information")
-                            else:
-                                status.update("❌ No response received")
-                                self.notify("Pattern executed but no response received", severity="warning")
-
-                        except Exception as e:
-                            # Stop loading animation
-                            self.loading_active = False
-
-                            # Show error
-                            status.update(f"❌ Execution failed: {str(e)}")
-                            self.notify(f"Pattern execution failed: {e}", severity="error")
-
-                        finally:
-                            # Re-enable execute button
-                            execute_btn.disabled = False
-
-                    @work(exclusive=True)
-                    async def animate_execution_status(self):
-                        """Animate the execution status during loading."""
-                        import asyncio
-                        status = self.query_one("#execution-status", Static)
-                        animation_chars = ["⏳", "⌛", "🔄", "⚡"]
-                        messages = [
-                            "Preparing pattern execution...",
-                            "Processing inputs...",
-                            "Executing pattern...",
-                            "Generating response...",
-                            "Almost ready..."
-                        ]
-
-                        counter = 0
-                        while getattr(self, 'loading_active', False):
-                            char = animation_chars[counter % len(animation_chars)]
-                            message = messages[counter % len(messages)]
-                            status.update(f"{char} {message}")
-                            counter += 1
-                            await asyncio.sleep(0.6)
-
-                    async def execute_pattern_async(self, input_values):
-                        """Execute the pattern asynchronously with real AI processing."""
-                        import asyncio
-                        import json
-                        import sys
-                        from modules.ai import AIService
-                        from modules.messaging import MessageBuilder
-
-                        def execute_sync():
-                            try:
-                                # Get components from app or initialize with defaults
-                                ai_service = getattr(self.app_instance.app, 'ai_service', None)
-                                message_builder = getattr(self.app_instance.app, 'message_builder', None)
-                                app_logger = getattr(self.app_instance.app, 'logger', None)
-                                config = getattr(self.app_instance.app, 'config', {})
-
-                                # Ensure we always have a valid logger
-                                if app_logger is not None:
-                                    logger = app_logger
-                                else:
-                                    import logging
-                                    # Create a proper logger with console output
-                                    logger = logging.getLogger('tui_pattern_execution')
-                                    logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all messages
-
-                                    # Only add handler if not already present
-                                    if not logger.handlers:
-                                        console_handler = logging.StreamHandler()
-                                        console_handler.setLevel(logging.INFO)
-                                        formatter = logging.Formatter('%(levelname)s: %(message)s')
-                                        console_handler.setFormatter(formatter)
-                                        logger.addHandler(console_handler)
-                                        logger.info("TUI Pattern Execution Logger initialized")
-
-                                # Now logger is guaranteed to be a valid Logger instance
-
-                                # Initialize if not available
-                                if not ai_service:
-                                    ai_service = AIService(logger)
-                                if not message_builder:
-                                    message_builder = MessageBuilder(self.pattern_manager, logger)
-
-                                # Build messages for pattern execution
-                                messages, pattern_data = message_builder.build_messages(
-                                    question=None,  # No question in pattern mode
-                                    file_input=None,
-                                    pattern_id=self.pattern_id,
-                                    pattern_input=input_values,
-                                    response_format='md',  # Default to markdown
-                                    url=None,
-                                    image=None,
-                                    pdf=None,
-                                    image_url=None,
-                                    pdf_url=None
-                                )
-
-                                if messages is None:
-                                    class MessageErrorResponse:
-                                        def __init__(self, content):
-                                            self.content = content
-                                    return MessageErrorResponse("❌ Error: Failed to build messages for pattern execution")
-
-                                # Debug log the messages (logger is guaranteed to be valid now)
-                                logger.debug(json.dumps({
-                                    "log_message": "Pattern execution messages",
-                                    "pattern_id": self.pattern_id,
-                                    "input_values": input_values,
-                                    "messages": messages
-                                }))
-
-                                # Validate that we have required components
-                                if not ai_service:
-                                    raise ValueError("AIService could not be initialized")
-                                if not self.pattern_manager:
-                                    raise ValueError("Pattern manager is not available")
-
-                                # Get AI response
-                                logger.info(f"Executing pattern '{self.pattern_id}' with AI service")
-                                response = ai_service.get_ai_response(
-                                    messages=messages,
-                                    model_name=None,  # Use default model
-                                    pattern_id=self.pattern_id,
-                                    debug=False,
-                                    pattern_manager=self.pattern_manager,
-                                    enable_url_search=False
-                                )
-
-                                logger.info("AI response received successfully")
-                                return response
-
-                            except Exception as e:
-                                # Return error response with proper logging
-                                class PatternErrorResponse:
-                                    def __init__(self, content):
-                                        self.content = content
-
-                                error_msg = f"❌ Pattern execution failed: {str(e)}"
-                                logger.error("Pattern execution error: %s", str(e))
-
-                                # Log full traceback for debugging
-                                import traceback
-                                logger.debug("Full traceback: %s", traceback.format_exc())
-
-                                return PatternErrorResponse(error_msg)
-
-                        # Run in thread pool to avoid blocking the UI
-                        loop = asyncio.get_event_loop()
-                        return await loop.run_in_executor(None, execute_sync)
-
-                pattern_screen = PatternExecuteScreen(
-                    self.selected_pattern_data,
-                    pattern_id,
-                    self.pattern_manager,
-                    self
-                )
-                await self.push_screen(pattern_screen)
-
-            except Exception as e:
-                self.notify(f"Error executing pattern: {e}", severity="error")
-
-        async def action_browse_chats(self) -> None:
-            """Launch chat browser."""
-            self.notify("Chat browser will be integrated in future version", severity="information")
-            if self.chat_manager:
-                # For now, exit to CLI chat browser
-                self.exit({"type": "chat", "data": {"workflow": "chat_browser"}})
-
-        async def action_open_settings(self) -> None:
-            """Open settings."""
-            self.notify("Settings interface will be added in future version", severity="information")
-
-        async def action_browse_models(self) -> None:
-            """Browse available OpenRouter models."""
-            from python.presentation.tui.screens.model_browser import ModelBrowserScreen
-            self.push_screen(ModelBrowserScreen())
-
-        async def action_check_credits(self) -> None:
-            """Check OpenRouter credit balance."""
-            from python.presentation.tui.screens.credit_view import CreditViewScreen
-            self.push_screen(CreditViewScreen())
-
-        async def action_focus_tab_1(self) -> None:
-            """Focus question builder tab."""
-            tabbed_content = self.query_one(TabbedContent)
-            tabbed_content.active = "question-tab"
-
-        async def action_focus_tab_2(self) -> None:
-            """Focus pattern browser tab."""
-            tabbed_content = self.query_one(TabbedContent)
-            tabbed_content.active = "pattern-tab"
-
-        async def action_focus_tab_3(self) -> None:
-            """Focus chat manager tab."""
-            tabbed_content = self.query_one(TabbedContent)
-            tabbed_content.active = "chat-tab"
-
-        async def action_focus_tab_4(self) -> None:
-            """Focus settings tab."""
-            tabbed_content = self.query_one(TabbedContent)
-            tabbed_content.active = "settings-tab"
-
-        async def action_execute_question(self) -> None:
-            """Global execute question action."""
-            await self.execute_question_action()
-
-        async def action_focus_pattern_filter(self) -> None:
-            """Focus the pattern filter input."""
-            try:
-                # Only focus filter if we're on the pattern tab
-                tabbed_content = self.query_one(TabbedContent)
-                if tabbed_content.active == "pattern-tab":
-                    pattern_filter = self.query_one("#pattern-filter", Input)
-                    pattern_filter.focus()
-            except Exception:
-                pass  # Filter might not exist or be visible
-
-        async def action_help(self) -> None:
-            """Show help information."""
-            help_text = """
-            AskAI Tabbed Interface Help:
-
-            Tabs:
-            • Question Builder: Ask AI questions with context
-            • Pattern Browser: Browse and use AI patterns
-            • Chat Manager: Manage chat history
-            • Settings: Application configuration
-
-            Question Builder:
-            • Type your question in the text area
-            • Select output format: Markdown, Raw Text, or JSON
-            • Press Execute or Ctrl+R to process
-            • Use Clear to reset the question
-
-            Global Shortcuts:
-            • Ctrl+1-4: Switch between tabs
-            • Ctrl+R: Execute question (from any tab)
-            • Ctrl+Q: Quit application
-            • F1: This help
-
-            Tips:
-            • Start typing your question immediately
-            • Use tabs to organize different workflows
-            • All features are integrated in one interface
-            """
-            self.notify(help_text, severity="information")
-
-        def start_loading_animation(self):
-            """Start animated loading status."""
-            self.loading_active = True
-            self.animate_status()
-
-        def stop_loading_animation(self):
-            """Stop the loading animation."""
-            self.loading_active = False
-
-        @work(exclusive=True)
-        async def animate_status(self):
-            """Animate the status during loading."""
-            import asyncio
-            status = self.query_one("#status", Static)
-            animation_chars = ["⏳", "⌛", "🔄", "⚡"]
-            messages = [
-                "Processing your question...",
-                "Analyzing content...",
-                "Generating response...",
-                "Almost ready..."
-            ]
-
-            counter = 0
-            while getattr(self, 'loading_active', False):
-                char = animation_chars[counter % len(animation_chars)]
-                message = messages[counter % len(messages)]
-                status.update(f"{char} {message}")
-                counter += 1
-                await asyncio.sleep(0.5)
-
-        async def process_question_async(self):
-            """Process the question asynchronously."""
-            import asyncio
-
-            def process_sync():
-                # Create mock args
-                class MockArgs:
-                    def __init__(self, question, format_type):
-                        self.question = question
-                        self.file_input = None
-                        self.url = None
+                if not self.question_processor:
+                    if self.question_tab:
+                        self.question_tab.update_status("❌ Question processor not available")
+                    return
+
+                # Create a simple args object from question_data
+                class SimpleArgs:
+                    def __init__(self, question_data):
+                        self.question = question_data['question']
+                        self.file_input = question_data['file_input'] if question_data['file_input'] else None
+                        self.url = question_data['url'] if question_data['url'] else None
+                        self.format = question_data['format']
+                        self.model = question_data['model'] if question_data['model'] else None
+                        self.output = None
+                        self.debug = False
+                        # These are not supported in TUI yet, but needed for compatibility
                         self.image = None
                         self.pdf = None
                         self.image_url = None
                         self.pdf_url = None
-                        self.format = format_type
-                        self.model = None
-                        self.debug = False
-                        self.save = False
-                        self.output = None
                         self.persistent_chat = None
-                        self.use_pattern = None
-                        self.plain_md = False
 
-                mock_args = MockArgs(self.question_text, self.selected_format)
-                if self.question_processor:
-                    return self.question_processor.process_question(mock_args)
+                args = SimpleArgs(question_data)
+
+                # Process the question
+                response = self.question_processor.process_question(args)
+
+                if response and response.content:
+                    # Display the answer
+                    if self.question_tab:
+                        self.question_tab.display_answer(response.content)
+                        self.question_tab.update_status("✅ Question processed successfully!")
                 else:
-                    # Return a mock response if no processor
-                    class MockResponse:
-                        def __init__(self, content):
-                            self.content = content
+                    if self.question_tab:
+                        self.question_tab.update_status("❌ No response received")
 
-                    return MockResponse(f"Mock response for: {self.question_text}")
+            except Exception as e:
+                if self.question_tab:
+                    self.question_tab.update_status(f"❌ Error processing question: {str(e)}")
+                    self.question_tab.display_answer(f"Error: {str(e)}")
 
-            # Run in thread pool to avoid blocking the UI
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, process_sync)
+        async def on_pattern_tab_pattern_selected(self, event) -> None:
+            """Handle pattern selection from PatternTab."""
+            pattern_data = event.pattern_data
+            pattern_input = event.pattern_input
 
+            # Update status
+            if self.pattern_tab:
+                self.pattern_tab.update_status("🔄 Executing pattern...")
 
+            try:
+                # For now, just validate the pattern and inputs
+                pattern_id = pattern_data.get('pattern_id', pattern_data.get('name', ''))
+
+                if self.pattern_manager:
+                    # Validate that we have the pattern
+                    pattern_content = self.pattern_manager.get_pattern_content(pattern_id)
+                    if pattern_content:
+                        # TODO: Here we would integrate with the AI/messaging system
+                        # For now, just show success with the collected inputs
+                        input_summary = ""
+                        if pattern_input:
+                            input_summary = f" with {len(pattern_input)} inputs"
+
+                        if self.pattern_tab:
+                            self.pattern_tab.update_status(f"✅ Pattern '{pattern_id}' ready for execution{input_summary}")
+                    else:
+                        if self.pattern_tab:
+                            self.pattern_tab.update_status(f"❌ Pattern '{pattern_id}' not found")
+                else:
+                    if self.pattern_tab:
+                        self.pattern_tab.update_status("❌ Pattern manager not available")
+
+            except Exception as e:
+                if self.pattern_tab:
+                    self.pattern_tab.update_status(f"❌ Pattern execution failed: {str(e)}")
+
+        async def on_chat_tab_chat_selected(self, event) -> None:
+            """Handle chat selection from ChatTab."""
+            chat_data = event.chat_data
+
+            # Update status
+            if self.chat_tab:
+                self.chat_tab.update_status(f"✅ Selected chat: {chat_data.get('chat_id', 'Unknown')}")
+
+        async def on_chat_tab_chat_action(self, event) -> None:
+            """Handle chat actions from ChatTab."""
+            action = event.action
+            chat_data = event.chat_data
+
+            if action == "new_chat":
+                # Handle new chat creation
+                if self.chat_tab:
+                    self.chat_tab.update_status("✅ New chat created!")
+            elif action == "delete_chat" and chat_data:
+                # Handle chat deletion
+                chat_id = chat_data.get('chat_id', 'Unknown')
+                if self.chat_tab:
+                    self.chat_tab.update_status(f"✅ Deleted chat: {chat_id}")
+
+        async def on_model_tab_model_selected(self, event) -> None:
+            """Handle model selection from ModelTab."""
+            model_data = event.model_data
+
+            # Update status
+            if self.model_tab:
+                self.model_tab.update_status(f"✅ Selected model: {model_data.get('name', 'Unknown')}")
+
+        # Key binding actions
+        def action_focus_question(self) -> None:
+            """Focus the question tab."""
+            tabs = self.query_one(TabbedContent)
+            tabs.active = "question-tab"
+
+        def action_focus_patterns(self) -> None:
+            """Focus the patterns tab."""
+            tabs = self.query_one(TabbedContent)
+            tabs.active = "pattern-tab"
+
+        def action_focus_chats(self) -> None:
+            """Focus the chats tab."""
+            tabs = self.query_one(TabbedContent)
+            tabs.active = "chat-tab"
+
+        def action_focus_models(self) -> None:
+            """Focus the models tab."""
+            tabs = self.query_one(TabbedContent)
+            tabs.active = "model-tab"
+
+        def action_focus_credits(self) -> None:
+            """Focus the credits tab."""
+            tabs = self.query_one(TabbedContent)
+            tabs.active = "credits-tab"
+
+        def action_help(self) -> None:
+            """Show help information."""
+            help_text = """
+**AskAI Interactive TUI Help**
+
+**Navigation:**
+• F1: Show this help
+• F2: Switch to Question Builder
+• F3: Switch to Pattern Browser
+• F4: Switch to Chat Browser
+• F5: Switch to Model Browser
+• F6: Switch to Credits
+• Ctrl+Q: Quit application
+
+**Tabs:**
+• Question Builder: Create and submit questions to AI
+• Pattern Browser: Browse and use AI patterns
+• Chat Browser: Manage chat history
+• Model Browser: Browse and select AI models
+• Credits: Monitor OpenRouter credit balance and usage
+
+**Question Builder:**
+• Enter your question in the main text area
+• Optionally add file input, URL, or specify format
+• Click "Ask AI" to submit your question
+• Use "Clear" to reset the form
+
+**Pattern Browser:**
+• Browse available patterns in the left panel
+• Select a pattern to view details in the right panel
+• Provide JSON input if the pattern requires it
+• Click "Use Pattern" to execute
+
+**Chat Browser:**
+• View all your chat sessions
+• Create new chats or delete existing ones
+• Select a chat to view details
+
+**Model Browser:**
+• Browse available AI models
+• Search for specific models
+• View model details, pricing, and capabilities
+• Check your OpenRouter credits
+"""
+
+            # For now, just log the help - in a real implementation you'd create a help screen
+            self.log(help_text)
 def run_tabbed_tui(pattern_manager=None, chat_manager=None, question_processor=None):
-    """Run the tabbed TUI application."""
+    """
+    Run the tabbed TUI application.
+
+    Args:
+        pattern_manager: Pattern manager instance
+        chat_manager: Chat manager instance
+        question_processor: Question processor instance
+
+    Returns:
+        Any result from the TUI interaction
+    """
     if not TEXTUAL_AVAILABLE:
+        print("Textual TUI library is not available. Please install it with: pip install textual")
         return None
 
     try:
-        app = TabbedTUIApp(pattern_manager, chat_manager, question_processor)
-        result = app.run()
-        return result
+        app = TabbedTUIApp(
+            pattern_manager=pattern_manager,
+            chat_manager=chat_manager,
+            question_processor=question_processor
+        )
+        return app.run()
     except Exception as e:
-        print(f"TUI failed: {e}")
+        print(f"TUI application failed: {e}")
+        return None
+    except KeyboardInterrupt:
+        print("\nTUI application interrupted by user")
         return None
 
 
-__all__ = ['TabbedTUIApp', 'run_tabbed_tui']
+# Fallback function for when TUI is not available
+def tabbed_tui_fallback(pattern_manager=None, chat_manager=None, question_processor=None):
+    """Fallback when TUI is not available."""
+    print("Tabbed TUI interface is not available.")
+    print("This could be due to:")
+    print("1. Missing textual package (install with: pip install textual)")
+    print("2. Incompatible terminal environment")
+    print("3. System configuration issues")
+    print("\nPlease use the CLI interface instead.")
+    return None
+
+
+if not TEXTUAL_AVAILABLE:
+    run_tabbed_tui = tabbed_tui_fallback

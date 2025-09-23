@@ -2,23 +2,29 @@
 
 ## Overview
 
-The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive terminal experience built on the [Textual framework](https://textual.textualize.io/). The TUI offers an intuitive alternative to the traditional command-line interface, featuring real-time interaction, visual feedback, and streamlined workflows.
+The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive terminal experience built on the [Textual framework](https://textual.textualize.io/). The TUI offers an intuitive alternative to the traditional command-line interface, featuring real-time interaction, visual feedback, and streamlined workflows through a **tabbed interface design**.
 
 ## Architecture Principles
 
-### 1. **Unified Application Design**
-- Single application instance managing all workflows
-- Consistent navigation patterns across all screens
-- Global keyboard shortcuts for enhanced usability
-- Seamless transitions between different functionalities
+### 1. **Tabbed Application Design**
+- Single application instance with tabbed interface
+- All functionality accessible through dedicated tabs
+- Consistent navigation patterns with function key shortcuts
+- Seamless transitions between different workflows without screen changes
 
-### 2. **Modular Screen System**
-- Screen-based architecture using Textual's Screen class
-- Each workflow implemented as a dedicated screen
-- Shared components for consistent user experience
-- Dynamic screen management with proper cleanup
+### 2. **Component-Based Architecture**
+- All tabs inherit from `BaseTabComponent` for consistency
+- Shared styling, error handling, and common functionality
+- Message-passing system for inter-tab communication
+- Modular design enabling easy extension and maintenance
 
-### 3. **Graceful Fallback**
+### 3. **Real-time API Integration**
+- Direct OpenRouter API integration for live data
+- Real-time model browsing with current pricing
+- Live credit balance monitoring
+- Functional AI question processing with streaming responses
+
+### 4. **Graceful Fallback**
 - Automatic detection of TUI compatibility
 - Seamless fallback to CLI mode when TUI unavailable
 - Environment-aware initialization
@@ -28,51 +34,136 @@ The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive termi
 
 ### Application Layer (`apps/`)
 
-#### UnifiedTUIApp
-**File**: `python/presentation/tui/apps/unified_tui_app.py`
-- **Purpose**: Central application coordinator
+#### TabbedTUIApp
+**File**: `python/presentation/tui/apps/tabbed_tui_app.py`
+- **Purpose**: Central tabbed application coordinator
 - **Features**:
-  - Workflow selection and routing
-  - Global navigation management
-  - Screen stack coordination
-  - Inter-workflow communication
-
-#### QuestionBuilder
-**File**: `python/presentation/tui/apps/question_builder.py`
-- **Purpose**: Interactive question creation and execution
-- **Features**:
-  - Multi-line text input with syntax highlighting
-  - Real-time execution with loading animation
-  - Context file attachment support
-  - Response viewer integration
-
-#### PatternBrowser
-**File**: `python/presentation/tui/apps/pattern_browser.py`
-- **Purpose**: Pattern discovery and management
-- **Features**:
-  - Live search and filtering
-  - Preview pane with markdown rendering
-  - Pattern metadata display
-  - Quick execution capabilities
-
-#### Selector Apps (CLI Integration)
-- `pattern_selector.py`: Lightweight pattern selection for CLI workflows
-- `chat_selector.py`: Lightweight chat selection for CLI workflows
-- `chat_manager.py`: Full-featured chat history management
-
-#### Legacy/Alternative Apps
-- `main_tui_app.py`: Original workflow launcher (deprecated)
-- `unified_tui_app.py`: Alternative unified interface
+  - Five-tab interface (Question, Pattern, Chat, Model, Credits)
+  - Global function key navigation (F1-F6)
+  - Shared CSS styling and theme management
+  - Real-time data integration across tabs
+  - Message handling between tabs and AI processing
 
 ### Component Layer (`components/`)
 
-#### LoadingScreen
-**File**: `python/presentation/tui/components/loading_screen.py`
-- **Purpose**: Animated feedback during AI processing
+#### BaseTabComponent
+**File**: `python/presentation/tui/components/base_tab.py`
+- **Purpose**: Foundation class for all tab components
 - **Features**:
-  - Progress indicators
-  - Status message updates
-  - Cancellation support
+  - Common initialization patterns
+  - Shared error handling and logging
+  - Consistent styling and layout helpers
+  - Standard message passing interface
+
+#### QuestionTab
+**File**: `python/presentation/tui/components/question_tab.py`
+- **Purpose**: Interactive question creation and AI execution
+- **Features**:
+  - Two-panel layout (input/answer)
+  - Multi-line question input with real-time processing
+  - File and URL input support
+  - Format selection (raw text, markdown, JSON)
+  - Live AI response display with proper formatting
+  - Clear and execute buttons for workflow control
+
+#### ModelTab
+**File**: `python/presentation/tui/components/model_tab.py`
+- **Purpose**: Real-time AI model browsing and selection
+- **Features**:
+  - Live OpenRouter model data with search/filter
+  - Two-panel layout (model list/details)
+  - Real-time pricing and capability information
+  - Model context length and feature display
+  - Direct integration with OpenRouter API
+
+#### CreditsTab
+**File**: `python/presentation/tui/components/credits_tab.py`
+- **Purpose**: Real-time credit balance and usage monitoring
+#### PatternTab
+**File**: `python/presentation/tui/components/pattern_tab.py`
+- **Purpose**: Pattern browsing and execution interface
+- **Features**:
+  - Two-panel layout (pattern list/details)
+  - Live search and filtering capabilities
+  - Preview pane with markdown rendering
+  - Pattern metadata and documentation display
+  - Quick pattern execution with input validation
+
+#### ChatTab
+**File**: `python/presentation/tui/components/chat_tab.py`
+- **Purpose**: Chat history management and browsing
+- **Features**:
+  - Chat file listing and management
+  - Chat history viewing and navigation
+  - Search and filter capabilities
+  - Chat deletion and maintenance tools
+
+### Utility Layer (`utils/`)
+
+#### TUI Fallback System
+**File**: `python/presentation/tui/utils/fallback.py`
+- **Purpose**: Environment detection and graceful degradation
+- **Features**:
+  - TUI compatibility checking
+  - Dependency validation
+  - Environment configuration recommendations
+  - Automatic CLI fallback when TUI unavailable
+
+### Integration Layer
+
+#### AI Integration
+- **OpenRouterClient**: Direct API integration for models, credits, and AI requests
+- **QuestionProcessor**: Question handling with context assembly and AI execution
+- **Real-time Data**: Live model lists, pricing, and credit information
+
+#### Message System
+- Tab-to-tab communication via Textual's message system
+- Event-driven architecture for user interactions
+- Centralized error handling and status updates
+
+## Key Features
+
+### 1. **Tabbed Interface Navigation**
+- **F1**: Help and documentation
+- **F2**: Question Builder tab
+- **F3**: Pattern Browser tab
+- **F4**: Chat Browser tab
+- **F5**: Model Browser tab
+- **F6**: Credits tab
+- **Ctrl+Q**: Quit application
+
+### 2. **Real-time AI Integration**
+- Live OpenRouter API data for models and credits
+- Streaming AI responses in question processing
+- Real-time pricing and model capability information
+- Credit usage monitoring and balance tracking
+
+### 3. **Consistent User Experience**
+- Shared BaseTabComponent architecture
+- Consistent styling and layout patterns
+- Common error handling and status messaging
+- Unified navigation and keyboard shortcuts
+
+### 4. **Two-Panel Layouts**
+- Question Tab: Input panel + Answer panel
+- Model Tab: Model list + Model details
+- Pattern Tab: Pattern list + Pattern preview
+- Chat Tab: Chat list + Chat details
+
+## Launch and Configuration
+
+### Interface Options
+The TUI can be launched in the following ways:
+
+1. **Command Line**: `askai --interactive` or `askai -i`
+2. **Configuration**: Set `default_mode: "tui"` in config file
+3. **Environment**: Disable with `ASKAI_NO_TUI=1` environment variable
+
+### Fallback Behavior
+- **Automatic Detection**: TUI availability checked at startup
+- **Graceful Degradation**: Falls back to CLI when TUI unavailable
+- **Dependency Handling**: Continues functioning without Textual framework
+- **User Notification**: Clear messaging about fallback reasons
   - Response transition management
 
 #### QuestionResponseScreen
@@ -86,57 +177,41 @@ The AskAI CLI Terminal User Interface (TUI) provides a modern, interactive termi
 ### Widget Layer (`widgets/`)
 - Custom Textual widgets for specialized UI elements
 - Reusable components across different screens
-- Enhanced input controls and display elements
+## Tab Architecture
 
-### Utility Layer (`utils/`)
-- TUI availability detection
-- Environment compatibility checking
-- Graceful degradation helpers
-- Configuration management
-
-## Navigation System
-
-### Global Shortcuts
-```
-Ctrl+B    : Back to main menu (from any screen)
-Ctrl+Q    : Quit application (global exit)
-F1        : Context-sensitive help
-Esc       : Cancel current operation / Back
-```
-
-### Workflow-Specific Shortcuts
-```
-Question Builder:
-  Ctrl+R  : Execute question
-  Ctrl+N  : New question (clear form)
-
-Pattern Browser:
-  Enter   : Select pattern
-  /       : Focus search
-  Ctrl+P  : Toggle preview pane
-```
-
-### Navigation Flow
-```
-Main Menu → Workflow Selection → Workflow Execution → Response/Results → Main Menu
-     ↑                                    ↓
-     ←────────────── Ctrl+B ──────────────
-```
-
-## Screen Architecture
-
-### Screen Lifecycle
-1. **Initialization**: Screen class instantiation with required dependencies
-2. **Composition**: UI element layout and styling
+### Tab Lifecycle
+1. **Initialization**: Tab component instantiation with BaseTabComponent inheritance
+2. **Composition**: UI element layout using Textual widgets and containers
 3. **Mounting**: Event handler registration and initial data loading
-4. **Interaction**: User input processing and state management
-5. **Cleanup**: Resource disposal and state preservation
+4. **Interaction**: User input processing and real-time updates
+5. **Message Handling**: Tab-to-app communication for AI processing
 
-### Screen Communication
-- **Parent-Child**: Direct method calls and event passing
-- **Sibling Screens**: Message passing through unified app
-- **Global State**: Shared through app instance references
-- **External Systems**: Dependency injection for processors/managers
+### Tab Communication
+- **Tab-to-App**: Message passing for question submission and processing
+- **App-to-Tab**: Response delivery and status updates
+- **Shared State**: Common styling and configuration through BaseTab
+- **External Integration**: Direct API calls for models and credits
+
+## Development Guidelines
+
+### Adding New Tabs
+1. **Inherit BaseTabComponent**: Extend the base class for consistency
+2. **Implement compose()**: Define UI layout using Textual widgets
+3. **Add Message Handling**: Implement event handlers for user interactions
+4. **Update TabbedTUIApp**: Add tab to main application with function key binding
+5. **Update CSS**: Add tab-specific styling to maintain visual consistency
+
+### Component Design Patterns
+- **Two-Panel Layout**: List/details pattern for browsing interfaces
+- **Form-Based Input**: Structured input collection with validation
+- **Real-time Updates**: Live data integration with progress indicators
+- **Consistent Styling**: Shared CSS classes and color schemes
+
+### Error Handling Strategy
+- **Graceful Degradation**: Continue operation with reduced functionality
+- **User Feedback**: Clear error messages and recovery suggestions
+- **Logging Integration**: Comprehensive logging for debugging
+- **API Resilience**: Robust handling of network and API failures
 
 ## Workflow Integration
 
@@ -172,57 +247,62 @@ Main Menu → Workflow Selection → Workflow Execution → Response/Results →
          ↑                       ↑                       │
          │                       │                       ↓
          │              ┌─────────────────┐    ┌─────────────────┐
-         │              │ Result Display  │    │ Pattern Exec    │
-         └──────────────│                 │←───│                 │
-                        │ • Output Format │    │ • Template Fill │
-                        │ • Save Options  │    │ • AI Processing │
-                        │ • Export Tools  │    │ • Result Format │
-                        └─────────────────┘    └─────────────────┘
-```
+## Implementation Status
 
-### System Management Workflow
-```
-┌─────────────────┐    ┌──────────────────┐
-│   Main Menu     │    │ System Dashboard │
-│                 │───→│                  │
-│ • Question      │    │ • Config Editor  │
-│ • Pattern       │    │ • API Keys Mgmt  │
-│ • System        │    │ • Logs Viewer    │
-└─────────────────┘    │ • Health Check   │
-         ↑              └──────────────────┘
-         │                       │
-         └───────────────────────┘
-```
+### Current State (2025)
+- ✅ **Tabbed Interface**: Fully implemented with five functional tabs
+- ✅ **Real AI Integration**: Live OpenRouter API integration
+- ✅ **Question Processing**: Functional question-answer workflow
+- ✅ **Model Browser**: Real-time model data with pricing
+- ✅ **Credits Management**: Live credit balance monitoring
+- ✅ **Simplified Interface**: Single `--interactive/-i` option
+- ✅ **Component Architecture**: BaseTabComponent with inheritance
+- ✅ **Error Handling**: Graceful fallback and user feedback
+
+### Architecture Benefits
+1. **Maintainability**: Component-based design with shared base classes
+2. **Extensibility**: Easy addition of new tabs and functionality
+3. **User Experience**: Consistent interface with intuitive navigation
+4. **Performance**: Efficient real-time data integration
+5. **Reliability**: Robust error handling and fallback mechanisms
+
+### Future Enhancements
+- Enhanced pattern execution workflows
+- Advanced chat management features
+- Additional model filtering and sorting options
+- Custom themes and visual customization
+- Advanced keyboard shortcuts and productivity features
 
 ## Styling and Theming
 
 ### CSS Architecture
-- **Global Styles**: Common layout patterns and color schemes
-- **Component Styles**: Widget-specific appearance rules
-- **Screen Styles**: Layout-specific styling overrides
-- **Theme Support**: Dark/light mode compatibility
+The TUI uses a unified CSS system defined in `TabbedTUIApp`:
 
-### Design System
 ```css
-/* Color Palette */
-$primary: #0078d7      /* Primary actions and highlights */
-$secondary: #6c757d    /* Secondary elements */
-$success: #28a745      /* Success states and confirmations */
-$warning: #ffc107      /* Warnings and cautions */
-$error: #dc3545       /* Error states and critical actions */
-$text: #ffffff        /* Primary text color */
-$text-muted: #6c757d  /* Secondary text color */
-$background: #1e1e1e  /* Main background */
-$surface: #2d2d2d     /* Card and panel backgrounds */
+/* Main Application Styles */
+Screen { background: #0f172a; }
+Header, Footer { background: #1e293b; color: #00FFFF; }
 
-/* Typography */
-.title { text-style: bold; color: $primary; }
-.subtitle { color: $text-muted; }
-.code { font-family: monospace; }
-.emphasis { text-style: italic; }
+/* Tab Content Styles */
+TabbedContent { background: #0f172a; margin: 1; }
+TabPane { background: #0f172a; padding: 1; }
 
-/* Layout */
-.container { padding: 1; margin: 1; }
+/* Component Styles */
+.panel-title { color: #00FFFF; text-style: bold; }
+.button-row { align: center middle; margin-top: 1; }
+Input, TextArea { background: #1e293b; border: solid #00FFFF; color: #ffffff; }
+
+/* Layout Containers */
+.question-main-layout { height: 100%; }
+.question-form-panel { width: 1fr; margin-right: 1; }
+.answer-panel { width: 1fr; margin-left: 1; }
+```
+
+### Design Consistency
+- **Color Scheme**: Dark theme with cyan accents for modern terminal feel
+- **Layout Patterns**: Consistent two-panel layouts across tabs
+- **Typography**: Clear hierarchy with bold titles and readable content
+- **Interactive Elements**: Consistent button styling and hover states
 .card { border: solid $surface; padding: 1; }
 .button { margin: 1; width: auto; }
 ```
@@ -267,37 +347,53 @@ def is_tui_available() -> bool:
 
 ## Testing Strategy
 
+## Testing Strategy
+
 ### Component Testing
-- **Unit Tests**: Individual widget and component functionality
-- **Integration Tests**: Screen interaction and navigation flows
-- **Mock Testing**: AI service integration with test doubles
-- **Visual Testing**: Layout and styling verification
+- **Tab Components**: Individual tab functionality and BaseTab inheritance
+- **Integration Tests**: Tab-to-app message passing and AI integration
+- **API Testing**: OpenRouter client integration with live data
+- **Fallback Testing**: TUI availability detection and CLI degradation
 
 ### User Experience Testing
-- **Keyboard Navigation**: Comprehensive shortcut testing
-- **Accessibility**: Screen reader and contrast compliance
-- **Performance**: Response time and resource usage validation
-- **Compatibility**: Multi-terminal and environment testing
+- **Tab Navigation**: Function key shortcuts and tab switching
+- **Real-time Updates**: Live data refresh and streaming responses
+- **Error Scenarios**: Network failures and API error handling
+- **Accessibility**: Keyboard navigation and screen reader compatibility
 
-## Development Guidelines
+## Code Organization
 
-### Adding New Screens
-1. **Create Screen Class**: Inherit from `textual.screen.Screen`
-2. **Define Layout**: Implement `compose()` method with UI elements
-3. **Add Interactions**: Implement event handlers and actions
-4. **Integrate Navigation**: Connect to unified app navigation system
-5. **Add Tests**: Create comprehensive test coverage
-
-### Best Practices
-- **Consistent Styling**: Follow established design system
-- **Keyboard-First**: Ensure full keyboard accessibility
-- **Error Handling**: Implement comprehensive error recovery
-- **Documentation**: Maintain inline code documentation
-- **Performance**: Profile and optimize resource usage
-
-### Code Organization
+### File Structure
 ```
 python/presentation/tui/
+├── apps/
+│   └── tabbed_tui_app.py          # Main tabbed application
+├── components/
+│   ├── base_tab.py                # Base component class
+│   ├── question_tab.py            # Question builder tab
+│   ├── pattern_tab.py             # Pattern browser tab
+│   ├── chat_tab.py                # Chat manager tab
+│   ├── model_tab.py               # Model browser tab
+│   ├── credits_tab.py             # Credits monitoring tab
+│   └── loading_screen.py          # Loading animations
+├── utils/
+│   └── fallback.py                # TUI detection and fallback
+└── __init__.py                    # TUI availability checking
+```
+
+### Integration Points
+- **CLI Integration**: Command handler launches TUI via `--interactive`
+- **AI Integration**: Direct OpenRouter API calls for real-time data
+- **Config Integration**: TUI settings and default mode configuration
+- **Business Logic**: Question processing and pattern execution
+
+## Conclusion
+
+The AskAI TUI architecture provides a robust, extensible foundation for interactive terminal experiences. Built on modern design principles with comprehensive error handling and graceful fallbacks, it offers users a powerful alternative to traditional CLI interaction while maintaining full compatibility with existing workflows.
+
+The tabbed interface design simplifies navigation and provides immediate access to all functionality, while the component-based architecture ensures maintainability and consistency. Real-time API integration delivers live data and responsive AI interactions, creating a modern, efficient user experience.
+
+The modular design enables easy extension and customization while the unified application approach ensures consistent user experience across all functionality areas. With proper testing, documentation, and adherence to established patterns, the TUI system provides a solid foundation for future enhancements and feature development.
 ├── __init__.py              # TUI availability and configuration
 ├── apps/                    # Main application screens
 │   ├── unified_tui_app.py  # Central application coordinator

@@ -24,101 +24,235 @@ If TUI is unavailable, AskAI automatically falls back to CLI mode with full func
 
 ## Main Interface
 
-### Welcome Screen
-When you launch the TUI, you'll see the main workflow selection screen:
+### Tabbed Interface
+When you launch the TUI, you'll see a modern tabbed interface with five main tabs:
 
 ```
-🤖 AskAI Interactive Terminal
-Choose your workflow to get started
-
-🤔 Question Logic
-Build interactive AI queries with context files, URLs, images, and PDFs
-[Start Question Builder]
-
-📋 Pattern Logic
-Browse patterns, preview markdown content, and execute with custom inputs
-[Browse Patterns]
-
-⚙️ System Management
-Manage OpenRouter account, configuration, and system operations
-[Open Internals]
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Question Builder | Pattern Browser | Chat Browser | Model Browser | Credits │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  [Current tab content displayed here]                                   │
+│                                                                         │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+ F1 Help  F2 Question  F3 Patterns  F4 Chats  F5 Models  F6 Credits  ^Q Quit
 ```
 
 ### Global Navigation
-These shortcuts work from any screen:
+These shortcuts work from any tab:
 
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Ctrl+B` | Back to Main Menu | Return to workflow selection |
-| `Ctrl+Q` | Quit Application | Exit TUI completely |
 | `F1` | Help | Show context-sensitive help |
-| `Esc` | Cancel/Back | Cancel current operation |
+| `F2` | Question Tab | Switch to Question Builder |
+| `F3` | Patterns Tab | Switch to Pattern Browser |
+| `F4` | Chats Tab | Switch to Chat Browser |
+| `F5` | Models Tab | Switch to Model Browser |
+| `F6` | Credits Tab | Switch to Credits Monitor |
+| `Ctrl+Q` | Quit Application | Exit TUI completely |
 
-## Question Logic Workflow
+## Question Builder Tab
 
-### Starting Question Builder
-1. From the main menu, click **"Start Question Builder"** or press **1**
-2. The question input screen opens with a text area for your query
+### Interface Layout
+The Question Builder uses a two-panel layout:
 
-### Question Input Interface
 ```
-┌─ Question Builder ────────────────────────────────────────┐
-│                                                           │
-│ Enter your question or prompt:                            │
-│ ┌─────────────────────────────────────────────────────┐   │
-│ │ What is the best way to implement error handling    │   │
-│ │ in Python applications?                             │   │
-│ │                                                     │   │
-│ │                                                     │   │
-│ └─────────────────────────────────────────────────────┘   │
-│                                                           │
-│ [Execute Question]  [Clear]  [Back to Main Menu]         │
-│                                                           │
-│ Status: Ready to execute                                  │
-└───────────────────────────────────────────────────────────┘
+┌─── Question Input Panel ───┐ ┌─── Answer Display Panel ───┐
+│ Question:                  │ │ Answer                      │
+│ ┌────────────────────────┐ │ │ ┌─────────────────────────┐ │
+│ │ Enter your question    │ │ │ │ AI response appears     │ │
+│ │ here...                │ │ │ │ here after execution    │ │
+│ │                        │ │ │ │                         │ │
+│ └────────────────────────┘ │ │ │                         │ │
+│                            │ │ │                         │ │
+│ [Ask AI] [Clear]           │ │ │                         │ │
+│                            │ │ │                         │ │
+│ File: [optional]           │ │ │                         │ │
+│ URL:  [optional]           │ │ │                         │ │
+│ Format: [Text ▼]           │ │ │                         │ │
+└────────────────────────────┘ └─────────────────────────────┘
 ```
 
-### Question Workflow Steps
-1. **Input**: Type your question in the text area
-2. **Execute**: Click "Execute Question" or press `Ctrl+R`
-3. **Loading**: Animated loading screen shows progress
-4. **Response**: AI response opens in dedicated viewer
-5. **Actions**: Choose next action (new question, back to menu, etc.)
+### Using the Question Builder
+1. **Enter Your Question**: Click in the text area and type your question
+2. **Add Context (Optional)**:
+## Model Browser Tab
 
-### Question Builder Shortcuts
-| Shortcut | Action | Description |
-|----------|--------|-------------|
-| `Ctrl+R` | Execute Question | Process current question |
-| `Ctrl+N` | New Question | Clear form for new question |
-| `Tab` | Navigate Fields | Move between input elements |
+### Interface Layout
+The Model Browser displays live OpenRouter model data in a two-panel layout:
 
-### Context and File Support
-The question builder supports various context types:
-- **Text Files**: Drag and drop or browse to attach
-- **URLs**: Paste web URLs for content extraction
-- **Images**: Upload images for visual analysis
-- **PDFs**: Attach PDF documents for content analysis
-
-## Pattern Logic Workflow
-
-### Pattern Browser Interface
 ```
-┌─ Pattern Browser ─────────────────────────────────────────┐
-│ Search: [data visualization        ] 🔍                   │
-├─────────────────────────┬─────────────────────────────────┤
-│ Pattern List            │ Preview Pane                    │
-│                         │                                 │
-│ ▶ Data Visualization    │ # Data Visualization Pattern    │
-│   Web Development       │                                 │
-│   Code Generation       │ Create interactive charts and   │
-│   Log Analysis          │ graphs from datasets using      │
-│   Market Research       │ modern visualization libraries. │
-│                         │                                 │
-│ [Use Pattern]           │ ## Features                     │
-│                         │ - Multiple chart types         │
-│                         │ - Interactive legends          │
-│                         │ - Export capabilities           │
-└─────────────────────────┴─────────────────────────────────┘
+┌─── Model List Panel ──────┐ ┌─── Model Details Panel ────┐
+│ 🔍 Search models...       │ │ Model: GPT-4               │
+│                           │ │ Provider: OpenAI           │
+│ ○ GPT-4 (OpenAI)         │ │ Context: 128k tokens       │
+│ ● GPT-3.5 Turbo          │ │ Pricing: $0.01/1k tokens  │
+│ ○ Claude-3 (Anthropic)   │ │                            │
+│ ○ Gemini Pro (Google)    │ │ Capabilities:              │
+│ ○ Mixtral (Mistral)      │ │ • Text generation          │
+│ ○ Llama 2 (Meta)         │ │ • Code completion          │
+│                           │ │ • Reasoning tasks          │
+│ [Refresh Models]          │ │                            │
+└───────────────────────────┘ └────────────────────────────┘
+```
+
+### Using the Model Browser
+1. **Browse Models**: Scroll through available AI models
+2. **Search/Filter**: Use search box to find specific models
+3. **View Details**: Click a model to see pricing and capabilities
+4. **Real-time Data**: Information updates automatically from OpenRouter
+
+## Credits Tab
+
+### Credit Monitoring Interface
+```
+┌─────────────── Credit Balance ────────────────┐
+│                                               │
+│  Total Credits: $60.00                        │
+│  Used Credits:  $39.12                        │
+│  Remaining:     $20.88                        │
+│                                               │
+│  ████████████████████████░░░░░░░░░ 65%        │
+│                                               │
+│  Usage History:                               │
+│  • Question processing: $25.40                │
+│  • Pattern execution:   $8.72                 │
+│  • Model testing:       $5.00                 │
+│                                               │
+│  [Refresh Balance]                            │
+└───────────────────────────────────────────────┘
+```
+
+### Credit Management
+- **Real-time Balance**: Live credit information from OpenRouter API
+- **Usage Tracking**: Monitor spending across different features
+- **Visual Progress**: Progress bar shows credit consumption
+- **Manual Refresh**: Update balance on demand
+
+## Pattern Browser Tab
+
+### Interface Layout
+```
+┌─── Pattern List Panel ────┐ ┌─── Pattern Details Panel ──┐
+│ 🔍 Search patterns...     │ │ Pattern: Data Visualization │
+│                           │ │ Category: Analysis          │
+│ ○ Data Visualization      │ │ Description:                │
+│ ● PDF Summary             │ │ Creates visual charts and   │
+│ ○ Log Interpretation      │ │ graphs from data sources.   │
+│ ○ Code Generation         │ │                             │
+│ ○ Content Summary         │ │ Required Inputs:            │
+│ ○ Market Analysis         │ │ • Data file or URL          │
+│                           │ │ • Chart type preference     │
+│ [Execute Pattern]         │ │ • Output format             │
+└───────────────────────────┘ └─────────────────────────────┘
+```
+
+### Pattern Execution
+1. **Browse Patterns**: View available AI patterns in the left panel
+2. **Pattern Details**: Select a pattern to see requirements and description
+3. **Execute**: Click "Execute Pattern" to launch the selected pattern
+4. **Follow Prompts**: Pattern will guide you through required inputs
+5. **View Results**: AI-generated content displays in the response area
+
+## Chat Browser Tab
+
+### Chat Management Interface
+```
+┌─── Chat Sessions Panel ───┐ ┌─── Chat Content Panel ─────┐
+│ 🔍 Search chats...        │ │ Chat: Project Planning      │
+│                           │ │ Created: 2024-01-15         │
+│ ○ Project Planning        │ │                             │
+│ ● API Design Discussion   │ │ You: How should I structure │
+│ ○ Code Review Session     │ │      my REST API?           │
+│ ○ Feature Requirements    │ │                             │
+│ ○ Bug Investigation       │ │ AI: For a well-structured   │
+│                           │ │     REST API, consider...   │
+│ [New Chat] [Delete Chat]  │ │                             │
+└───────────────────────────┘ └─────────────────────────────┘
+```
+
+### Chat Operations
+- **Browse Sessions**: View all saved chat conversations
+- **Search/Filter**: Find specific chats by content or date
+- **View History**: Read previous conversations with AI
+- **Continue Chats**: Resume existing conversations
+- **Manage Sessions**: Create new chats or delete old ones
+
+## Navigation and Shortcuts
+
+### Tab Navigation
+| Key Combination | Action | Description |
+|----------------|--------|-------------|
+| `Tab` | Next Tab | Move to the next tab |
+| `Shift+Tab` | Previous Tab | Move to the previous tab |
+| `Ctrl+1-5` | Direct Tab | Jump directly to tab number |
+
+### Universal Shortcuts
+| Key Combination | Action | Description |
+|----------------|--------|-------------|
+| `Ctrl+Q` | Quit | Exit the application |
+| `Ctrl+R` | Refresh | Refresh current tab content |
+| `F1` | Help | Show context-sensitive help |
+| `Escape` | Cancel | Cancel current operation |
+
+### Panel Navigation
+| Key Combination | Action | Description |
+|----------------|--------|-------------|
+| `Ctrl+Left/Right` | Switch Panels | Move between left/right panels |
+| `Enter` | Select/Execute | Activate selected item or button |
+| `Space` | Toggle | Toggle selection where applicable |
+
+## Troubleshooting
+
+### Common Issues
+
+#### Tab Content Not Loading
+- **Symptom**: Empty or loading tab content
+- **Solution**: Press `Ctrl+R` to refresh or check network connection
+- **Prevention**: Ensure stable internet for OpenRouter API access
+
+#### Input Fields Not Responding
+- **Symptom**: Cannot type in question or search fields
+- **Solution**: Click directly in the input area or press Tab to focus
+- **Prevention**: Use Tab navigation to ensure proper field focus
+
+#### Slow Model/Credit Updates
+- **Symptom**: Outdated information in Model or Credits tabs
+- **Solution**: Use refresh buttons or `Ctrl+R` to update
+- **Prevention**: Check network connection quality
+
+### Performance Tips
+- Use search and filtering to reduce data loading
+- Close unnecessary background applications
+- Ensure adequate terminal size for proper layout
+- Keep network connection stable for real-time updates
+
+### Error Recovery
+If the TUI encounters errors:
+1. Try refreshing the current tab (`Ctrl+R`)
+2. Switch to a different tab and return
+3. Use `Escape` to cancel problematic operations
+4. Restart the application if issues persist
+
+## Advanced Usage
+
+### Workflow Integration
+The tabbed interface supports efficient workflows:
+1. **Research Phase**: Use Model Browser to find optimal AI models
+2. **Content Creation**: Execute questions or patterns based on research
+3. **Iteration**: Review chat history to build on previous conversations
+4. **Monitoring**: Track credit usage to manage costs
+
+### Best Practices
+- Keep the Credits tab visible to monitor usage
+- Use descriptive chat names for better organization
+- Leverage pattern templates for consistent results
+- Bookmark frequently used models in your workflow
+
+---
+
+*For technical implementation details, see [TUI_ARCHITECTURE.md](TUI_ARCHITECTURE.md)*
 ```
 
 ### Pattern Workflow Steps

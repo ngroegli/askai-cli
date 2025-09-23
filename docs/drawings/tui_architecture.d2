@@ -4,12 +4,11 @@ title: "AskAI TUI Architecture & Flow"
 # Main Application Layer
 unified_app: "UnifiedTUIApp" {
   shape: rectangle
-  style.fill: "#0078d7"
-  style.font-color: white
+  style.fill: "#E3F2FD"
 
   main_menu: "Main Menu Screen" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#90CAF9"
 
     question_option: "Question Logic"
     pattern_option: "Pattern Logic"
@@ -17,9 +16,8 @@ unified_app: "UnifiedTUIApp" {
   }
 
   navigation: "Global Navigation" {
-    shape: diamond
-    style.fill: "#28a745"
-    style.font-color: white
+    shape: rectangle
+    style.fill: "#90CAF9"
 
     back_shortcut: "Ctrl+B: Back"
     quit_shortcut: "Ctrl+Q: Quit"
@@ -30,12 +28,11 @@ unified_app: "UnifiedTUIApp" {
 # Question Workflow
 question_flow: "Question Workflow" {
   shape: rectangle
-  style.fill: "#6c757d"
-  style.font-color: white
+  style.fill: "#F3E5F5"
 
   builder: "QuestionBuilder Screen" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#CE93D8"
 
     text_input: "Text Input Area"
     action_buttons: "Execute/Clear Buttons"
@@ -44,8 +41,8 @@ question_flow: "Question Workflow" {
   }
 
   processing: "AI Processing" {
-    shape: cylinder
-    style.fill: "#ffc107"
+    shape: rectangle
+    style.fill: "#A5D6A7"
 
     input_validation: "Input Validation"
     context_assembly: "Context Assembly"
@@ -55,7 +52,7 @@ question_flow: "Question Workflow" {
 
   response: "Response Viewer" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#CE93D8"
 
     formatted_display: "Formatted Display"
     scrollable_content: "Scrollable Content"
@@ -67,12 +64,11 @@ question_flow: "Question Workflow" {
 # Pattern Workflow
 pattern_flow: "Pattern Workflow" {
   shape: rectangle
-  style.fill: "#6c757d"
-  style.font-color: white
+  style.fill: "#F3E5F5"
 
   browser: "PatternBrowser Screen" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#CE93D8"
 
     search_filter: "Search/Filter Bar"
     pattern_list: "Pattern List Pane"
@@ -81,8 +77,8 @@ pattern_flow: "Pattern Workflow" {
   }
 
   execution: "Pattern Execution" {
-    shape: cylinder
-    style.fill: "#ffc107"
+    shape: rectangle
+    style.fill: "#A5D6A7"
 
     template_loading: "Template Loading"
     variable_substitution: "Variable Substitution"
@@ -92,7 +88,7 @@ pattern_flow: "Pattern Workflow" {
 
   results: "Results Display" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#CE93D8"
 
     formatted_output: "Formatted Output"
     export_options: "Export Options"
@@ -104,12 +100,11 @@ pattern_flow: "Pattern Workflow" {
 # System Management
 system_flow: "System Management" {
   shape: rectangle
-  style.fill: "#6c757d"
-  style.font-color: white
+  style.fill: "#FAFAFA"
 
   dashboard: "System Dashboard" {
     shape: rectangle
-    style.fill: "#e8f4f8"
+    style.fill: "#BDBDBD"
 
     config_editor: "Configuration Editor"
     api_management: "API Key Management"
@@ -118,8 +113,8 @@ system_flow: "System Management" {
   }
 
   config: "Configuration" {
-    shape: cylinder
-    style.fill: "#ffc107"
+    shape: rectangle
+    style.fill: "#A5D6A7"
 
     tui_preferences: "TUI Preferences"
     ai_model_settings: "AI Model Settings"
@@ -131,12 +126,11 @@ system_flow: "System Management" {
 # Shared Components Layer
 components: "Shared Components" {
   shape: rectangle
-  style.fill: "#dc3545"
-  style.font-color: white
+  style.fill: "#FFEBEE"
 
   loading: "Loading Screen" {
-    shape: oval
-    style.fill: "#f8d7da"
+    shape: rectangle
+    style.fill: "#EF9A9A"
 
     progress_indicators: "Progress Indicators"
     status_messages: "Status Messages"
@@ -145,8 +139,8 @@ components: "Shared Components" {
   }
 
   widgets: "Custom Widgets" {
-    shape: oval
-    style.fill: "#f8d7da"
+    shape: rectangle
+    style.fill: "#CE93D8"
 
     enhanced_input: "Enhanced Input"
     syntax_display: "Syntax Highlighting"
@@ -155,8 +149,8 @@ components: "Shared Components" {
   }
 
   utils: "TUI Utils" {
-    shape: oval
-    style.fill: "#f8d7da"
+    shape: rectangle
+    style.fill: "#BDBDBD"
 
     tui_detection: "TUI Detection"
     graceful_fallback: "Graceful Fallback"
@@ -168,12 +162,11 @@ components: "Shared Components" {
 # External Dependencies
 external: "External Systems" {
   shape: rectangle
-  style.fill: "#17a2b8"
-  style.font-color: white
+  style.fill: "#FFF3E0"
 
   textual: "Textual Framework" {
-    shape: hexagon
-    style.fill: "#d1ecf1"
+    shape: rectangle
+    style.fill: "#FFCC80"
 
     app_class: "App Class"
     screen_management: "Screen Management"
@@ -182,8 +175,8 @@ external: "External Systems" {
   }
 
   ai_apis: "AI APIs" {
-    shape: hexagon
-    style.fill: "#d1ecf1"
+    shape: rectangle
+    style.fill: "#FFCC80"
 
     openrouter_api: "OpenRouter API"
     ai_models: "AI Models"
@@ -192,8 +185,8 @@ external: "External Systems" {
   }
 
   cli: "CLI Fallback" {
-    shape: hexagon
-    style.fill: "#d1ecf1"
+    shape: rectangle
+    style.fill: "#CE93D8"
 
     cli_commands: "CLI Commands"
     argument_parsing: "Argument Parsing"

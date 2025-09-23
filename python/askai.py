@@ -40,9 +40,52 @@ def main():
     """Main entry point for the AskAI CLI application."""
     # Check if this is a help request (before any heavy initialization)
     # Use most efficient path for help commands
-    if '-h' in sys.argv or '--help' in sys.argv or len(sys.argv) == 1:
+    if '-h' in sys.argv or '--help' in sys.argv:
         display_help_fast()
         return  # Exit after displaying help
+
+    # Handle no parameters case - check default_mode config
+    if len(sys.argv) == 1:
+        try:
+            config = load_config()
+            interface_config = config.get('interface', {})
+            default_mode = interface_config.get('default_mode', 'cli')
+
+            if default_mode == 'tui':
+                # Try to launch TUI mode
+                try:
+                    from presentation.tui import is_tui_available
+                    from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
+
+                    if is_tui_available():
+                        # Initialize minimal components for TUI
+                        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        logger = setup_logger(config, False)
+
+                        pattern_manager = PatternManager(base_path, config)
+                        chat_manager = ChatManager(config, logger)
+                        question_processor = QuestionProcessor(config, logger, base_path)
+
+                        # Launch TUI
+                        run_tabbed_tui(
+                            pattern_manager=pattern_manager,
+                            chat_manager=chat_manager,
+                            question_processor=question_processor
+                        )
+                        return
+                    else:
+                        print("TUI mode configured but not available. Falling back to CLI help.")
+                except ImportError:
+                    print("TUI mode configured but dependencies not available. Falling back to CLI help.")
+                except Exception as e:
+                    print(f"TUI mode failed: {e}. Falling back to CLI help.")
+        except Exception:
+            # If config loading fails, fall back to help
+            pass
+
+        # Show CLI help as fallback or if default_mode is cli
+        display_help_fast()
+        return
 
     # For non-help commands, initialize CLI parser first
     cli_parser = CLIParser()

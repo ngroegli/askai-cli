@@ -2,11 +2,11 @@
 Reusable UI components with built-in styling.
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 try:
     from textual.widgets import Button as TextualButton, Input as TextualInput, TextArea as TextualTextArea
-    from textual.widgets import Static, ListView, ListItem, Select
+    from textual.widgets import Static, ListView, Select
     from textual.containers import Vertical, Horizontal
     TEXTUAL_AVAILABLE = True
 except ImportError:
