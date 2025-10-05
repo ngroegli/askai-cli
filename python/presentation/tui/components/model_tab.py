@@ -4,29 +4,18 @@ Handles AI model browsing and selection.
 """
 
 from typing import TYPE_CHECKING
+from .base_tab import BaseTabComponent
+
+from ..common import (
+    Static, Button, ListView, ListItem, Label, Input,
+    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
+)
 
 try:
-    from textual.widgets import Static, Button, ListView, ListItem, Label, Input
-    from textual.containers import Vertical, Horizontal, VerticalScroll
-    from textual.message import Message
     from modules.ai import OpenRouterClient
-    from shared.config import load_config
-    TEXTUAL_AVAILABLE = True
 except ImportError:
-    TEXTUAL_AVAILABLE = False
     if not TYPE_CHECKING:
-        Static = object
-        Button = object
-        ListView = object
-        ListItem = object
-        Label = object
-        Input = object
-        Vertical = object
-        Horizontal = object
-        VerticalScroll = object
-        Message = object
         OpenRouterClient = object
-        load_config = lambda: {}
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label, Input
@@ -34,10 +23,8 @@ if TYPE_CHECKING:
     from textual.message import Message
     from modules.ai import OpenRouterClient
 
-from .base_tab import BaseTabComponent
 
-
-class ModelTab(BaseTabComponent):
+class ModelTab(BaseTabComponent, StatusMixin):
     """Model Browser tab component."""
 
     class ModelSelected(Message):
@@ -127,12 +114,11 @@ class ModelTab(BaseTabComponent):
                 status_display.update(f"❌ Error loading from OpenRouter: {str(api_error)}")
                 # Fall back to sample models for now
                 self._load_fallback_models(status_display)
-
-        except Exception as e:
+        except Exception:
             try:
                 status_display = self.query_one("#status-display", Static)
-                status_display.update(f"❌ Error loading models: {e}")
-            except:
+                status_display.update("❌ Error loading models: Widget not available")
+            except Exception:
                 pass  # Widget not available yet
 
     def _load_fallback_models(self, status_display):
@@ -192,7 +178,7 @@ class ModelTab(BaseTabComponent):
                 label = f"🤖 {name} ({context_str} ctx)"
                 list_item = ListItem(Label(label), name=model_id)
                 model_list.append(list_item)
-        except:
+        except Exception:
             pass  # Widget not available yet
 
     async def on_input_changed(self, event) -> None:
@@ -221,7 +207,7 @@ class ModelTab(BaseTabComponent):
         """Display information about the selected model."""
         try:
             model_info = self.query_one("#model-info", Static)
-        except:
+        except Exception:
             return  # Widget not available yet
 
         # Find the selected model
@@ -253,7 +239,7 @@ class ModelTab(BaseTabComponent):
                     prompt_price_float = 0.0
                     completion_price_float = 0.0
 
-                info_text += f"\n💰 Pricing:\n"
+                info_text += "\n💰 Pricing:\n"
                 info_text += f"  📥 Prompt: ${prompt_price_float:.6f} per 1K tokens\n"
                 info_text += f"  📤 Completion: ${completion_price_float:.6f} per 1K tokens\n"
 
@@ -268,8 +254,5 @@ class ModelTab(BaseTabComponent):
 
     def update_status(self, message: str) -> None:
         """Update the status display."""
-        try:
-            status_display = self.query_one("#status-display", Static)
-            status_display.update(message)
-        except:
-            pass
+        # Use the inherited method from StatusMixin
+        super().update_status(message)

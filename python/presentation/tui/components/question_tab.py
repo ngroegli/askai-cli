@@ -4,34 +4,20 @@ Handles the question creation interface with inputs, format selection, and execu
 """
 
 from typing import TYPE_CHECKING
+from .base_tab import BaseTabComponent
 
-try:
-    from textual.widgets import Static, Button, TextArea, Select, Input
-    from textual.containers import Vertical, Horizontal, VerticalScroll
-    from textual.message import Message
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    TEXTUAL_AVAILABLE = False
-    if not TYPE_CHECKING:
-        Static = object
-        Button = object
-        TextArea = object
-        Select = object
-        Input = object
-        Vertical = object
-        Horizontal = object
-        VerticalScroll = object
-        Message = object
+from ..common import (
+    Static, Button, TextArea, Select, Input,
+    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
+)
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, TextArea, Select, Input
     from textual.containers import Vertical, Horizontal, VerticalScroll
     from textual.message import Message
 
-from .base_tab import BaseTabComponent
 
-
-class QuestionTab(BaseTabComponent):
+class QuestionTab(BaseTabComponent, StatusMixin):
     """Question Builder tab component."""
 
     class QuestionSubmitted(Message):
@@ -148,11 +134,8 @@ class QuestionTab(BaseTabComponent):
 
     def update_status(self, message: str) -> None:
         """Update the status display."""
-        try:
-            status_display = self.query_one("#status-display", Static)
-            status_display.update(message)
-        except Exception:
-            pass
+        # Use the inherited method from StatusMixin
+        super().update_status(message)
 
     def display_answer(self, answer: str) -> None:
         """Display the AI answer in the answer panel."""

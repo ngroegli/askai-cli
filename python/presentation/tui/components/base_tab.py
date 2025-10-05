@@ -4,15 +4,7 @@ Base component for tab content in the TUI interface.
 
 from typing import TYPE_CHECKING
 
-try:
-    from textual.widgets import Static
-    from textual.containers import Vertical
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    TEXTUAL_AVAILABLE = False
-    if not TYPE_CHECKING:
-        Static = object
-        Vertical = object
+from ..common import Static, Vertical
 
 if TYPE_CHECKING:
     from textual.widgets import Static

@@ -6,6 +6,10 @@ Each tab is now a separate, reusable component.
 
 from typing import TYPE_CHECKING
 
+# Import our components and common styles
+from ..common import COMMON_STYLES
+from ..components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
+
 try:
     from textual.app import App
     from textual.widgets import Header, Footer, TabbedContent, TabPane
@@ -30,9 +34,6 @@ if TYPE_CHECKING:
     from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
     from textual.binding import Binding
 
-# Import our components
-from ..components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
-
 
 if TEXTUAL_AVAILABLE:
     class TabbedTUIApp(App):
@@ -48,194 +49,115 @@ if TEXTUAL_AVAILABLE:
             ("f6", "focus_credits", "Credits"),
         ]
 
-        CSS = """
+        CSS = f"""
         /* Main Application Styles */
-        Screen {
+        Screen {{
             background: #0f172a;
-        }
+        }}
 
-        Header {
+        Header {{
             background: #1e293b;
             color: #00FFFF;
             dock: top;
             height: 3;
-        }
+        }}
 
-        Footer {
+        Footer {{
             background: #1e293b;
             color: #87CEEB;
             dock: bottom;
             height: 3;
-        }
+        }}
 
         /* Tab Content Styles */
-        TabbedContent {
+        TabbedContent {{
             background: #0f172a;
             margin: 1;
-        }
+        }}
 
-        TabPane {
+        TabPane {{
             background: #0f172a;
             padding: 1;
-        }
+        }}
 
-        /* Panel Title Styles */
-        .panel-title {
-            color: #00FFFF;
-            text-style: bold;
-            margin-bottom: 1;
-        }
+        {COMMON_STYLES}
 
-        .panel-subtitle {
-            color: #87CEEB;
-            text-style: bold;
-            margin-bottom: 1;
-        }
-
-        /* Status Text */
-        .status-text {
-            color: #87CEEB;
-            margin-top: 1;
-        }
-
-        /* Button Styles */
-        Button {
-            margin: 1;
-            min-width: 12;
-        }
-
-        .button-row {
-            align: center middle;
-            margin-top: 1;
-            height: 4;
-        }
-
-        /* List Styles */
-        ListView {
-            background: #1e293b;
-            border: solid #00FFFF;
-            height: 100%;
-        }
-
-        ListItem {
-            background: #1e293b;
-            color: #ffffff;
-        }
-
-        ListItem:hover {
-            background: #334155;
-        }
-
-        ListItem.-highlight {
-            background: #0ea5e9;
-            color: #ffffff;
-        }
-
-        /* Input and TextArea Styles */
-        Input {
-            background: #1e293b;
-            border: solid #00FFFF;
-            color: #ffffff;
-        }
-
-        TextArea {
-            background: #1e293b;
-            border: solid #00FFFF;
-            color: #ffffff;
-        }
-
-        .question-input {
+        /* Additional app-specific styles */
+        .question-input {{
             height: 4;
             max-height: 4;
-        }
+        }}
 
-        Select {
-            background: #1e293b;
-            border: solid #00FFFF;
-            color: #ffffff;
-        }
-
-        /* Layout Containers */
-        .question-form {
+        .question-form {{
             margin: 1;
-        }
+        }}
 
-        .question-main-layout {
+        .question-main-layout {{
             height: 100%;
-        }
+        }}
 
-        .question-form-panel {
+        .question-form-panel {{
             width: 1fr;
             margin-right: 1;
-        }
+        }}
 
-        .answer-panel {
+        .answer-panel {{
             width: 1fr;
             margin-left: 1;
-        }
+        }}
 
-        .input-row, .select-row {
+        .input-row, .select-row {{
             height: auto;
             margin: 0;
-        }
+        }}
 
-        .input-column, .select-column {
+        .input-column, .select-column {{
             margin: 0 1;
-        }
+        }}
 
         .pattern-browser-container,
         .chat-browser-container,
-        .model-browser-container {
+        .model-browser-container {{
             height: 100%;
-        }
+        }}
 
         .pattern-list-panel,
         .chat-list-panel,
-        .model-list-panel {
+        .model-list-panel {{
             width: 1fr;
             margin-right: 1;
-        }
+        }}
 
         .pattern-details-panel,
         .chat-details-panel,
-        .model-details-panel {
+        .model-details-panel {{
             width: 2fr;
-        }
+        }}
 
-        /* Input Field Styles */
-        .input-label {
-            color: #94a3b8;
-            margin-top: 1;
-        }
-
-        .hidden {
+        .hidden {{
             display: none;
-        }
-
-        Input, TextArea {
-            margin-bottom: 1;
-        }
+        }}
 
         /* Pattern Details Box */
-        .pattern-details-box {
+        .pattern-details-box {{
             background: #1e293b;
             border: solid #00FFFF;
             height: 1fr;
             padding: 1;
-        }
+        }}
 
         /* Pattern List Box */
-        .pattern-list-box {
+        .pattern-list-box {{
             background: #1e293b;
             border: solid #00FFFF;
             height: 1fr;
-        }
+        }}
 
         /* Remove border from ListView when inside ScrollableContainer */
-        .pattern-list-box ListView {
+        .pattern-list-box ListView {{
             border: none;
             background: transparent;
-        }
+        }}
         """
 
         def __init__(self, pattern_manager=None, chat_manager=None, question_processor=None):
@@ -326,6 +248,8 @@ if TEXTUAL_AVAILABLE:
 
                 # Create a simple args object from question_data
                 class SimpleArgs:
+                    """Simple arguments container for question processing."""
+
                     def __init__(self, question_data):
                         self.question = question_data['question']
                         self.file_input = question_data['file_input'] if question_data['file_input'] else None
@@ -384,7 +308,8 @@ if TEXTUAL_AVAILABLE:
                             input_summary = f" with {len(pattern_input)} inputs"
 
                         if self.pattern_tab:
-                            self.pattern_tab.update_status(f"✅ Pattern '{pattern_id}' ready for execution{input_summary}")
+                            status_msg = f"✅ Pattern '{pattern_id}' ready for execution{input_summary}"
+                            self.pattern_tab.update_status(status_msg)
                     else:
                         if self.pattern_tab:
                             self.pattern_tab.update_status(f"❌ Pattern '{pattern_id}' not found")
@@ -540,7 +465,6 @@ def tabbed_tui_fallback(pattern_manager=None, chat_manager=None, question_proces
     print("2. Incompatible terminal environment")
     print("3. System configuration issues")
     print("\nPlease use the CLI interface instead.")
-    return None
 
 
 if not TEXTUAL_AVAILABLE:

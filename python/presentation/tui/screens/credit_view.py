@@ -5,6 +5,7 @@ from textual.containers import Horizontal, Container
 from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 
+from python.modules.ai.openrouter_client import OpenRouterClient
 from python.presentation.tui.styles.styled_components import StyledButton, StyledStatic
 from python.presentation.tui.screens.base_screen import BaseScreen
 
@@ -106,9 +107,7 @@ class CreditViewScreen(BaseScreen):
             content_widget.remove_class("error-text")
             content_widget.add_class("loading-text")
 
-            # Import and create OpenRouter client
-            from python.modules.ai.openrouter_client import OpenRouterClient
-
+            # Create OpenRouter client
             client = OpenRouterClient()
             self.credit_data = client.get_credit_balance()
 

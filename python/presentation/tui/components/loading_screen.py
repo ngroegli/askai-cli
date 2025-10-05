@@ -5,9 +5,9 @@ Shared loading screen component for TUI applications.
 from typing import Optional, TYPE_CHECKING
 
 try:
-    from textual.containers import Center, Middle, Vertical
-    from textual.widgets import Static, ProgressBar
-    from textual.screen import ModalScreen
+    from textual.containers import Center, Middle, Vertical, Horizontal, ScrollableContainer
+    from textual.widgets import Static, ProgressBar, TextArea, Button, Header, Footer
+    from textual.screen import ModalScreen, Screen
     from textual import work
     import asyncio
     TEXTUAL_AVAILABLE = True
@@ -21,7 +21,10 @@ except ImportError:
         ProgressBar = object
         ModalScreen = object
         Screen = object
-        work = lambda x: x
+
+        def work(x):
+            """Simple fallback for work decorator."""
+            return x
     import asyncio
 
 # Type imports for static analysis
@@ -157,14 +160,12 @@ if TEXTUAL_AVAILABLE:
                 yield Static(f"Response ({len(self.response_content)} characters)", id="response-info")
 
                 # Create scrollable response area
-                from textual.widgets import TextArea
                 yield TextArea(
                     text=self.response_content,
                     read_only=True,
                     id="response-content"
                 )
 
-                from textual.widgets import Button
                 yield Button("Close", id="close-response", variant="primary")
 
         async def on_button_pressed(self, event) -> None:
@@ -227,10 +228,6 @@ if TEXTUAL_AVAILABLE:
 
         def create_screen_class(self):
             """Create the screen class dynamically."""
-            from textual.screen import Screen
-            from textual.containers import Vertical, Horizontal, ScrollableContainer
-            from textual.widgets import Header, Footer, Static, Button, TextArea
-
             response_content = self.response_content
             title = self.title
             app_instance = self.app_instance
@@ -405,5 +402,8 @@ def create_question_response_screen(response_content: str, title: str = "Questio
     return response_screen_builder.create_screen_class()
 
 
-__all__ = ['LoadingScreen', 'ResponseViewerScreen', 'QuestionResponseScreen',
-           'create_loading_screen', 'create_response_viewer', 'create_question_response_screen', 'create_pattern_response_screen']
+__all__ = [
+    'LoadingScreen', 'ResponseViewerScreen', 'QuestionResponseScreen',
+    'create_loading_screen', 'create_response_viewer', 'create_question_response_screen',
+    'create_pattern_response_screen'
+]

@@ -6,6 +6,12 @@ import os
 import sys
 from typing import Optional
 
+try:
+    import textual  # noqa: F401
+    TEXTUAL_AVAILABLE = True
+except ImportError:
+    TEXTUAL_AVAILABLE = False
+
 
 def check_tui_environment() -> dict:
     """
@@ -23,10 +29,8 @@ def check_tui_environment() -> dict:
     }
 
     # Check if textual is available
-    try:
-        import textual  # noqa: F401
-        result['textual_available'] = True
-    except ImportError:
+    result['textual_available'] = TEXTUAL_AVAILABLE
+    if not TEXTUAL_AVAILABLE:
         result['issues'].append("Textual library not installed (pip install textual)")
 
     # Check terminal compatibility

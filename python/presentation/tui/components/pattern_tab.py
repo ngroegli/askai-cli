@@ -4,36 +4,20 @@ Handles pattern browsing, selection, and execution.
 """
 
 from typing import Optional, TYPE_CHECKING
+from .base_tab import BaseTabComponent
 
-try:
-    from textual.widgets import Static, Button, ListView, ListItem, Label, TextArea, Input
-    from textual.containers import Vertical, Horizontal, VerticalScroll
-    from textual.message import Message
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    TEXTUAL_AVAILABLE = False
-    if not TYPE_CHECKING:
-        Static = object
-        Button = object
-        ListView = object
-        ListItem = object
-        Label = object
-        TextArea = object
-        Input = object
-        Vertical = object
-        Horizontal = object
-        VerticalScroll = object
-        Message = object
+from ..common import (
+    Static, Button, ListView, ListItem, Label, TextArea, Input,
+    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
+)
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label, TextArea, Input
     from textual.containers import Vertical, Horizontal, VerticalScroll
     from textual.message import Message
 
-from .base_tab import BaseTabComponent
 
-
-class PatternTab(BaseTabComponent):
+class PatternTab(BaseTabComponent, StatusMixin):
     """Pattern Browser tab component."""
 
     class PatternSelected(Message):
@@ -43,7 +27,7 @@ class PatternTab(BaseTabComponent):
             self.pattern_input = pattern_input or {}
             super().__init__()
 
-    def __init__(self, pattern_manager=None, *args, **kwargs):
+    def __init__(self, *args, pattern_manager=None, **kwargs):
         super().__init__("Pattern Browser", *args, **kwargs)
         self.pattern_manager = pattern_manager
         self.selected_pattern = None
@@ -103,7 +87,6 @@ class PatternTab(BaseTabComponent):
             for pattern in patterns:
                 name = pattern.get('name', 'Unknown')
                 pattern_id = pattern.get('pattern_id', name)
-                source = pattern.get('source', 'built-in')
                 is_private = pattern.get('is_private', False)
 
                 # Create display label
@@ -121,7 +104,7 @@ class PatternTab(BaseTabComponent):
             try:
                 status_display = self.query_one("#status-display", Static)
                 status_display.update(f"❌ Error loading patterns: {e}")
-            except:
+            except Exception:
                 pass  # Widget not available yet
 
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
@@ -138,14 +121,14 @@ class PatternTab(BaseTabComponent):
                 try:
                     pattern_info = self.query_one("#pattern-info", Static)
                     pattern_info.update("Pattern details not available.")
-                except:
+                except Exception:
                     pass
 
         except Exception as e:
             try:
                 pattern_info = self.query_one("#pattern-info", Static)
                 pattern_info.update(f"Error displaying pattern: {str(e)}")
-            except:
+            except Exception:
                 pass
 
     async def _display_pattern_info(self):
@@ -172,7 +155,10 @@ class PatternTab(BaseTabComponent):
                 pattern_content = self.pattern_manager.get_pattern_content(pattern_id)
                 if pattern_content:
                     # Get description from pattern content first, fallback to pattern metadata
-                    description = pattern_content.get('description', pattern.get('description', 'No description available'))
+                    description = pattern_content.get(
+                        'description',
+                        pattern.get('description', 'No description available')
+                    )
                     inputs = pattern_content.get('inputs', [])
                     outputs = pattern_content.get('outputs', [])
 
@@ -281,21 +267,19 @@ class PatternTab(BaseTabComponent):
             try:
                 status_display = self.query_one("#status-display", Static)
                 status_display.update("❌ Please select a pattern first")
-            except:
+            except Exception:
                 pass
             return
 
         try:
             status_display = self.query_one("#status-display", Static)
             status_display.update("🔄 Collecting inputs...")
-        except:
+        except Exception:
             pass
 
         # Collect input values from dynamic fields
         pattern_inputs = {}
         try:
-            inputs_container = self.query_one("#pattern-inputs-container", Vertical)
-
             # Get pattern content to know what inputs we expect
             pattern_id = self.selected_pattern.get('pattern_id', self.selected_pattern.get('name', ''))
             if self.pattern_manager:
@@ -333,16 +317,16 @@ class PatternTab(BaseTabComponent):
                             if value:  # Only include non-empty values
                                 pattern_inputs[inp_name] = value
 
-                        except Exception as e:
+                        except Exception:
                             if inp_required:
                                 status_display.update(f"❌ Could not read required field '{inp_name}'")
                                 return
-        except:
+        except Exception:
             pass
 
         try:
             status_display.update("🔄 Executing pattern...")
-        except:
+        except Exception:
             pass
 
         # Emit message to parent for actual execution
@@ -354,8 +338,5 @@ class PatternTab(BaseTabComponent):
 
     def update_status(self, message: str) -> None:
         """Update the status display."""
-        try:
-            status_display = self.query_one("#status-display", Static)
-            status_display.update(message)
-        except:
-            pass
+        # Use the inherited method from StatusMixin
+        super().update_status(message)

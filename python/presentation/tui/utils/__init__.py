@@ -4,6 +4,13 @@ import os
 import sys
 from typing import Dict, Any, Optional
 
+try:
+    import textual
+    TEXTUAL_AVAILABLE = True
+except ImportError:
+    textual = None
+    TEXTUAL_AVAILABLE = False
+
 
 def get_terminal_size() -> tuple[int, int]:
     """Get terminal dimensions (width, height)."""
@@ -71,11 +78,7 @@ def is_chat_file(filename: str) -> bool:
 
 def safe_import_textual() -> Optional[Any]:
     """Safely import textual with error handling."""
-    try:
-        import textual
-        return textual
-    except ImportError:
-        return None
+    return textual if TEXTUAL_AVAILABLE else None
 
 
 __all__ = [

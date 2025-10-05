@@ -10,12 +10,16 @@ import os
 import sys
 from typing import Optional
 
+try:
+    import textual  # noqa: F401
+    TEXTUAL_AVAILABLE = True
+except ImportError:
+    TEXTUAL_AVAILABLE = False
+
 
 def is_tui_available() -> bool:
     """Check if TUI can be used in the current environment."""
-    try:
-        import textual  # noqa: F401
-    except ImportError:
+    if not TEXTUAL_AVAILABLE:
         return False
 
     # Check if we're in a terminal

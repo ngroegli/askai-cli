@@ -1,27 +1,26 @@
 """
 Credits Tab Component.
-Handles OpenRouter credit balance and usage monitoring.
+Displays OpenRouter credit balance and usage information.
 """
 
 from typing import TYPE_CHECKING
+from datetime import datetime
+from .base_tab import BaseTabComponent
+
+from ..common import (
+    Static, Button, ProgressBar, Vertical, Horizontal,
+    VerticalScroll, StatusMixin
+)
 
 try:
-    from textual.widgets import Static, Button, ProgressBar
-    from textual.containers import Vertical, Horizontal, VerticalScroll
     from modules.ai import OpenRouterClient
-    TEXTUAL_AVAILABLE = True
 except ImportError:
-    TEXTUAL_AVAILABLE = False
     if not TYPE_CHECKING:
-        Static = object
-        Button = object
-        ProgressBar = object
-        Vertical = object
-        Horizontal = object
-        VerticalScroll = object
-        Message = object
         OpenRouterClient = object
-        load_config = lambda: {}
+
+        def load_config():
+            """Fallback config loader."""
+            return {}
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ProgressBar
@@ -29,10 +28,8 @@ if TYPE_CHECKING:
     from textual.message import Message
     from modules.ai import OpenRouterClient
 
-from .base_tab import BaseTabComponent
 
-
-class CreditsTab(BaseTabComponent):
+class CreditsTab(BaseTabComponent, StatusMixin):
     """Credits monitoring tab component."""
 
     def __init__(self, *args, **kwargs):
@@ -194,7 +191,6 @@ class CreditsTab(BaseTabComponent):
                 account_status.update("⚠️  Low Balance - Add Credits Soon")
 
             last_updated = self.query_one("#last-updated", Static)
-            from datetime import datetime
             last_updated.update(f"Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         except Exception:
@@ -229,5 +225,5 @@ class CreditsTab(BaseTabComponent):
 
     def update_status(self, message: str) -> None:
         """Update the status display."""
-        status_display = self.query_one("#status-display", Static)
-        status_display.update(message)
+        # Use the inherited method from StatusMixin
+        super().update_status(message)

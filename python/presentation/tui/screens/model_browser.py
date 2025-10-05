@@ -5,6 +5,7 @@ from textual.containers import Vertical, Horizontal, Container
 from textual.widgets import Header, Footer, Static, Input, ListView, ListItem, Label, RichLog
 from textual.binding import Binding
 
+from python.modules.ai.openrouter_client import OpenRouterClient
 from python.presentation.tui.styles.styled_components import StyledButton, StyledStatic, StyledInput
 from python.presentation.tui.screens.base_screen import BaseScreen
 
@@ -253,9 +254,7 @@ class ModelBrowserScreen(BaseScreen):
             status_widget.update("[cyan]Models: Loading...[/cyan]")
             status_widget.add_class("loading-text")
 
-            # Import and create OpenRouter client
-            from python.modules.ai.openrouter_client import OpenRouterClient
-
+            # Create OpenRouter client
             client = OpenRouterClient()
             self.models = client.get_available_models()
             self.filtered_models = self.models.copy()

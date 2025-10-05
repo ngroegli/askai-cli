@@ -23,7 +23,11 @@ except ImportError:
         Label = object
         DataTable = object
         ModalScreen = object
-        reactive = lambda x: x  # Simple fallback for reactive
+
+        def reactive(x):
+            """Simple fallback for reactive."""
+            return x
+
     ComposeResult = Any
 
 # Type imports for static analysis
@@ -239,8 +243,8 @@ if TEXTUAL_AVAILABLE:
             # Create a simple text-based progress bar
             bar_width = 40
             filled = int((new_progress / 100) * bar_width)
-            bar = "█" * filled + "░" * (bar_width - filled)
-            progress_widget.update(f"[{bar}] {new_progress}%")
+            progress_bar = "█" * filled + "░" * (bar_width - filled)
+            progress_widget.update(f"[{progress_bar}] {new_progress}%")
 
         def set_status(self, status: str, progress: Optional[int] = None):
             """Set status and optionally progress."""

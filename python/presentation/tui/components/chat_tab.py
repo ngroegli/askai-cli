@@ -4,33 +4,20 @@ Handles chat browsing, viewing, and management.
 """
 
 from typing import Optional, TYPE_CHECKING
+from .base_tab import BaseTabComponent
 
-try:
-    from textual.widgets import Static, Button, ListView, ListItem, Label
-    from textual.containers import Vertical, Horizontal
-    from textual.message import Message
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    TEXTUAL_AVAILABLE = False
-    if not TYPE_CHECKING:
-        Static = object
-        Button = object
-        ListView = object
-        ListItem = object
-        Label = object
-        Vertical = object
-        Horizontal = object
-        Message = object
+from ..common import (
+    Static, Button, ListView, ListItem, Label,
+    Vertical, Horizontal, Message, StatusMixin
+)
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label
     from textual.containers import Vertical, Horizontal
     from textual.message import Message
 
-from .base_tab import BaseTabComponent
 
-
-class ChatTab(BaseTabComponent):
+class ChatTab(BaseTabComponent, StatusMixin):
     """Chat Browser tab component."""
 
     class ChatSelected(Message):
@@ -46,7 +33,7 @@ class ChatTab(BaseTabComponent):
             self.chat_data = chat_data
             super().__init__()
 
-    def __init__(self, chat_manager=None, *args, **kwargs):
+    def __init__(self, *args, chat_manager=None, **kwargs):
         super().__init__("Chat Browser", *args, **kwargs)
         self.chat_manager = chat_manager
         self.chat_list = None
@@ -203,5 +190,5 @@ class ChatTab(BaseTabComponent):
 
     def update_status(self, message: str) -> None:
         """Update the status display."""
-        if self.status_display:
-            self.status_display.update(message)
+        # Use the inherited method from StatusMixin
+        super().update_status(message)

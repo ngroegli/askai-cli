@@ -19,6 +19,8 @@ from modules.questions import QuestionProcessor
 
 from presentation.cli import CommandHandler
 from presentation.cli.cli_parser import CLIParser
+from presentation.tui import is_tui_available
+from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
 
 from shared.config import load_config
 from shared.logging import setup_logger
@@ -54,9 +56,6 @@ def main():
             if default_mode == 'tui':
                 # Try to launch TUI mode
                 try:
-                    from presentation.tui import is_tui_available
-                    from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
-
                     if is_tui_available():
                         # Initialize minimal components for TUI
                         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
