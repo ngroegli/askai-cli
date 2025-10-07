@@ -336,7 +336,3 @@ class PatternTab(BaseTabComponent, StatusMixin):
         """Legacy method - redirect to new execution method."""
         await self._execute_pattern()
 
-    def update_status(self, message: str) -> None:
-        """Update the status display."""
-        # Use the inherited method from StatusMixin
-        super().update_status(message)

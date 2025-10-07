@@ -2,7 +2,6 @@
 Common utility functions for TUI components.
 """
 
-from typing import Optional
 from .textual_imports import Static
 
 

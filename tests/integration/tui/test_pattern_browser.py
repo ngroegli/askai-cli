@@ -3,17 +3,17 @@ Integration tests for TUI pattern browser functionality.
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch, mock_open
 import sys
 import os
 
 # Add the project root to the path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
-from tests.test_base import TestBase
+from tests.integration.test_base import TestBase
 
 # Import modules under test
-from python.presentation.tui.apps.pattern_browser import (
+from python.presentation.tui.pattern_browser import (
     PatternItem, pattern_browser_fallback
 )
 
@@ -21,11 +21,9 @@ from python.presentation.tui.apps.pattern_browser import (
 class TestPatternBrowserIntegration(TestBase):
     """Integration tests for pattern browser TUI."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        super().setUp()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.mock_pattern_manager = Mock()
-
         # Mock pattern data
         self.sample_patterns = [
             {
@@ -43,6 +41,9 @@ class TestPatternBrowserIntegration(TestBase):
                 'pattern_id': 'test2'
             }
         ]
+
+    def set_up(self):
+        """Set up test fixtures."""
 
         self.mock_pattern_manager.list_patterns.return_value = self.sample_patterns
 
@@ -178,11 +179,6 @@ class TestPatternBrowserIntegration(TestBase):
 
 class TestTUIIntegration(TestBase):
     """Integration tests for TUI system integration."""
-
-    def setUp(self):
-        """Set up test fixtures."""
-        super().setUp()
-
     @patch('python.presentation.tui.is_tui_available')
     def test_tui_availability_check(self, mock_tui_available):
         """Test TUI availability checking."""

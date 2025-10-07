@@ -223,7 +223,3 @@ class CreditsTab(BaseTabComponent, StatusMixin):
             status_display = self.query_one("#status-display", Static)
             status_display.update("📈 Usage history feature coming soon...")
 
-    def update_status(self, message: str) -> None:
-        """Update the status display."""
-        # Use the inherited method from StatusMixin
-        super().update_status(message)

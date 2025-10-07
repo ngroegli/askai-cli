@@ -301,8 +301,6 @@ if TEXTUAL_AVAILABLE:
                     # Validate that we have the pattern
                     pattern_content = self.pattern_manager.get_pattern_content(pattern_id)
                     if pattern_content:
-                        # TODO: Here we would integrate with the AI/messaging system
-                        # For now, just show success with the collected inputs
                         input_summary = ""
                         if pattern_input:
                             input_summary = f" with {len(pattern_input)} inputs"

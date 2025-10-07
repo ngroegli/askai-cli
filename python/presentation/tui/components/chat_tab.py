@@ -188,7 +188,3 @@ class ChatTab(BaseTabComponent, StatusMixin):
         # Emit message to parent
         self.post_message(self.ChatAction("delete_chat", self.selected_chat))
 
-    def update_status(self, message: str) -> None:
-        """Update the status display."""
-        # Use the inherited method from StatusMixin
-        super().update_status(message)

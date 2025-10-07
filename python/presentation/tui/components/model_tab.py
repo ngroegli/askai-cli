@@ -252,7 +252,3 @@ class ModelTab(BaseTabComponent, StatusMixin):
         if event.button.id == "refresh-models-button":
             self._load_models()
 
-    def update_status(self, message: str) -> None:
-        """Update the status display."""
-        # Use the inherited method from StatusMixin
-        super().update_status(message)

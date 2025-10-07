@@ -132,10 +132,6 @@ class QuestionTab(BaseTabComponent, StatusMixin):
         format_select.value = "rawtext"
         status_display.update("✅ Form cleared, ready for new question!")
 
-    def update_status(self, message: str) -> None:
-        """Update the status display."""
-        # Use the inherited method from StatusMixin
-        super().update_status(message)
 
     def display_answer(self, answer: str) -> None:
         """Display the AI answer in the answer panel."""
