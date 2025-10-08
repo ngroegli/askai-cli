@@ -5,7 +5,6 @@ Unit tests for TUI fallback utilities.
 import os
 import unittest
 from unittest.mock import patch
-from tests.test_base import TestBase
 
 # Import the module under test
 from python.presentation.tui.utils.fallback import (
@@ -16,7 +15,7 @@ from python.presentation.tui.utils.fallback import (
 )
 
 
-class TestTUIFallback(TestBase):
+class TestTUIFallback(unittest.TestCase):
     """Test TUI fallback functionality."""
 
     def setUp(self):
@@ -160,7 +159,8 @@ class TestTUIFallback(TestBase):
                 None
             )
             self.assertIsNotNone(install_rec)
-            self.assertIn("pip install textual", install_rec['command'])
+            if install_rec is not None:
+                self.assertIn("pip install textual", install_rec['command'])
 
             # Check for enable TUI recommendation
             enable_rec = next(
@@ -168,7 +168,8 @@ class TestTUIFallback(TestBase):
                 None
             )
             self.assertIsNotNone(enable_rec)
-            self.assertIn("unset ASKAI_NO_TUI", enable_rec['command'])
+            if enable_rec is not None:
+                self.assertIn("unset ASKAI_NO_TUI", enable_rec['command'])
 
     def test_configure_tui_environment_already_configured(self):
         """Test TUI environment when already properly configured."""
