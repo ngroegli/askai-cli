@@ -2,15 +2,13 @@
 TUI fallback utilities for graceful degradation when Textual is unavailable.
 """
 
+import importlib.util
 import os
 import sys
 from typing import Optional
 
-try:
-    import textual  # noqa: F401
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    TEXTUAL_AVAILABLE = False
+# Check textual availability using importlib instead of direct import
+TEXTUAL_AVAILABLE = importlib.util.find_spec("textual") is not None
 
 
 def check_tui_environment() -> dict:

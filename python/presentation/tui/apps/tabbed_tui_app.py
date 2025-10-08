@@ -457,6 +457,9 @@ def run_tabbed_tui(pattern_manager=None, chat_manager=None, question_processor=N
 # Fallback function for when TUI is not available
 def tabbed_tui_fallback(pattern_manager=None, chat_manager=None, question_processor=None):
     """Fallback when TUI is not available."""
+    # Acknowledge parameters to satisfy linter (they maintain API compatibility)
+    _ = pattern_manager, chat_manager, question_processor
+
     print("Tabbed TUI interface is not available.")
     print("This could be due to:")
     print("1. Missing textual package (install with: pip install textual)")

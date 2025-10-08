@@ -9,8 +9,9 @@ import importlib
 import inspect
 from typing import Dict, Type
 
-# Set the testing environment variable
+# Set the testing environment variables
 os.environ['ASKAI_TESTING'] = 'true'
+os.environ['ASKAI_NO_TUI'] = 'true'  # Disable TUI during tests
 
 # Add the project root directory to sys.path FIRST
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
