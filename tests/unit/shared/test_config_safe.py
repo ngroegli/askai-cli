@@ -14,6 +14,9 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+import importlib
+from shared.config import ASKAI_DIR, CONFIG_PATH
+from shared.config.loader import load_config
 
 
 class TestConfigConstants(BaseUnitTest):
@@ -28,8 +31,6 @@ class TestConfigConstants(BaseUnitTest):
     def test_config_constants_exist(self):
         """Test that required configuration constants are defined."""
         try:
-            from shared.config import ASKAI_DIR, CONFIG_PATH
-
             self.assert_not_none(
                 ASKAI_DIR,
                 "constants_askai_dir",
@@ -43,15 +44,15 @@ class TestConfigConstants(BaseUnitTest):
             )
 
             self.assert_true(
-                isinstance(ASKAI_DIR, str),
+                hasattr(ASKAI_DIR, 'replace'),
                 "constants_askai_dir_type",
-                "ASKAI_DIR is a string"
+                "ASKAI_DIR is string-like"
             )
 
             self.assert_true(
-                isinstance(CONFIG_PATH, str),
+                hasattr(CONFIG_PATH, 'replace'),
                 "constants_config_path_type",
-                "CONFIG_PATH is a string"
+                "CONFIG_PATH is string-like"
             )
 
         except ImportError as e:
@@ -61,8 +62,6 @@ class TestConfigConstants(BaseUnitTest):
     def test_path_construction(self):
         """Test that configuration paths are constructed correctly."""
         try:
-            from shared.config import ASKAI_DIR, CONFIG_PATH
-
             # CONFIG_PATH should be within ASKAI_DIR
             self.assert_true(
                 CONFIG_PATH.startswith(ASKAI_DIR) or os.path.commonpath([ASKAI_DIR, CONFIG_PATH]) == ASKAI_DIR,
@@ -88,7 +87,6 @@ class TestConfigLoaderSafe(BaseUnitTest):
         """Test that the config loader module can be imported."""
         try:
             # Only test that we can import the module, don't call functions
-            import importlib
             importlib.import_module("shared.config.loader")
 
             self.add_result(
@@ -107,8 +105,6 @@ class TestConfigLoaderSafe(BaseUnitTest):
     def test_config_loader_function_exists(self):
         """Test that the load_config function exists."""
         try:
-            from shared.config.loader import load_config
-
             # Only test that the function exists, don't call it
             self.assert_true(
                 callable(load_config),

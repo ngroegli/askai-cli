@@ -10,6 +10,8 @@ import os
 # Add the project root to the path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
+from python.presentation.tui import is_tui_available, get_tui_config  # pylint: disable=wrong-import-position
+
 # Mock implementations for testing (since the actual modules don't exist yet)
 class PatternItem:
     """Mock PatternItem for testing."""
@@ -251,7 +253,6 @@ class TestTUIIntegration(unittest.TestCase):
         """Test TUI availability checking."""
         mock_tui_available.return_value = True
 
-        from python.presentation.tui import is_tui_available
         self.assertTrue(is_tui_available())
 
         mock_tui_available.return_value = False
@@ -259,8 +260,6 @@ class TestTUIIntegration(unittest.TestCase):
 
     def test_tui_config_retrieval(self):
         """Test TUI configuration retrieval."""
-        from python.presentation.tui import get_tui_config
-
         config = get_tui_config()
 
         self.assertIsInstance(config, dict)

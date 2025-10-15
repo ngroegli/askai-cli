@@ -335,4 +335,3 @@ class PatternTab(BaseTabComponent, StatusMixin):
     async def _use_pattern(self) -> None:
         """Legacy method - redirect to new execution method."""
         await self._execute_pattern()
-

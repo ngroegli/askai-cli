@@ -15,6 +15,15 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 sys.modules['shared.config'] = MagicMock()
 sys.modules['shared.config.loader'] = MagicMock()
 
+# pylint: disable=wrong-import-position,import-error
+from unit.test_base import BaseUnitTest
+from modules.ai.ai_service import AIService
+from modules.messaging.builder import MessageBuilder
+
+# Mock the config system before any imports
+sys.modules['shared.config'] = MagicMock()
+sys.modules['shared.config.loader'] = MagicMock()
+
 # Mock configuration data
 mock_config = {
     'openrouter_api_key': 'test-key',
@@ -27,9 +36,6 @@ sys.modules['shared.config'].load_config = MagicMock(return_value=mock_config)
 sys.modules['shared.config.loader'].load_config = MagicMock(return_value=mock_config)
 sys.modules['shared.config.loader'].ensure_askai_setup = MagicMock()
 sys.modules['shared.config.loader'].create_directory_structure = MagicMock()
-
-# pylint: disable=wrong-import-position,import-error
-from unit.test_base import BaseUnitTest
 
 
 class TestAIService(BaseUnitTest):
@@ -46,8 +52,6 @@ class TestAIService(BaseUnitTest):
     def test_ai_service_initialization(self):
         """Test AI service initialization."""
         try:
-            from modules.ai.ai_service import AIService
-
             mock_logger = Mock()
             ai_service = AIService(mock_logger)
 
@@ -72,8 +76,6 @@ class TestAIService(BaseUnitTest):
             # Additional runtime patches for user input
             with patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
                  patch('builtins.input', return_value='y'):
-
-                from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
@@ -111,7 +113,7 @@ class TestAIService(BaseUnitTest):
                         )
 
                         # Also check the actual response structure for debugging
-                        actual_content = response.get('content', '') if isinstance(response, dict) else str(response)
+                        actual_content = response.get('content', '') if hasattr(response, 'get') else str(response)
 
                         self.assert_equal(
                             'Test AI response',
@@ -131,8 +133,6 @@ class TestAIService(BaseUnitTest):
             # Additional runtime patches for user input
             with patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
                  patch('builtins.input', return_value='y'):
-
-                from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
@@ -173,8 +173,6 @@ class TestAIService(BaseUnitTest):
     def test_model_configuration(self):
         """Test model configuration functionality."""
         try:
-            from modules.ai.ai_service import AIService
-
             mock_logger = Mock()
             ai_service = AIService(mock_logger)
 
@@ -211,8 +209,6 @@ class TestMessageBuilder(BaseUnitTest):
     def test_message_builder_initialization(self):
         """Test message builder initialization."""
         try:
-            from modules.messaging.builder import MessageBuilder
-
             mock_pattern_manager = Mock()
             mock_logger = Mock()
 
@@ -242,8 +238,6 @@ class TestMessageBuilder(BaseUnitTest):
     def test_build_simple_message(self):
         """Test building a simple question message."""
         try:
-            from modules.messaging.builder import MessageBuilder
-
             mock_pattern_manager = Mock()
             mock_logger = Mock()
 
@@ -299,8 +293,6 @@ class TestMessageBuilder(BaseUnitTest):
     def test_build_pattern_message(self):
         """Test building a pattern-based message."""
         try:
-            from modules.messaging.builder import MessageBuilder
-
             mock_pattern_manager = Mock()
             mock_logger = Mock()
 

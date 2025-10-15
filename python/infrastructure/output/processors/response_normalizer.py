@@ -52,7 +52,7 @@ class ResponseNormalizer:
             except (TypeError, ValueError):
                 return str(response)
 
-        if isinstance(response, str):
+        if hasattr(response, 'replace'):  # String-like objects
             return response
         # Handle other types
         try:

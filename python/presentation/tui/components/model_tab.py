@@ -251,4 +251,3 @@ class ModelTab(BaseTabComponent, StatusMixin):
         """Handle button presses."""
         if event.button.id == "refresh-models-button":
             self._load_models()
-

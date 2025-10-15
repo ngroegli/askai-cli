@@ -187,4 +187,3 @@ class ChatTab(BaseTabComponent, StatusMixin):
 
         # Emit message to parent
         self.post_message(self.ChatAction("delete_chat", self.selected_chat))
-

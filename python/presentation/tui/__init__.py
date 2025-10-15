@@ -8,7 +8,6 @@ CLI interface when Textual is unavailable or the terminal is incompatible.
 
 import os
 import sys
-from typing import Optional
 
 try:
     import textual  # noqa: F401

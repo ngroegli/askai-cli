@@ -30,9 +30,7 @@ except ImportError:
 # Type imports for static analysis
 if TYPE_CHECKING:
     from textual.app import App
-    from textual.containers import Vertical, Horizontal
-    from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
-    from textual.binding import Binding
+    from textual.widgets import Header, Footer, TabbedContent, TabPane
 
 
 if TEXTUAL_AVAILABLE:

@@ -25,7 +25,6 @@ except ImportError:
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ProgressBar
     from textual.containers import Vertical, Horizontal, VerticalScroll
-    from textual.message import Message
     from modules.ai import OpenRouterClient
 
 
@@ -222,4 +221,3 @@ class CreditsTab(BaseTabComponent, StatusMixin):
             # Placeholder for future usage history functionality
             status_display = self.query_one("#status-display", Static)
             status_display.update("📈 Usage history feature coming soon...")
-
