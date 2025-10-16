@@ -66,7 +66,8 @@ def discover_tests() -> Dict[str, Type[BaseIntegrationTest]]:
     test_categories = [
         'general',
         'question',
-        'pattern'
+        'pattern',
+        'api'
     ]
 
     # Scan each category directory for test modules
@@ -117,7 +118,7 @@ def parse_args():
     )
     parser.add_argument(
         "--category",
-        choices=["general", "question", "pattern"],
+        choices=["general", "question", "pattern", "api"],
         help="Run tests from a specific category"
     )
     parser.add_argument(

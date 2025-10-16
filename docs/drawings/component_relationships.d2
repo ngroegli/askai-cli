@@ -1,10 +1,10 @@
-# AskAI CLI - Component Dependencies and Relationships (Layered Architecture)
+# AskAI CLI - Component Dependencies and Relationships (Layered Architecture with API)
 title: "Component Dependencies & Relationships"
 
-# Note: Enhanced layered architecture with clear separation of concerns
+# Note: Enhanced layered architecture with CLI and API presentation layers
 # Shared layer provides common services to all other layers
 # Modules layer contains core business logic organized by domain
-# Presentation layer handles user interface
+# Presentation layer handles both CLI and HTTP API interfaces
 # Infrastructure layer manages external output processing
 
 # Main Application
@@ -30,9 +30,17 @@ presentation_layer: "Presentation Layer" {
   style.fill: "#F3E5F5" # Light Purple background
   style.stroke: "#9C27B0"
 
+  # CLI Components
   cli_parser: "cli/cli_parser.py" { style.fill: "#CE93D8" }
   command_handler: "cli/command_handler.py" { style.fill: "#CE93D8" }
   banner_parser: "cli/banner_argument_parser.py" { style.fill: "#CE93D8" }
+
+  # API Components
+  flask_app: "api/app.py" { style.fill: "#BA68C8" }
+  questions_routes: "api/routes/questions.py" { style.fill: "#BA68C8" }
+  patterns_routes: "api/routes/patterns.py" { style.fill: "#BA68C8" }
+  health_routes: "api/routes/health.py" { style.fill: "#BA68C8" }
+  api_schemas: "api/schemas/" { style.fill: "#BA68C8" }
 }
 
 # Modules Layer (Core Business Logic)
@@ -94,16 +102,27 @@ modules_layer -> shared_layer: "Common services"
 infrastructure_layer -> shared_layer: "Common services"
 
 # Specific Component Dependencies
-main -> cli_parser: "Argument parsing"
-main -> question_processor: "Question handling"
-cli_parser -> command_handler: "Command routing"
-command_handler -> pattern_manager: "Pattern operations"
-command_handler -> chat_manager: "Chat operations"
-ai_service -> openrouter_client: "API communication"
-pattern_manager -> pattern_input: "Input validation"
-pattern_manager -> pattern_output: "Output definition"
-output_coordinator -> content_extractor: "Content processing"
-output_coordinator -> file_writer_chain: "File operations"
-message_builder -> pattern_manager: "Template application"
-question_processor -> ai_service: "AI interactions"
-question_processor -> message_builder: "Message construction"
+main -> presentation_layer.cli_parser: "CLI argument parsing"
+main -> modules_layer.question_processor: "Question handling"
+presentation_layer.cli_parser -> presentation_layer.command_handler: "Command routing"
+presentation_layer.command_handler -> modules_layer.pattern_manager: "Pattern operations"
+presentation_layer.command_handler -> modules_layer.chat_manager: "Chat operations"
+
+# API Component Dependencies
+presentation_layer.flask_app -> presentation_layer.questions_routes: "Route registration"
+presentation_layer.flask_app -> presentation_layer.patterns_routes: "Route registration"
+presentation_layer.flask_app -> presentation_layer.health_routes: "Route registration"
+presentation_layer.questions_routes -> modules_layer.question_processor: "Shared question logic"
+presentation_layer.patterns_routes -> modules_layer.pattern_manager: "Shared pattern logic"
+presentation_layer.questions_routes -> modules_layer.ai_service: "AI interactions"
+presentation_layer.api_schemas -> presentation_layer.questions_routes: "Request validation"
+
+# Shared Module Dependencies
+modules_layer.ai_service -> modules_layer.openrouter_client: "API communication"
+modules_layer.pattern_manager -> modules_layer.pattern_input: "Input validation"
+modules_layer.pattern_manager -> modules_layer.pattern_output: "Output definition"
+infrastructure_layer.output_coordinator -> infrastructure_layer.content_extractor: "Content processing"
+infrastructure_layer.output_coordinator -> infrastructure_layer.file_writer_chain: "File operations"
+modules_layer.message_builder -> modules_layer.pattern_manager: "Template application"
+modules_layer.question_processor -> modules_layer.ai_service: "AI interactions"
+modules_layer.question_processor -> modules_layer.message_builder: "Message construction"

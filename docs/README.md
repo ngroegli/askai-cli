@@ -22,7 +22,7 @@ This document provides a comprehensive overview of the AskAI CLI system architec
 This document dives deep into the technical implementation details:
 - Code organization and module structure
 - Class hierarchies and relationships
-- API interfaces and data models
+- API interfaces and data models (CLI and REST API)
 - Configuration schemas
 - Testing architecture
 - Deployment structure and runtime dependencies
@@ -39,6 +39,7 @@ This file contains D2 (declarative diagramming) definitions for:
 - Configuration and initialization flows
 - Pattern system architecture
 - AI service integration
+- REST API architecture and integration
 - Error handling and recovery systems
 
 **Usage**: Use with D2 CLI or compatible tools to generate visual diagrams
@@ -60,15 +61,18 @@ d2 -t system_overview architecture_diagrams.d2 system_overview.png
 
 ### Key Components
 - **Main Application**: `python/askai.py` - Entry point and orchestration
-- **CLI Interface**: `python/cli/` - Command parsing and handling
-- **AI Services**: `python/ai/` - AI model integration via OpenRouter
-- **Pattern System**: `python/patterns/` - Template-based AI interactions
-- **Output Processing**: `python/output/` - Response formatting and file generation
-- **Chat Management**: `python/chat/` - Persistent conversation sessions
-- **Configuration**: `python/config.py` - YAML-based configuration system
+- **CLI Interface**: `python/presentation/cli/` - Command parsing and handling
+- **REST API Interface**: `python/presentation/api/` - HTTP endpoints and Swagger documentation
+- **AI Services**: `python/modules/ai/` - AI model integration via OpenRouter
+- **Pattern System**: `python/modules/patterns/` - Template-based AI interactions
+- **Question Processing**: `python/modules/questions/` - Standalone question handling
+- **Output Processing**: `python/infrastructure/output/` - Response formatting and file generation
+- **Chat Management**: `python/modules/chat/` - Persistent conversation sessions
+- **Configuration**: `python/shared/config/` - YAML-based configuration system
 
 ### Architecture Highlights
-- **Layered Architecture**: Clear separation between presentation, application, service, and infrastructure layers
+- **Layered Architecture**: Clear separation between presentation (CLI/API), application, service, and infrastructure layers
+- **Multiple Interfaces**: Command-line interface and REST API with shared core logic
 - **Pattern-Based Design**: Extensible template system for structured AI interactions
 - **Multimodal Support**: Text, images, PDFs, and URLs as input
 - **Flexible Output**: Console display, file generation, and command execution

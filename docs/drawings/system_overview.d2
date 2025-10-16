@@ -1,4 +1,4 @@
-# AskAI CLI - High-Level System Architecture (Layered Architecture)
+# AskAI CLI - High-Level System Architecture (Layered Architecture with API)
 title: "AskAI CLI - System Overview"
 
 user: "User" {
@@ -6,14 +6,23 @@ user: "User" {
   style.fill: "#90CAF9" # Light Blue (core app, user)
 }
 
+web_client: "Web Client" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external client)
+}
+
 # Presentation Layer
 presentation: "Presentation Layer" {
   shape: rectangle
-  style.fill: "#F3E5F5" # Light Purple (CLI group)
+  style.fill: "#F3E5F5" # Light Purple (CLI/API group)
 
   cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
   command_handler: "Command Handler" { style.fill: "#CE93D8" }
   banner_parser: "Banner Display" { style.fill: "#CE93D8" }
+
+  api_routes: "REST API Routes" { style.fill: "#BA68C8" }
+  flask_app: "Flask Application" { style.fill: "#BA68C8" }
+  swagger_docs: "Swagger Documentation" { style.fill: "#BA68C8" }
 }
 
 # Application Core
@@ -67,14 +76,16 @@ external: "External Services" {
 }
 
 # Layer Connections
-user -> presentation: "Commands & Input"
+user -> presentation: "CLI Commands & Input"
+web_client -> presentation: "HTTP Requests"
 presentation -> app: "Parsed Arguments"
 app -> modules: "Business Logic Calls"
 modules -> infrastructure: "Output Processing"
 modules -> external: "API Requests"
 external -> modules: "AI Responses"
 infrastructure -> presentation: "Formatted Output"
-presentation -> user: "Results & Feedback"
+presentation -> user: "CLI Results & Feedback"
+presentation -> web_client: "HTTP Responses"
 
 # Shared services connections (all layers use shared)
 presentation -> shared: "Common Services"
