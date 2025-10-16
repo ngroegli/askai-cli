@@ -6,3 +6,11 @@ termcolor
 jsonschema
 setuptools
 pytest
+
+# API dependencies (optional, only needed for API server)
+flask>=2.3.0
+flask-restx>=1.1.0
+flask-cors>=4.0.0
+marshmallow>=3.19.0
+python-dotenv>=1.0.0
+gunicorn>=21.0.0

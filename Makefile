@@ -63,4 +63,20 @@ help:
 	@echo "  test-integration-X Run specific integration test (e.g., test-integration-cli_help)"
 	@echo "  lint               Run linting"
 	@echo "  clean              Remove build artifacts"
+	@echo "  api-dev            Start API development server"
+	@echo "  api-test           Test API endpoints"
+	@echo "  api-docker         Build and run API with Docker"
 	@echo "  help               Show this help message"
+
+# API development targets
+api-dev:
+	cd python/presentation/api && $(PYTHON) run.py --debug
+
+api-test:
+	$(PYTHON) python/presentation/api/test_api.py
+
+api-docker:
+	docker-compose up --build
+
+api-docker-prod:
+	docker-compose --profile production up --build

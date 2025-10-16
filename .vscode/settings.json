@@ -15,5 +15,6 @@
     "files.trimTrailingWhitespace": true,
     "[python]": {
         "editor.trimTrailingWhitespace": true
-    }
+    },
+    "makefile.configureOnOpen": false
 }
