@@ -18,6 +18,8 @@ from shared.logging.setup import setup_logger
 from .routes.questions import questions_ns
 from .routes.health import health_ns
 from .routes.patterns import patterns_ns
+from .routes.openrouter import openrouter_ns
+from .routes.config import config_ns
 
 
 def get_logger():
@@ -90,6 +92,8 @@ def create_app(config=None):
     api.add_namespace(health_ns)
     api.add_namespace(questions_ns)
     api.add_namespace(patterns_ns)
+    api.add_namespace(openrouter_ns)
+    api.add_namespace(config_ns)
 
     # Add custom root endpoints as regular Flask routes
     @app.route('/', endpoint='api_root')
@@ -111,6 +115,8 @@ def create_app(config=None):
                 'health': '/api/v1/health/',
                 'questions': '/api/v1/questions/',
                 'patterns': '/api/v1/patterns/',
+                'openrouter': '/api/v1/openrouter/',
+                'config': '/api/v1/config/',
                 'documentation': '/docs/',
                 'api_spec': '/api/v1/swagger.json'
             },
@@ -141,7 +147,9 @@ def create_app(config=None):
                 'documentation': '/docs/',
                 'health': '/api/v1/health/',
                 'questions': '/api/v1/questions/',
-                'patterns': '/api/v1/patterns/'
+                'patterns': '/api/v1/patterns/',
+                'openrouter': '/api/v1/openrouter/',
+                'config': '/api/v1/config/'
             },
             'suggestion': 'Visit /docs/ for interactive API documentation'
         }), 404

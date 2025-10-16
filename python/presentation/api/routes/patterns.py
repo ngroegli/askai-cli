@@ -52,8 +52,8 @@ class PatternsList(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            base_path = os.path.join(project_root)
-            pattern_manager = PatternManager(base_path, config)
+            patterns_dir = os.path.join(project_root, "patterns")
+            pattern_manager = PatternManager(patterns_dir, config)
 
             # Get all patterns
             available_patterns = pattern_manager.list_patterns()
@@ -107,8 +107,8 @@ class PatternDetail(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            base_path = os.path.join(project_root)
-            pattern_manager = PatternManager(base_path, config)
+            patterns_dir = os.path.join(project_root, "patterns")
+            pattern_manager = PatternManager(patterns_dir, config)
 
             # Load specific pattern
             pattern_content = pattern_manager.get_pattern_content(pattern_id)
@@ -148,8 +148,8 @@ class PatternCategories(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            base_path = os.path.join(project_root)
-            pattern_manager = PatternManager(base_path, config)
+            patterns_dir = os.path.join(project_root, "patterns")
+            pattern_manager = PatternManager(patterns_dir, config)
 
             # Get all patterns and extract categories
             available_patterns = pattern_manager.list_patterns()

@@ -3,7 +3,7 @@ Unit tests for AI service functionality.
 """
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # Setup paths for imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -21,7 +21,7 @@ class TestAIService(BaseUnitTest):
     def run(self):
         """Run all AI service tests."""
         self.test_ai_service_initialization()
-        self.test_get_ai_response_success() 
+        self.test_get_ai_response_success()
         self.test_get_ai_response_failure()
         self.test_model_configuration()
         return self.results
@@ -29,13 +29,13 @@ class TestAIService(BaseUnitTest):
     def test_ai_service_initialization(self):
         """Test AI service initialization."""
         try:
-            # Mock configuration data  
+            # Mock configuration data
             mock_config = {
                 'openrouter_api_key': 'test-key',
                 'model': 'claude-3-sonnet',
                 'askai_dir': '/tmp/test-askai'
             }
-            
+
             # Comprehensive mocking to prevent config system access
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
@@ -46,7 +46,7 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-                
+
                 from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
@@ -70,13 +70,13 @@ class TestAIService(BaseUnitTest):
     def test_get_ai_response_success(self):
         """Test successful AI response retrieval."""
         try:
-            # Mock configuration data  
+            # Mock configuration data
             mock_config = {
                 'openrouter_api_key': 'test-key',
                 'model': 'claude-3-sonnet',
                 'askai_dir': '/tmp/test-askai'
             }
-            
+
             # Comprehensive mocking to prevent config system access
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
@@ -87,7 +87,7 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-                
+
                 from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
@@ -143,13 +143,13 @@ class TestAIService(BaseUnitTest):
     def test_get_ai_response_failure(self):
         """Test AI response handling when API fails."""
         try:
-            # Mock configuration data  
+            # Mock configuration data
             mock_config = {
                 'openrouter_api_key': 'test-key',
                 'model': 'claude-3-sonnet',
                 'askai_dir': '/tmp/test-askai'
             }
-            
+
             # Comprehensive mocking to prevent config system access
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
@@ -160,7 +160,7 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-                
+
                 from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
@@ -201,13 +201,13 @@ class TestAIService(BaseUnitTest):
     def test_model_configuration(self):
         """Test model configuration functionality."""
         try:
-            # Mock configuration data  
+            # Mock configuration data
             mock_config = {
                 'openrouter_api_key': 'test-key',
                 'model': 'claude-3-sonnet',
                 'askai_dir': '/tmp/test-askai'
             }
-            
+
             # Comprehensive mocking to prevent config system access
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
@@ -218,7 +218,7 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-                
+
                 from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
