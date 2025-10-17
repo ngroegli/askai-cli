@@ -271,14 +271,13 @@ if TEXTUAL_AVAILABLE:
                 yield TitleText(self.card_title)
 
 
-# Convenience function to create styled components
+# Convenience functions to create styled components
 def create_button(label: str, variant: str = "primary", icon: str = "", **kwargs):
     """Create a styled button with the specified variant."""
     if not TEXTUAL_AVAILABLE:
         return None
 
-    # Only reference button classes if textual is available
-    if 'StyledButton' in globals() and 'PrimaryButton' in globals():
+    try:
         variant_map = {
             'primary': PrimaryButton,
             'secondary': SecondaryButton,
@@ -290,17 +289,18 @@ def create_button(label: str, variant: str = "primary", icon: str = "", **kwargs
 
         button_class = variant_map.get(variant, StyledButton)
         return button_class(label, icon=icon, **kwargs)
-    return None
+    except NameError:
+        return None
 
 
 def create_input(placeholder: str = "", variant: str = "default", **kwargs):
     """Create a styled input field."""
     if not TEXTUAL_AVAILABLE:
         return None
-    # Only reference StyledInput if textual is available
-    if 'StyledInput' in globals():
+    try:
         return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
-    return None
+    except NameError:
+        return None
 
 
 def create_textarea(text: str = "", placeholder: str = "", size: str = "default", **kwargs):
@@ -308,15 +308,15 @@ def create_textarea(text: str = "", placeholder: str = "", size: str = "default"
     if not TEXTUAL_AVAILABLE:
         return None
 
-    # Only reference text area classes if textual is available
-    if 'StyledTextArea' in globals() and 'LargeTextArea' in globals():
+    try:
         if size == "large":
             return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
         elif size == "small":
             return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
         else:
             return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
-    return None
+    except NameError:
+        return None
 
 
 __all__ = [

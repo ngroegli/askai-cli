@@ -373,23 +373,23 @@ def create_loading_screen(title: str = "Processing", message: str = "Please wait
     """Create a loading screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    # Only reference LoadingScreen if textual is available
-    if 'LoadingScreen' in globals():
+    try:
         return LoadingScreen(title, message)
-    return None
+    except NameError:
+        return None
 
 
 def create_response_viewer_screen(data: dict) -> Optional['ResponseViewerScreen']:
     """Create a response viewer screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    # Only reference ResponseViewerScreen if textual is available
-    if 'ResponseViewerScreen' in globals():
+    try:
         # Extract content from the data dict - handle different possible keys
         content = data.get('content', data.get('response', data.get('text', str(data))))
         title = data.get('title', 'AI Response')
         return ResponseViewerScreen(content, title)
-    return None
+    except NameError:
+        return None
 
 
 def create_pattern_response_screen(response_content: str, title: str = "Pattern Response", app_instance=None):
@@ -397,21 +397,21 @@ def create_pattern_response_screen(response_content: str, title: str = "Pattern 
     if not TEXTUAL_AVAILABLE:
         return None
 
-    # Only reference QuestionResponseScreen if textual is available
-    if 'QuestionResponseScreen' in globals():
+    try:
         response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
         return response_screen_builder.create_screen_class()
-    return None
+    except NameError:
+        return None
 
 
 def create_question_response_screen(question: str, response: str) -> Optional['QuestionResponseScreen']:
     """Create a question response screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    # Only reference QuestionResponseScreen if textual is available
-    if 'QuestionResponseScreen' in globals():
+    try:
         return QuestionResponseScreen(question, response)
-    return None
+    except NameError:
+        return None
 
 
 __all__ = [
