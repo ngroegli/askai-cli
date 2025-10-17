@@ -373,14 +373,23 @@ def create_loading_screen(title: str = "Processing", message: str = "Please wait
     """Create a loading screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    return LoadingScreen(title, message)
+    # Only reference LoadingScreen if textual is available
+    if 'LoadingScreen' in globals():
+        return LoadingScreen(title, message)
+    return None
 
 
-def create_response_viewer(response_content: str, title: str = "AI Response") -> Optional['ResponseViewerScreen']:
-    """Create a response viewer instance."""
+def create_response_viewer_screen(data: dict) -> Optional['ResponseViewerScreen']:
+    """Create a response viewer screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    return ResponseViewerScreen(response_content, title)
+    # Only reference ResponseViewerScreen if textual is available
+    if 'ResponseViewerScreen' in globals():
+        # Extract content from the data dict - handle different possible keys
+        content = data.get('content', data.get('response', data.get('text', str(data))))
+        title = data.get('title', 'AI Response')
+        return ResponseViewerScreen(content, title)
+    return None
 
 
 def create_pattern_response_screen(response_content: str, title: str = "Pattern Response", app_instance=None):
@@ -388,22 +397,25 @@ def create_pattern_response_screen(response_content: str, title: str = "Pattern 
     if not TEXTUAL_AVAILABLE:
         return None
 
-    # Reuse the QuestionResponseScreen but with pattern-specific styling
-    response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
-    return response_screen_builder.create_screen_class()
+    # Only reference QuestionResponseScreen if textual is available
+    if 'QuestionResponseScreen' in globals():
+        response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
+        return response_screen_builder.create_screen_class()
+    return None
 
 
-def create_question_response_screen(response_content: str, title: str = "Question Response", app_instance=None):
-    """Create a dedicated question response screen."""
+def create_question_response_screen(question: str, response: str) -> Optional['QuestionResponseScreen']:
+    """Create a question response screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-
-    response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
-    return response_screen_builder.create_screen_class()
+    # Only reference QuestionResponseScreen if textual is available
+    if 'QuestionResponseScreen' in globals():
+        return QuestionResponseScreen(question, response)
+    return None
 
 
 __all__ = [
     'LoadingScreen', 'ResponseViewerScreen', 'QuestionResponseScreen',
-    'create_loading_screen', 'create_response_viewer', 'create_question_response_screen',
+    'create_loading_screen', 'create_response_viewer_screen', 'create_question_response_screen',
     'create_pattern_response_screen'
 ]

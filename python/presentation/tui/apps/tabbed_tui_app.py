@@ -438,12 +438,16 @@ def run_tabbed_tui(pattern_manager=None, chat_manager=None, question_processor=N
         return None
 
     try:
-        app = TabbedTUIApp(
-            pattern_manager=pattern_manager,
-            chat_manager=chat_manager,
-            question_processor=question_processor
-        )
-        return app.run()
+        if TEXTUAL_AVAILABLE:
+            app = TabbedTUIApp(
+                pattern_manager=pattern_manager,
+                chat_manager=chat_manager,
+                question_processor=question_processor
+            )
+            return app.run()
+        else:
+            print("Textual TUI library is not available. Cannot create TUI app.")
+            return None
     except Exception as e:
         print(f"TUI application failed: {e}")
         return None

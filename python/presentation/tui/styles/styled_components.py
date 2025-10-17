@@ -277,24 +277,30 @@ def create_button(label: str, variant: str = "primary", icon: str = "", **kwargs
     if not TEXTUAL_AVAILABLE:
         return None
 
-    variant_map = {
-        'primary': PrimaryButton,
-        'secondary': SecondaryButton,
-        'success': SuccessButton,
-        'warning': WarningButton,
-        'danger': DangerButton,
-        'error': DangerButton,
-    }
+    # Only reference button classes if textual is available
+    if 'StyledButton' in globals() and 'PrimaryButton' in globals():
+        variant_map = {
+            'primary': PrimaryButton,
+            'secondary': SecondaryButton,
+            'success': SuccessButton,
+            'warning': WarningButton,
+            'danger': DangerButton,
+            'error': DangerButton,
+        }
 
-    button_class = variant_map.get(variant, StyledButton)
-    return button_class(label, icon=icon, **kwargs)
+        button_class = variant_map.get(variant, StyledButton)
+        return button_class(label, icon=icon, **kwargs)
+    return None
 
 
 def create_input(placeholder: str = "", variant: str = "default", **kwargs):
     """Create a styled input field."""
     if not TEXTUAL_AVAILABLE:
         return None
-    return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
+    # Only reference StyledInput if textual is available
+    if 'StyledInput' in globals():
+        return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
+    return None
 
 
 def create_textarea(text: str = "", placeholder: str = "", size: str = "default", **kwargs):
@@ -302,12 +308,15 @@ def create_textarea(text: str = "", placeholder: str = "", size: str = "default"
     if not TEXTUAL_AVAILABLE:
         return None
 
-    if size == "large":
-        return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
-    elif size == "small":
-        return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
-    else:
-        return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
+    # Only reference text area classes if textual is available
+    if 'StyledTextArea' in globals() and 'LargeTextArea' in globals():
+        if size == "large":
+            return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
+        elif size == "small":
+            return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
+        else:
+            return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
+    return None
 
 
 __all__ = [
