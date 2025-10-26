@@ -1,7 +1,6 @@
 """Utility functions for TUI components."""
 
 import os
-import sys
 from typing import Dict, Any, Optional
 
 try:

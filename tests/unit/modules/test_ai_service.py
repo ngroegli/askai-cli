@@ -29,6 +29,10 @@ class TestAIService(BaseUnitTest):
 
     def test_ai_service_initialization(self):
         """Test AI service initialization."""
+        # Set test environment variable
+        original_testing = os.environ.get('ASKAI_TESTING')
+        os.environ['ASKAI_TESTING'] = 'true'
+
         try:
             # Mock configuration data
             mock_config = {
@@ -40,13 +44,16 @@ class TestAIService(BaseUnitTest):
             # Comprehensive mocking to prevent config system access
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.ensure_askai_setup'), \
-                 patch('shared.config.loader.create_directory_structure'), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard'), \
+                 patch('shared.config.loader.ensure_askai_setup', return_value=True), \
+                 patch('shared.config.loader.create_directory_structure', return_value=True), \
+                 patch('shared.config.loader.run_dynamic_setup_wizard', return_value=True), \
+                 patch('shared.config.loader.create_test_config_from_production', return_value=True), \
+                 patch('shared.config.is_test_environment', return_value=True), \
                  patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
-                 patch('os.makedirs'):
+                 patch('os.makedirs', return_value=True), \
+                 patch('builtins.print'):  # Suppress setup messages
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
@@ -65,6 +72,12 @@ class TestAIService(BaseUnitTest):
 
         except Exception as e:
             self.add_result("ai_service_init_error", False, f"AI service initialization failed: {e}")
+        finally:
+            # Restore original environment variable
+            if original_testing is None:
+                os.environ.pop('ASKAI_TESTING', None)
+            else:
+                os.environ['ASKAI_TESTING'] = original_testing
 
     def test_get_ai_response_success(self):
         """Test successful AI response retrieval."""
