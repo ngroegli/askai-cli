@@ -2,11 +2,11 @@
 """
 Main runner for askai-cli integration tests.
 """
-import os
-import sys
 import argparse
 import importlib
 import inspect
+import os
+import sys
 from typing import Dict, Type
 
 # Set the testing environment variable to suppress spinner animations
@@ -16,11 +16,13 @@ os.environ['ASKAI_TESTING'] = 'true'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Now we can import project modules
+# pylint: disable=wrong-import-position
 from tests.integration.test_base import BaseIntegrationTest, AutomatedTest, SemiAutomatedTest
 from python.shared.config.loader import (
     ASKAI_DIR, CONFIG_PATH, TEST_DIR, TEST_CONFIG_PATH,
     create_directory_structure, create_test_config_from_production
 )
+# pylint: enable=wrong-import-position
 
 def setup_test_environment():
     """Set up the test environment with proper directory structure and configuration."""
@@ -233,20 +235,20 @@ def main():
     print("\n" + "=" * 70)
 
     # ANSI color codes
-    GREEN = "\033[92m"  # Bright green
-    RED = "\033[91m"    # Bright red
-    RESET = "\033[0m"   # Reset color
+    green = "\033[92m"  # Bright green
+    red = "\033[91m"    # Bright red
+    reset = "\033[0m"   # Reset color
 
     # Determine the color formatting based on test results
     if total_passed > 0 and total_failed == 0:
         # All tests passed - everything in green
-        print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {GREEN}{total_failed} failed{RESET}")
+        print(f"OVERALL SUMMARY: {green}{total_passed} passed{reset}, {green}{total_failed} failed{reset}")
     elif total_passed == 0 and total_failed > 0:
         # All tests failed - both numbers in red
-        print(f"OVERALL SUMMARY: {RED}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")
+        print(f"OVERALL SUMMARY: {red}{total_passed} passed{reset}, {red}{total_failed} failed{reset}")
     else:
         # Mixed results - passed in green, failed in red
-        print(f"OVERALL SUMMARY: {GREEN}{total_passed} passed{RESET}, {RED}{total_failed} failed{RESET}")
+        print(f"OVERALL SUMMARY: {green}{total_passed} passed{reset}, {red}{total_failed} failed{reset}")
 
     # Print detailed results table
     if detailed_results:
@@ -267,24 +269,39 @@ def main():
         total_width = file_width + action_width + status_width + message_width + 3  # +3 for spaces
 
         print("=" * total_width)
-        print(f"{'TEST FILE':<{file_width}} {'TEST ACTION':<{action_width}} {'STATUS':<{status_width}} {'MESSAGE':<{message_width}}")
+        header = (f"{'TEST FILE':<{file_width}} {'TEST ACTION':<{action_width}} "
+                 f"{'STATUS':<{status_width}} {'MESSAGE':<{message_width}}")
+        print(header)
         print("-" * total_width)
 
         # Print each test result
         for result in detailed_results:
             # Truncate long strings if necessary
-            test_file = result['test_file'][:file_width-3] + "..." if len(result['test_file']) > file_width else result['test_file']
-            test_action = result['test_action'][:action_width-3] + "..." if len(result['test_action']) > action_width else result['test_action']
-            message = result['message'][:message_width-3] + "..." if len(result['message']) > message_width else result['message']
+            if len(result['test_file']) > file_width:
+                test_file = result['test_file'][:file_width-3] + "..."
+            else:
+                test_file = result['test_file']
+
+            if len(result['test_action']) > action_width:
+                test_action = result['test_action'][:action_width-3] + "..."
+            else:
+                test_action = result['test_action']
+
+            if len(result['message']) > message_width:
+                message = result['message'][:message_width-3] + "..."
+            else:
+                message = result['message']
 
             # Color the status
             status = result['status']
             if status == 'PASS':
-                colored_status = f"{GREEN}{status}{RESET}"
+                colored_status = f"{green}{status}{reset}"
             else:
-                colored_status = f"{RED}{status}{RESET}"
+                colored_status = f"{red}{status}{reset}"
 
-            print(f"{test_file:<{file_width}} {test_action:<{action_width}} {colored_status:<15} {message:<{message_width}}")
+            output_line = (f"{test_file:<{file_width}} {test_action:<{action_width}} "
+                          f"{colored_status:<15} {message:<{message_width}}")
+            print(output_line)
 
     print("=" * total_width)
 

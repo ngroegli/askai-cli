@@ -1,6 +1,7 @@
 """
 Tests for persistent chat functionality.
 """
+import glob
 import os
 import re
 from tests.integration.test_base import AutomatedTest
@@ -25,7 +26,8 @@ class TestPersistentChat(AutomatedTest):
         """Run the test cases."""
         # Safety check: Ensure we're in test environment to avoid affecting production chats
         if not os.environ.get('ASKAI_TESTING'):
-            raise RuntimeError("ASKAI_TESTING environment variable not set - refusing to run tests that could affect production chats")
+            raise RuntimeError("ASKAI_TESTING environment variable not set - " \
+            "refusing to run tests that could affect production chats")
 
         # Clean up any existing test chats to ensure test isolation
         self._cleanup_test_chats()
@@ -58,7 +60,6 @@ class TestPersistentChat(AutomatedTest):
 
     def _cleanup_test_chats(self):
         """Clean up any existing test chat files to ensure test isolation."""
-        import glob
         test_chats_dir = os.path.expanduser("~/.askai/test/chats")
         if os.path.exists(test_chats_dir):
             # Remove all .json chat files

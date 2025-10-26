@@ -116,6 +116,12 @@ class CLIParser:
                            action='store_true',
                            help='Enable debug logging for this session')
 
+        # TUI (Terminal User Interface) options
+        tui_group = parser.add_argument_group('Interface mode')
+        tui_group.add_argument('--interactive', '-i',
+                          action='store_true',
+                          help='Launch interactive terminal interface')
+
         return parser
 
     def parse_arguments(self):

@@ -6,8 +6,14 @@ from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
 
 
+# ANSI color codes
+GREEN = "\033[92m"  # Bright green
+RED = "\033[91m"    # Bright red
+RESET = "\033[0m"   # Reset color
+
 class TestResult:
     """Represents a single test result."""
+
 
     def __init__(self, name: str):
         self.name = name
@@ -32,11 +38,6 @@ class TestResult:
     def __str__(self):
         """String representation of the test result."""
         status = "PASS" if self.passed else "FAIL"
-
-        # ANSI color codes
-        GREEN = "\033[92m"  # Bright green
-        RED = "\033[91m"    # Bright red
-        RESET = "\033[0m"   # Reset color
 
         # Color the status
         if self.passed:
@@ -230,11 +231,6 @@ class BaseUnitTest(ABC):
         # Summary with color formatting
         passed = sum(1 for r in self.results if r.passed)
         failed = sum(1 for r in self.results if not r.passed)
-
-        # ANSI color codes
-        GREEN = "\033[92m"  # Bright green
-        RED = "\033[91m"    # Bright red
-        RESET = "\033[0m"   # Reset color
 
         # Determine the color formatting based on test results
         if passed > 0 and failed == 0:

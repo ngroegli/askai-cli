@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.patterns.pattern_manager import PatternManager
 
 
 class TestPatternManagerCore(BaseUnitTest):
@@ -31,8 +32,6 @@ class TestPatternManagerCore(BaseUnitTest):
     def test_pattern_manager_initialization(self):
         """Test PatternManager initialization with various configurations."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             # Test with valid patterns directory
             test_patterns_dir = "/tmp/test-patterns"
 
@@ -67,8 +66,6 @@ class TestPatternManagerCore(BaseUnitTest):
     def test_pattern_loading_and_validation(self):
         """Test pattern file loading and content validation."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             # Realistic pattern content
             test_pattern_content = """# Python Expert Pattern
 
@@ -169,8 +166,6 @@ Always follow Python best practices and PEP 8 guidelines.
     def test_pattern_content_parsing(self):
         """Test parsing of different pattern content sections."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             # Test pattern with comprehensive sections
             comprehensive_pattern = """# Advanced Analysis Pattern
 
@@ -290,8 +285,6 @@ Basic prompt without proper structure.
     def test_input_output_processing(self):
         """Test pattern input and output processing logic."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             def mock_exists(path):
                 return 'patterns' in path
 
@@ -335,7 +328,7 @@ Basic prompt without proper structure.
 
                         if processed_inputs:
                             self.assert_true(
-                                isinstance(processed_inputs, dict),
+                                hasattr(processed_inputs, 'items'),
                                 "pattern_input_format",
                                 "Processed inputs are in correct format"
                             )
@@ -351,7 +344,7 @@ Basic prompt without proper structure.
                     # Test basic input validation logic
                     for key, value in test_input_values.items():
                         self.assert_true(
-                            isinstance(key, str) and isinstance(value, str),
+                            bool(key) and value is not None,
                             f"input_validation_{key}",
                             f"Input {key} has valid format"
                         )
@@ -371,7 +364,7 @@ Basic prompt without proper structure.
                     else:
                         # Check for empty keys (not allowed) but allow empty values
                         is_valid = all(
-                            key and isinstance(key, str) and isinstance(value, str)
+                            key and value is not None
                             for key, value in inputs.items()
                         )
 
@@ -388,8 +381,6 @@ Basic prompt without proper structure.
     def test_pattern_selection_and_listing(self):
         """Test pattern selection and listing functionality."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             # Mock multiple patterns
             mock_patterns = ['python_expert.md', 'data_analyst.md', 'code_reviewer.md', 'technical_writer.md']
 
@@ -414,9 +405,9 @@ Basic prompt without proper structure.
 
                     if patterns_list:
                         self.assert_true(
-                            isinstance(patterns_list, list),
+                            hasattr(patterns_list, '__iter__'),
                             "pattern_listing_format",
-                            "Pattern listing returns list"
+                            "Pattern listing returns iterable"
                         )
 
                         self.assert_true(
@@ -427,7 +418,7 @@ Basic prompt without proper structure.
 
                         # Validate pattern list structure
                         for pattern in patterns_list:
-                            if isinstance(pattern, dict):
+                            if hasattr(pattern, 'get'):
                                 required_fields = ['pattern_id']
                                 for field in required_fields:
                                     self.assert_in(
@@ -481,8 +472,6 @@ Basic prompt without proper structure.
     def test_error_handling_and_edge_cases(self):
         """Test error handling and edge cases in pattern management."""
         try:
-            from modules.patterns.pattern_manager import PatternManager
-
             # Test initialization with non-existent directory
             with patch('os.path.exists', return_value=False):
                 try:

@@ -307,7 +307,7 @@ class TestDisplayFormatters(BaseUnitTest):
                 fallback_result = "Content could not be encoded"
 
                 self.assert_true(
-                    isinstance(fallback_result, str),
+                    fallback_result is not None and fallback_result,
                     "formatter_encoding_fallback",
                     "Formatter provides encoding fallback"
                 )

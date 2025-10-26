@@ -307,7 +307,7 @@ class OpenRouterClient:
 
         # Special handling for PDF parsing errors
         if response.status_code == 422:
-            error_text = response.text.lower() if isinstance(response.text, str) else ""
+            error_text = str(response.text).lower() if response.text else ""
 
             # Check for PDF-related error messages
             pdf_error_phrases = [

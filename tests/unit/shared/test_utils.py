@@ -13,6 +13,8 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from shared.utils import print_error_or_warnings
+import shared.utils
 
 
 class TestProgressSpinner(BaseUnitTest):
@@ -78,13 +80,11 @@ class TestProgressSpinner(BaseUnitTest):
     def test_spinner_error_handling(self):
         """Test spinner error handling."""
         try:
-            import shared.utils as utils
-
             # This test always passes because we're testing graceful degradation
             self.add_result(
                 "spinner_error_fallback",
                 True,
-                f"Spinner error handling: {utils} does not have the attribute 'tqdm'"
+                f"Spinner error handling: {shared.utils} does not have the attribute 'tqdm'"
             )
 
         except Exception as e:
@@ -106,8 +106,6 @@ class TestPrintUtilities(BaseUnitTest):
         try:
             # Mock print to capture calls without output
             with patch('builtins.print') as mock_print:
-                from shared.utils import print_error_or_warnings
-
                 test_message = "Test error message"
                 print_error_or_warnings(test_message)
 
@@ -129,8 +127,6 @@ class TestPrintUtilities(BaseUnitTest):
         """Test warning printing capabilities."""
         try:
             with patch('builtins.print') as mock_print:
-                from shared.utils import print_error_or_warnings
-
                 # Test with different types of messages
                 test_cases = [
                     "Warning: test message",
@@ -160,7 +156,6 @@ class TestPrintUtilities(BaseUnitTest):
 
                 # Try to import and test colored functions
                 try:
-                    from shared.utils import print_error_or_warnings
                     print_error_or_warnings("Test colored message")
 
                     self.add_result(

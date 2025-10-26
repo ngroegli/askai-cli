@@ -11,9 +11,25 @@ presentation: "Presentation Layer" {
   shape: rectangle
   style.fill: "#F3E5F5" # Light Purple (CLI group)
 
-  cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
-  command_handler: "Command Handler" { style.fill: "#CE93D8" }
-  banner_parser: "Banner Display" { style.fill: "#CE93D8" }
+  cli_interface: "CLI Interface" {
+    shape: rectangle
+    style.fill: "#E1BEE7" # Darker purple for CLI group
+
+    cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
+    command_handler: "Command Handler" { style.fill: "#CE93D8" }
+    banner_parser: "Banner Display" { style.fill: "#CE93D8" }
+  }
+
+  tui_interface: "TUI Interface" {
+    shape: rectangle
+    style.fill: "#C8E6C9" # Light green for TUI group
+
+    unified_app: "Unified TUI App" { style.fill: "#A5D6A7" }
+    question_builder: "Question Builder" { style.fill: "#A5D6A7" }
+    pattern_browser: "Pattern Browser" { style.fill: "#A5D6A7" }
+    system_dashboard: "System Dashboard" { style.fill: "#A5D6A7" }
+    loading_components: "Loading & Response" { style.fill: "#A5D6A7" }
+  }
 }
 
 # Application Core
@@ -67,17 +83,22 @@ external: "External Services" {
 }
 
 # Layer Connections
-user -> presentation: "Commands & Input"
-presentation -> app: "Parsed Arguments"
+user -> presentation.cli_interface: "CLI Commands"
+user -> presentation.tui_interface: "Interactive TUI"
+presentation.cli_interface -> app: "Parsed CLI Arguments"
+presentation.tui_interface -> app: "TUI Event Calls"
 app -> modules: "Business Logic Calls"
 modules -> infrastructure: "Output Processing"
 modules -> external: "API Requests"
 external -> modules: "AI Responses"
-infrastructure -> presentation: "Formatted Output"
-presentation -> user: "Results & Feedback"
+infrastructure -> presentation.cli_interface: "Text Output"
+infrastructure -> presentation.tui_interface: "Structured Data"
+presentation.cli_interface -> user: "Terminal Text"
+presentation.tui_interface -> user: "Interactive UI"
 
 # Shared services connections (all layers use shared)
-presentation -> shared: "Common Services"
+presentation.cli_interface -> shared: "Common Services"
+presentation.tui_interface -> shared: "Common Services"
 app -> shared: "Common Services"
 modules -> shared: "Common Services"
 infrastructure -> shared: "Common Services"

@@ -9,8 +9,9 @@ import importlib
 import inspect
 from typing import Dict, Type
 
-# Set the testing environment variable
+# Set the testing environment variables
 os.environ['ASKAI_TESTING'] = 'true'
+os.environ['ASKAI_NO_TUI'] = 'true'  # Disable TUI during tests
 
 # Add the project root directory to sys.path FIRST
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -195,10 +196,10 @@ def main():
     print("\n" + "=" * 70)
 
     # ANSI color codes
-    GREEN = "\033[92m"  # Bright green
-    RED = "\033[91m"    # Bright red
-    BLUE = "\033[94m"   # Bright blue
-    RESET = "\033[0m"   # Reset color
+    GREEN = "\033[92m"  # Bright green  # pylint: disable=invalid-name
+    RED = "\033[91m"    # Bright red    # pylint: disable=invalid-name
+    BLUE = "\033[94m"   # Bright blue   # pylint: disable=invalid-name
+    RESET = "\033[0m"   # Reset color   # pylint: disable=invalid-name
 
     print(f"{BLUE}UNIT TEST SUMMARY{RESET}")
     print("=" * 70)
@@ -233,15 +234,22 @@ def main():
         total_width = file_width + action_width + status_width + message_width + 3  # +3 for spaces
 
         print("=" * total_width)
-        print(f"{'TEST FILE':<{file_width}} {'TEST METHOD':<{action_width}} {'STATUS':<{status_width}} {'MESSAGE':<{message_width}}")
+        print(f"{'TEST FILE':<{file_width}} {'TEST METHOD':<{action_width}} "
+              f"{'STATUS':<{status_width}} {'MESSAGE':<{message_width}}")
         print("-" * total_width)
 
         # Print each test result
         for result in detailed_results:
             # Truncate long strings if necessary
-            test_file = result['test_file'][:file_width-3] + "..." if len(result['test_file']) > file_width else result['test_file']
-            test_action = result['test_action'][:action_width-3] + "..." if len(result['test_action']) > action_width else result['test_action']
-            message = result['message'][:message_width-3] + "..." if len(result['message']) > message_width else result['message']
+            test_file = (result['test_file'][:file_width-3] + "..."
+                        if len(result['test_file']) > file_width
+                        else result['test_file'])
+            test_action = (result['test_action'][:action_width-3] + "..."
+                          if len(result['test_action']) > action_width
+                          else result['test_action'])
+            message = (result['message'][:message_width-3] + "..."
+                      if len(result['message']) > message_width
+                      else result['message'])
 
             # Color the status
             status = result['status']
@@ -250,7 +258,8 @@ def main():
             else:
                 colored_status = f"{RED}{status}{RESET}"
 
-            print(f"{test_file:<{file_width}} {test_action:<{action_width}} {colored_status:<15} {message:<{message_width}}")
+            print(f"{test_file:<{file_width}} {test_action:<{action_width}} "
+                  f"{colored_status:<15} {message:<{message_width}}")
 
         print("=" * total_width)
 

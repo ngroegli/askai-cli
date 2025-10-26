@@ -1,6 +1,7 @@
 """
 Unit tests for questions module - comprehensive coverage with realistic scenarios.
 """
+import argparse
 import os
 import sys
 from unittest.mock import Mock, patch
@@ -13,6 +14,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.questions.processor import QuestionProcessor
 
 
 class TestQuestionProcessor(BaseUnitTest):
@@ -29,47 +31,61 @@ class TestQuestionProcessor(BaseUnitTest):
         return self.results
 
     def test_question_processor_initialization(self):
-        """Test QuestionProcessor initialization with various configurations."""
+        """Test QuestionProcessor initialization with all dependencies."""
         try:
-            # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
-                 patch('modules.messaging.MessageBuilder'), \
-                 patch('modules.chat.ChatManager'), \
-                 patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'):
+            # Mock at module level to ensure they work across imports
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager') as mock_pattern_class, \
+                 patch('modules.messaging.MessageBuilder') as mock_builder_class, \
+                 patch('modules.chat.ChatManager') as mock_chat_manager_class, \
+                 patch('modules.ai.AIService') as mock_ai_service_class, \
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
 
-                from modules.questions.processor import QuestionProcessor
+                # Configure the mocks to return the expected objects
+                mock_pattern_manager = Mock()
+                mock_pattern_class.return_value = mock_pattern_manager
 
-                # Mock dependencies and patterns directory
-                mock_config = {
-                    "openrouter_api_key": "test-key",
-                    "model": "claude-3-sonnet",
-                    "askai_dir": "/tmp/test-askai"
-                }
+                mock_builder = Mock()
+                mock_builder_class.return_value = mock_builder
+
+                mock_chat_manager = Mock()
+                mock_chat_manager_class.return_value = mock_chat_manager
+
+                mock_ai_service = Mock()
+                mock_ai_service_class.return_value = mock_ai_service
+
+                mock_coordinator = Mock()
+                mock_coordinator.process_output.return_value = ("Formatted response", [])
+                mock_coordinator_class.return_value = mock_coordinator
+
+                # Setup mocks with patterns directory support
+                mock_config = {"openrouter_api_key": "test-key", "model": "test-model"}
                 mock_logger = Mock()
-                base_path = "/tmp/test-base"
 
-                processor = QuestionProcessor(mock_config, mock_logger, base_path)
+                # Create processor with mocked dependencies
+                processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test-base")
 
+                # Verify initialization
                 self.assert_not_none(
                     processor,
-                    "question_processor_init",
-                    "QuestionProcessor initializes successfully"
+                    "question_processor_instance",
+                    "QuestionProcessor created successfully"
                 )
 
-            self.assert_equal(
-                mock_config,
-                processor.config,
-                "question_processor_config",
-                "Configuration stored correctly"
-            )
+                self.assert_equal(
+                    processor.config,
+                    mock_config,
+                    "question_processor_config",
+                    "Config stored correctly"
+                )
 
-            self.assert_equal(
-                mock_logger,
-                processor.logger,
-                "question_processor_logger",
-                "Logger stored correctly"
-            )
+                self.assert_equal(
+                    processor.logger,
+                    mock_logger,
+                    "question_processor_logger",
+                    "Logger stored correctly"
+                )
 
         except Exception as e:
             self.add_result("question_processor_init_error", False, f"QuestionProcessor initialization failed: {e}")
@@ -78,7 +94,9 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test basic question processing end-to-end."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager') as mock_pattern_class, \
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
@@ -110,12 +128,11 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_coordinator.process_output.return_value = ("Formatted response", [])
                 mock_coordinator_class.return_value = mock_coordinator
 
-                from modules.questions.processor import QuestionProcessor
-
                 # Setup mocks with patterns directory support
                 mock_config = {"openrouter_api_key": "test-key", "model": "test-model"}
                 mock_logger = Mock()
 
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
                 # Explicitly override the processor's instances with our mocks
@@ -128,8 +145,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 test_question = "What is the capital of France?"
 
                 # Create mock args for the method
-                from argparse import Namespace
-                mock_args = Namespace(
+                mock_args = argparse.Namespace(
                     question=test_question,
                     format="rawtext",
                     plain_md=False,
@@ -175,17 +191,18 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test handling of images, PDFs, and URLs in question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager'), \
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
                  patch('infrastructure.output.output_coordinator.OutputCoordinator'):
 
-                from modules.questions.processor import QuestionProcessor
-
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test different input types
@@ -228,13 +245,16 @@ class TestQuestionProcessor(BaseUnitTest):
                             "role": "user",
                             "content": [
                                 {"type": "text", "text": scenario["question"]},
-                                {"type": "file", "file": {"filename": "document.pdf", "file_data": "data:application/pdf;base64,..."}}
+                                {"type": "file",
+                                 "file": {"filename": "document.pdf",
+                                         "file_data": "data:application/pdf;base64,..."}}
                             ]
                         }]
                     else:  # URL
                         mock_messages = [{
                             "role": "user",
-                            "content": f"Please analyze the content from this URL: {scenario['url']}\n\nQuestion: {scenario['question']}"
+                            "content": (f"Please analyze the content from this URL: {scenario['url']}\n\n"
+                                      f"Question: {scenario['question']}")
                         }]
 
                     mock_builder.build_messages.return_value = (mock_messages, None)
@@ -254,8 +274,7 @@ class TestQuestionProcessor(BaseUnitTest):
 
                         try:
                             # Create mock args namespace for process_question
-                            from argparse import Namespace
-                            mock_args = Namespace(**kwargs)
+                            mock_args = argparse.Namespace(**kwargs)
                             processor.process_question(mock_args)
                             self.add_result(
                                 f"multimodal_{scenario['type']}_processing",
@@ -289,17 +308,18 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test different output format processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager'), \
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
                  patch('infrastructure.output.output_coordinator.OutputCoordinator'):
 
-                from modules.questions.processor import QuestionProcessor
-
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test different output formats
@@ -343,8 +363,7 @@ class TestQuestionProcessor(BaseUnitTest):
                     if hasattr(processor, 'process_question'):
                         try:
                             # Create mock args for process_question
-                            from argparse import Namespace
-                            mock_args = Namespace(question=test_question, format=fmt)
+                            mock_args = argparse.Namespace(question=test_question, format=fmt)
                             processor.process_question(mock_args)
                             self.add_result(
                                 f"output_format_{fmt}_processing",
@@ -373,17 +392,18 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test error handling in question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager'), \
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
                  patch('infrastructure.output.output_coordinator.OutputCoordinator'):
 
-                from modules.questions.processor import QuestionProcessor
-
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test API failure scenario
@@ -453,7 +473,9 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test complete integration flow of question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
+            with patch('os.path.isdir', return_value=True), \
+                 patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
+                 patch('modules.patterns.PatternManager') as mock_pattern_class, \
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
@@ -493,8 +515,6 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_coordinator.process_output.return_value = ("Formatted response about recursion...", ["output.txt"])
                 mock_coordinator_class.return_value = mock_coordinator
 
-                from modules.questions.processor import QuestionProcessor
-
                 mock_config = {
                     "openrouter_api_key": "test-key",
                     "model": "claude-3-sonnet",
@@ -502,6 +522,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 }
                 mock_logger = Mock()
 
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
                 # Explicitly override the processor's instances with our mocks
@@ -514,8 +535,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 if hasattr(processor, 'process_question'):
                     try:
                         # Create mock args for process_question
-                        from argparse import Namespace
-                        mock_args = Namespace(
+                        mock_args = argparse.Namespace(
                             question=test_question,
                             format="rawtext",
                             plain_md=False,
@@ -559,3 +579,9 @@ class TestQuestionProcessor(BaseUnitTest):
 
         except Exception as e:
             self.add_result("integration_flow_error", False, f"Integration flow test failed: {e}")
+
+
+if __name__ == "__main__":
+    test_suite = TestQuestionProcessor()
+    test_suite.run()
+    test_suite.report()

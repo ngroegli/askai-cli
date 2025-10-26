@@ -1,6 +1,10 @@
 """
 General utility functions for the AskAI CLI application.
-Contains core utilities for input handling, command execution, and formatting.
+Contains core util            # Open and read the file in binary mode
+            with open(file_path, "rb") as file:
+                file_content = file.read()
+                # file_content is always bytes when reading in binary mode
+                return file_contentdling, command execution, and formatting.
 """
 
 import os
@@ -80,16 +84,7 @@ def encode_file_to_base64(file_path):
             # Open and read the file in binary mode
             with open(file_path, "rb") as file:
                 file_content = file.read()
-
-                # When reading in binary mode, file_content should always be bytes already
-                # but in case it's not, convert it properly
-                if not isinstance(file_content, bytes):
-                    # For string-like objects with encode method (str)
-                    if isinstance(file_content, str):
-                        file_content = file_content.encode('utf-8')
-                    # For bytes-like objects (bytearray, memoryview)
-                    else:
-                        file_content = bytes(file_content)
+                # file_content is always bytes when reading in binary mode
 
                 # Encode the file content to base64
                 encoded_string = base64.b64encode(file_content).decode('utf-8')
