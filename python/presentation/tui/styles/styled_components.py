@@ -264,24 +264,38 @@ def create_button(label: str, variant: str = "primary", icon: str = "", **kwargs
     if not TEXTUAL_AVAILABLE:
         return None
 
+    # Get classes from global scope to avoid E0606 errors
+    primary_button = globals().get('PrimaryButton')
+    secondary_button = globals().get('SecondaryButton')
+    success_button = globals().get('SuccessButton')
+    warning_button = globals().get('WarningButton')
+    danger_button = globals().get('DangerButton')
+    styled_button = globals().get('StyledButton')
+
     variant_map = {
-        'primary': PrimaryButton,
-        'secondary': SecondaryButton,
-        'success': SuccessButton,
-        'warning': WarningButton,
-        'danger': DangerButton,
-        'error': DangerButton,
+        'primary': primary_button,
+        'secondary': secondary_button,
+        'success': success_button,
+        'warning': warning_button,
+        'danger': danger_button,
+        'error': danger_button,
     }
 
-    button_class = variant_map.get(variant, StyledButton)
-    return button_class(label, icon=icon, **kwargs)
+    button_class = variant_map.get(variant, styled_button)
+    if button_class:
+        return button_class(label, icon=icon, **kwargs)
+    return None
 
 
 def create_input(placeholder: str = "", variant: str = "default", **kwargs):
     """Create a styled input field."""
     if not TEXTUAL_AVAILABLE:
         return None
-    return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
+
+    styled_input = globals().get('StyledInput')
+    if styled_input:
+        return styled_input(placeholder=placeholder, variant=variant, **kwargs)
+    return None
 
 
 def create_textarea(text: str = "", placeholder: str = "", size: str = "default", **kwargs):
@@ -289,12 +303,18 @@ def create_textarea(text: str = "", placeholder: str = "", size: str = "default"
     if not TEXTUAL_AVAILABLE:
         return None
 
-    if size == "large":
-        return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
-    elif size == "small":
-        return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
-    else:
-        return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
+    # Get classes from global scope to avoid E0606 errors
+    large_textarea = globals().get('LargeTextArea')
+    small_textarea = globals().get('SmallTextArea')
+    styled_textarea = globals().get('StyledTextArea')
+
+    if size == "large" and large_textarea:
+        return large_textarea(text=text, placeholder=placeholder, **kwargs)
+    if size == "small" and small_textarea:
+        return small_textarea(text=text, placeholder=placeholder, **kwargs)
+    if styled_textarea:
+        return styled_textarea(text=text, placeholder=placeholder, **kwargs)
+    return None
 
 
 __all__ = [
