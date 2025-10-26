@@ -296,15 +296,24 @@ class TestMessageBuilder(BaseUnitTest):
             mock_pattern_manager = Mock()
             mock_logger = Mock()
 
-            # Mock pattern data
+            # Mock pattern data with proper input structure
+            from modules.patterns.pattern_inputs import PatternInput, InputType
+
+            mock_input = PatternInput(
+                name='input',
+                description='Test Input',
+                input_type=InputType.TEXT,
+                required=True
+            )
+
             mock_pattern_data = {
                 'id': 'test_pattern',
-                'prompt': 'Test pattern prompt with {input}',
-                'inputs': [{'id': 'input', 'label': 'Test Input', 'required': True}]
+                'prompt_content': 'Test pattern prompt with {input}',
+                'inputs': [mock_input]
             }
 
             mock_pattern_manager.get_pattern_content.return_value = mock_pattern_data
-            mock_pattern_manager.validate_inputs.return_value = True
+            mock_pattern_manager.process_pattern_inputs.return_value = {'input': 'test value'}  # Return the actual inputs
 
             message_builder = MessageBuilder(mock_pattern_manager, mock_logger)
 
