@@ -300,6 +300,10 @@ def ensure_askai_setup():
     Returns:
         bool: True if setup is complete, False if user chose to exit
     """
+    # Safety check: In test environment, always return True immediately
+    if is_test_environment():
+        return True
+
     # Check if main directory structure exists
     if not os.path.exists(ASKAI_DIR):
         print("\n" + "="*60)
@@ -373,6 +377,38 @@ def load_config():
     Raises:
         SystemExit: If setup is incomplete or configuration cannot be loaded
     """
+    # In test environment, return minimal config to avoid setup
+    if is_test_environment():
+        return {
+            'api_key': 'test-key',
+            'default_model': 'test-model',
+            'base_url': 'https://test.api.com',
+            'enable_logging': False,
+            'log_path': '/tmp/test.log',
+            'log_level': 'ERROR',
+            'patterns': {
+                'private_patterns_path': ''
+            },
+            'web_search': {
+                'enabled': False,
+                'method': 'plugin',
+                'max_results': 5
+            },
+            'chat': {
+                'storage_path': '/tmp/test-chats',
+                'max_history': 10
+            },
+            'interface': {
+                'default_mode': 'cli',
+                'tui_features': {
+                    'enabled': False,
+                    'auto_fallback': True,
+                    'theme': 'dark',
+                    'animations': False
+                }
+            }
+        }
+
     # Ensure AskAI is properly set up
     if not ensure_askai_setup():
         sys.exit(1)

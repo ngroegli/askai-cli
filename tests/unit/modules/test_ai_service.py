@@ -11,9 +11,32 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "python"))
 sys.path.insert(0, os.path.join(project_root, "tests"))
 
-# pylint: disable=wrong-import-position,import-error
-from unit.test_base import BaseUnitTest
-from modules.ai.ai_service import AIService
+# Set test environment BEFORE any imports to prevent setup wizard
+os.environ['ASKAI_TESTING'] = 'true'
+
+# Start global mocking early to prevent setup wizard
+_global_patches = [
+    patch('shared.config.loader.ensure_askai_setup', return_value=True),
+    patch('shared.config.load_config', return_value={'test': 'config'}),
+    patch('builtins.print'),
+    patch('os.path.exists', return_value=True),
+]
+
+# Apply all patches
+for p in _global_patches:
+    p.start()
+
+try:
+    # pylint: disable=wrong-import-position,import-error
+    from unit.test_base import BaseUnitTest
+
+    # Import AIService with heavy mocking to prevent any config access
+    with patch('modules.ai.ai_service.load_config', return_value={'test': 'config'}):
+        from modules.ai.ai_service import AIService
+finally:
+    # Stop all patches
+    for p in _global_patches:
+        p.stop()
 
 
 class TestAIService(BaseUnitTest):
@@ -41,19 +64,32 @@ class TestAIService(BaseUnitTest):
                 'askai_dir': '/tmp/test-askai'
             }
 
-            # Comprehensive mocking to prevent config system access
+            # Comprehensive mocking to prevent any config system access
+            # Mock all possible entry points to config system
             with patch('shared.config.load_config', return_value=mock_config), \
                  patch('shared.config.loader.load_config', return_value=mock_config), \
                  patch('shared.config.loader.ensure_askai_setup', return_value=True), \
                  patch('shared.config.loader.create_directory_structure', return_value=True), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard', return_value=True), \
+                 patch('shared.config.loader.run_dynamic_setup_wizard', return_value=mock_config), \
                  patch('shared.config.loader.create_test_config_from_production', return_value=True), \
+                 patch('shared.config.loader.is_test_environment', return_value=True), \
                  patch('shared.config.is_test_environment', return_value=True), \
-                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
-                 patch('builtins.input', return_value='y'), \
-                 patch('os.path.exists', return_value=True), \
+                 patch('os.path.exists') as mock_exists, \
                  patch('os.makedirs', return_value=True), \
-                 patch('builtins.print'):  # Suppress setup messages
+                 patch('builtins.input', return_value='y'), \
+                 patch('builtins.print'), \
+                 patch('yaml.safe_dump'), \
+                 patch('yaml.safe_load', return_value=mock_config), \
+                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True):
+
+                # Mock file existence checks to prevent setup wizard
+                def mock_exists_side_effect(path):
+                    # Mock that all required paths exist to prevent setup
+                    if 'askai' in str(path).lower() or 'config' in str(path).lower():
+                        return True
+                    return True
+
+                mock_exists.side_effect = mock_exists_side_effect
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
