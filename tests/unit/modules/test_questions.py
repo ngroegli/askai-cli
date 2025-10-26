@@ -1,6 +1,7 @@
 """
 Unit tests for questions module - comprehensive coverage with realistic scenarios.
 """
+import argparse
 import os
 import sys
 from unittest.mock import Mock, patch
@@ -13,6 +14,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.questions.processor import QuestionProcessor
 
 
 class TestQuestionProcessor(BaseUnitTest):
@@ -61,8 +63,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_config = {"openrouter_api_key": "test-key", "model": "test-model"}
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test-base")
 
                 # Verify initialization
@@ -131,8 +132,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_config = {"openrouter_api_key": "test-key", "model": "test-model"}
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
                 # Explicitly override the processor's instances with our mocks
@@ -145,8 +145,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 test_question = "What is the capital of France?"
 
                 # Create mock args for the method
-                from argparse import Namespace
-                mock_args = Namespace(
+                mock_args = argparse.Namespace(
                     question=test_question,
                     format="rawtext",
                     plain_md=False,
@@ -203,8 +202,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test different input types
@@ -247,13 +245,16 @@ class TestQuestionProcessor(BaseUnitTest):
                             "role": "user",
                             "content": [
                                 {"type": "text", "text": scenario["question"]},
-                                {"type": "file", "file": {"filename": "document.pdf", "file_data": "data:application/pdf;base64,..."}}
+                                {"type": "file",
+                                 "file": {"filename": "document.pdf",
+                                         "file_data": "data:application/pdf;base64,..."}}
                             ]
                         }]
                     else:  # URL
                         mock_messages = [{
                             "role": "user",
-                            "content": f"Please analyze the content from this URL: {scenario['url']}\n\nQuestion: {scenario['question']}"
+                            "content": (f"Please analyze the content from this URL: {scenario['url']}\n\n"
+                                      f"Question: {scenario['question']}")
                         }]
 
                     mock_builder.build_messages.return_value = (mock_messages, None)
@@ -273,8 +274,7 @@ class TestQuestionProcessor(BaseUnitTest):
 
                         try:
                             # Create mock args namespace for process_question
-                            from argparse import Namespace
-                            mock_args = Namespace(**kwargs)
+                            mock_args = argparse.Namespace(**kwargs)
                             processor.process_question(mock_args)
                             self.add_result(
                                 f"multimodal_{scenario['type']}_processing",
@@ -319,8 +319,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test different output formats
@@ -364,8 +363,7 @@ class TestQuestionProcessor(BaseUnitTest):
                     if hasattr(processor, 'process_question'):
                         try:
                             # Create mock args for process_question
-                            from argparse import Namespace
-                            mock_args = Namespace(question=test_question, format=fmt)
+                            mock_args = argparse.Namespace(question=test_question, format=fmt)
                             processor.process_question(mock_args)
                             self.add_result(
                                 f"output_format_{fmt}_processing",
@@ -405,8 +403,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test API failure scenario
@@ -525,8 +522,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 }
                 mock_logger = Mock()
 
-                # Import after mocking
-                from modules.questions.processor import QuestionProcessor
+                # Create processor with mocked dependencies
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
                 # Explicitly override the processor's instances with our mocks
@@ -539,8 +535,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 if hasattr(processor, 'process_question'):
                     try:
                         # Create mock args for process_question
-                        from argparse import Namespace
-                        mock_args = Namespace(
+                        mock_args = argparse.Namespace(
                             question=test_question,
                             format="rawtext",
                             plain_md=False,

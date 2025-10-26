@@ -3,6 +3,7 @@ Unit tests for shared configuration functionality - SAFE VERSION.
 This version does NOT call actual config loading functions to prevent
 any interference with real configuration files.
 """
+import importlib
 import os
 import sys
 
@@ -14,7 +15,6 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-import importlib
 from shared.config import ASKAI_DIR, CONFIG_PATH
 from shared.config.loader import load_config
 

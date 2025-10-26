@@ -373,23 +373,27 @@ def create_loading_screen(title: str = "Processing", message: str = "Please wait
     """Create a loading screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    try:
-        return LoadingScreen(title, message)
-    except NameError:
-        return None
+
+    # Access class from module globals to avoid self-import
+    loading_screen_class = globals().get('LoadingScreen')
+    if loading_screen_class:
+        return loading_screen_class(title, message)
+    return None
 
 
 def create_response_viewer_screen(data: dict) -> Optional['ResponseViewerScreen']:
     """Create a response viewer screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    try:
+
+    # Access class from module globals to avoid self-import
+    response_viewer_class = globals().get('ResponseViewerScreen')
+    if response_viewer_class:
         # Extract content from the data dict - handle different possible keys
         content = data.get('content', data.get('response', data.get('text', str(data))))
         title = data.get('title', 'AI Response')
-        return ResponseViewerScreen(content, title)
-    except NameError:
-        return None
+        return response_viewer_class(content, title)
+    return None
 
 
 def create_pattern_response_screen(response_content: str, title: str = "Pattern Response", app_instance=None):
@@ -397,23 +401,24 @@ def create_pattern_response_screen(response_content: str, title: str = "Pattern 
     if not TEXTUAL_AVAILABLE:
         return None
 
-    try:
-        response_screen_builder = QuestionResponseScreen(response_content, title, app_instance)
+    # Access class from module globals to avoid self-import
+    question_response_class = globals().get('QuestionResponseScreen')
+    if question_response_class:
+        response_screen_builder = question_response_class(response_content, title, app_instance)
         return response_screen_builder.create_screen_class()
-    except NameError:
-        return None
+    return None
 
 
 def create_question_response_screen(question: str, response: str) -> Optional['QuestionResponseScreen']:
     """Create a question response screen instance."""
     if not TEXTUAL_AVAILABLE:
         return None
-    try:
-        return QuestionResponseScreen(question, response)
-    except NameError:
-        return None
 
-
+    # Access class from module globals to avoid self-import
+    question_response_class = globals().get('QuestionResponseScreen')
+    if question_response_class:
+        return question_response_class(question, response)
+    return None
 __all__ = [
     'LoadingScreen', 'ResponseViewerScreen', 'QuestionResponseScreen',
     'create_loading_screen', 'create_response_viewer_screen', 'create_question_response_screen',

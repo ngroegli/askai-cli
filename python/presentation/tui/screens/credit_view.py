@@ -6,7 +6,7 @@ from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 
 from python.modules.ai.openrouter_client import OpenRouterClient
-from python.presentation.tui.styles.styled_components import StyledButton, StyledStatic
+from python.presentation.tui.styles.styled_components import StyledStatic
 from python.presentation.tui.screens.base_screen import BaseScreen
 
 
@@ -86,8 +86,8 @@ class CreditViewScreen(BaseScreen):
             )
 
             with Horizontal(classes="button-container"):
-                yield StyledButton("Refresh", id="refresh-credits", variant="primary")
-                yield StyledButton("Back", id="back-button", variant="primary")
+                yield Button("Refresh", id="refresh-credits", variant="primary")
+                yield Button("Back", id="back-button", variant="primary")
 
         yield Footer()
 

@@ -17,7 +17,6 @@ except ImportError:
         TextualTextArea = object
         Static = object
         ListView = object
-        ListItem = object
         Select = object
         Vertical = object
         Horizontal = object
@@ -25,7 +24,7 @@ except ImportError:
 # Type imports for static analysis
 if TYPE_CHECKING:
     from textual.widgets import Button as TextualButton, Input as TextualInput, TextArea as TextualTextArea
-    from textual.widgets import Static, ListView, ListItem, Select
+    from textual.widgets import Static, ListView, Select
     from textual.containers import Vertical, Horizontal
 
 
@@ -108,60 +107,8 @@ if TEXTUAL_AVAILABLE:
     class StyledTextArea(TextualTextArea):
         """TextArea with predefined styling."""
 
-        def __init__(self, text: str = "", placeholder: str = "", size: str = "default", **kwargs):
-            # Add size class if specified
-            if size != "default":
-                classes = kwargs.get('classes', '')
-                if classes:
-                    classes += f" {size}"
-                else:
-                    classes = size
-                kwargs['classes'] = classes
-
-            super().__init__(text=text, placeholder=placeholder, **kwargs)
-
-
-    class LargeTextArea(StyledTextArea):
-        """Large text area for long content."""
-        def __init__(self, **kwargs):
-            super().__init__(size="large", **kwargs)
-
-
-    class SmallTextArea(StyledTextArea):
-        """Small text area for brief content."""
-        def __init__(self, **kwargs):
-            super().__init__(size="small", **kwargs)
-
-
-    class ReadOnlyTextArea(StyledTextArea):
-        """Read-only text area for displaying content."""
-        def __init__(self, text: str = "", **kwargs):
-            kwargs['read_only'] = True
-            classes = kwargs.get('classes', '')
-            classes += " readonly"
-            kwargs['classes'] = classes
-            super().__init__(text=text, **kwargs)
-
-
-    class StyledSelect(Select):
-        """Select dropdown with predefined styling."""
-
-        def __init__(self, options, **kwargs):
-            super().__init__(options, **kwargs)
-
-
-    class StyledListView(ListView):
-        """ListView with predefined styling."""
-
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
-
-    class StyledStatic(Static):
-        """Static text with semantic styling."""
-
-        def __init__(self, renderable: str = "", variant: str = "default", **kwargs):
-            # Add variant class
+        def __init__(self, text: str = "", variant: str = "default", **kwargs):
+            # Add variant class if not default
             if variant != "default":
                 classes = kwargs.get('classes', '')
                 if classes:
@@ -170,54 +117,102 @@ if TEXTUAL_AVAILABLE:
                     classes = variant
                 kwargs['classes'] = classes
 
-            super().__init__(renderable, **kwargs)
+            super().__init__(text=text, **kwargs)
+
+
+    class LargeTextArea(StyledTextArea):
+        """Large text area for extensive content."""
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+
+    class SmallTextArea(StyledTextArea):
+        """Small text area for brief content."""
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+
+    class ReadOnlyTextArea(StyledTextArea):
+        """Read-only text area for display purposes."""
+        def __init__(self, *args, **kwargs):
+            kwargs['read_only'] = True
+            super().__init__(*args, **kwargs)
+
+
+    class StyledSelect(Select):
+        """Select dropdown with styling."""
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+
+    class StyledListView(ListView):
+        """ListView with styling."""
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+
+    class StyledStatic(Static):
+        """Static text with predefined styling classes."""
+
+        def __init__(self, text: str = "", variant: str = "default", **kwargs):
+            # Add variant class if not default
+            if variant != "default":
+                classes = kwargs.get('classes', '')
+                if classes:
+                    classes += f" {variant}"
+                else:
+                    classes = variant
+                kwargs['classes'] = classes
+
+            super().__init__(text, **kwargs)
 
 
     class TitleText(StyledStatic):
-        """Title text styling."""
+        """Large title text."""
         def __init__(self, text: str, **kwargs):
             super().__init__(text, variant="title", **kwargs)
 
 
     class SubtitleText(StyledStatic):
-        """Subtitle text styling."""
+        """Medium subtitle text."""
         def __init__(self, text: str, **kwargs):
             super().__init__(text, variant="subtitle", **kwargs)
 
 
     class CaptionText(StyledStatic):
-        """Caption/description text styling."""
+        """Small caption text."""
         def __init__(self, text: str, **kwargs):
             super().__init__(text, variant="caption", **kwargs)
 
 
     class ErrorText(StyledStatic):
-        """Error message text styling."""
+        """Red error text."""
         def __init__(self, text: str, **kwargs):
-            super().__init__(text, variant="error-text", **kwargs)
+            super().__init__(text, variant="error", **kwargs)
 
 
     class SuccessText(StyledStatic):
-        """Success message text styling."""
+        """Green success text."""
         def __init__(self, text: str, **kwargs):
-            super().__init__(text, variant="success-text", **kwargs)
+            super().__init__(text, variant="success", **kwargs)
 
 
     class WarningText(StyledStatic):
-        """Warning message text styling."""
+        """Yellow warning text."""
         def __init__(self, text: str, **kwargs):
-            super().__init__(text, variant="warning-text", **kwargs)
+            super().__init__(text, variant="warning", **kwargs)
 
 
     class StatusText(StyledStatic):
-        """Status indicator text."""
-        def __init__(self, text: str, status: str = "loading", **kwargs):
-            variant = f"status-{status}"
-            super().__init__(text, variant=variant, **kwargs)
+        """Muted status text."""
+        def __init__(self, text: str, **kwargs):
+            super().__init__(text, variant="status", **kwargs)
 
 
     class ButtonGroup(Horizontal):
-        """Horizontal container for button groups."""
+        """Group of buttons in a horizontal layout."""
         def __init__(self, **kwargs):
             classes = kwargs.get('classes', '')
             classes += " button-group"
@@ -226,7 +221,7 @@ if TEXTUAL_AVAILABLE:
 
 
     class ButtonRow(Horizontal):
-        """Horizontal container for button rows."""
+        """Row of buttons with standard spacing."""
         def __init__(self, **kwargs):
             classes = kwargs.get('classes', '')
             classes += " button-row"
@@ -235,26 +230,18 @@ if TEXTUAL_AVAILABLE:
 
 
     class FormField(Vertical):
-        """Container for form fields with label and input."""
-
-        def __init__(self, label: str, input_widget, description: str = "", error: str = "", **kwargs):
+        """Vertical form field container."""
+        def __init__(self, label: str = "", **kwargs):
+            classes = kwargs.get('classes', '')
+            classes += " form-field"
+            kwargs['classes'] = classes
             super().__init__(**kwargs)
-            self.label_text = label
-            self.input_widget = input_widget
-            self.description_text = description
-            self.error_text = error
+
+            self.field_label = label
 
         def compose(self):
-            if self.label_text:
-                yield StyledStatic(self.label_text, classes="input-label")
-
-            if self.description_text:
-                yield StyledStatic(self.description_text, classes="input-description")
-
-            yield self.input_widget
-
-            if self.error_text:
-                yield ErrorText(self.error_text, classes="input-error")
+            if self.field_label:
+                yield StyledStatic(self.field_label, variant="label")
 
 
     class Card(Vertical):
@@ -277,30 +264,24 @@ def create_button(label: str, variant: str = "primary", icon: str = "", **kwargs
     if not TEXTUAL_AVAILABLE:
         return None
 
-    try:
-        variant_map = {
-            'primary': PrimaryButton,
-            'secondary': SecondaryButton,
-            'success': SuccessButton,
-            'warning': WarningButton,
-            'danger': DangerButton,
-            'error': DangerButton,
-        }
+    variant_map = {
+        'primary': PrimaryButton,
+        'secondary': SecondaryButton,
+        'success': SuccessButton,
+        'warning': WarningButton,
+        'danger': DangerButton,
+        'error': DangerButton,
+    }
 
-        button_class = variant_map.get(variant, StyledButton)
-        return button_class(label, icon=icon, **kwargs)
-    except NameError:
-        return None
+    button_class = variant_map.get(variant, StyledButton)
+    return button_class(label, icon=icon, **kwargs)
 
 
 def create_input(placeholder: str = "", variant: str = "default", **kwargs):
     """Create a styled input field."""
     if not TEXTUAL_AVAILABLE:
         return None
-    try:
-        return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
-    except NameError:
-        return None
+    return StyledInput(placeholder=placeholder, variant=variant, **kwargs)
 
 
 def create_textarea(text: str = "", placeholder: str = "", size: str = "default", **kwargs):
@@ -308,15 +289,12 @@ def create_textarea(text: str = "", placeholder: str = "", size: str = "default"
     if not TEXTUAL_AVAILABLE:
         return None
 
-    try:
-        if size == "large":
-            return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
-        elif size == "small":
-            return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
-        else:
-            return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
-    except NameError:
-        return None
+    if size == "large":
+        return LargeTextArea(text=text, placeholder=placeholder, **kwargs)
+    elif size == "small":
+        return SmallTextArea(text=text, placeholder=placeholder, **kwargs)
+    else:
+        return StyledTextArea(text=text, placeholder=placeholder, **kwargs)
 
 
 __all__ = [
@@ -324,7 +302,8 @@ __all__ = [
     'WarningButton', 'DangerButton', 'IconButton',
     'StyledInput', 'StyledTextArea', 'LargeTextArea', 'SmallTextArea', 'ReadOnlyTextArea',
     'StyledSelect', 'StyledListView', 'StyledStatic',
-    'TitleText', 'SubtitleText', 'CaptionText', 'ErrorText', 'SuccessText', 'WarningText', 'StatusText',
+    'TitleText', 'SubtitleText', 'CaptionText',
+    'ErrorText', 'SuccessText', 'WarningText', 'StatusText',
     'ButtonGroup', 'ButtonRow', 'FormField', 'Card',
     'create_button', 'create_input', 'create_textarea'
 ]

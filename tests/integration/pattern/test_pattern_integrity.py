@@ -3,8 +3,10 @@ Integration tests for pattern file integrity and structure validation.
 """
 import os
 import re
-import yaml
 from typing import Dict, List, Tuple
+
+import yaml
+
 from tests.integration.test_base import AutomatedTest
 
 
@@ -162,7 +164,7 @@ class TestPatternIntegrity(AutomatedTest):
 
                 # Must start with "# Pattern" (with or without colon)
                 pattern_header = None
-                for section in sections.keys():
+                for section in sections:
                     if section.startswith('# Pattern'):
                         pattern_header = section
                         break
