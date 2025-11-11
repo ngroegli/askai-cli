@@ -52,8 +52,7 @@ class PatternsList(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            patterns_dir = os.path.join(project_root, "patterns")
-            pattern_manager = PatternManager(patterns_dir, config)
+            pattern_manager = PatternManager(project_root, config)
 
             # Get all patterns
             available_patterns = pattern_manager.list_patterns()
@@ -61,17 +60,54 @@ class PatternsList(Resource):
 
             for pattern_data in available_patterns:
                 try:
-                    pattern_id = pattern_data.get('id', '')
+                    pattern_id = pattern_data.get('pattern_id', '')
                     pattern_content = pattern_manager.get_pattern_content(pattern_id)
 
                     if pattern_content:
+                        # Convert PatternInput objects to dictionaries for JSON serialization
+                        inputs = []
+                        for input_obj in pattern_content.get('inputs', []):
+                            if hasattr(input_obj, 'name'):  # It's a PatternInput object
+                                input_dict = {
+                                    'name': input_obj.name,
+                                    'description': input_obj.description,
+                                    'type': input_obj.input_type.value if hasattr(input_obj.input_type, 'value') else str(input_obj.input_type),
+                                    'required': input_obj.required,
+                                    'default': input_obj.default,
+                                    'options': input_obj.options,
+                                    'min_value': input_obj.min_value,
+                                    'max_value': input_obj.max_value,
+                                    'group': input_obj.group
+                                }
+                                inputs.append(input_dict)
+                            else:  # It's already a dictionary
+                                inputs.append(input_obj)
+
+                        # Convert PatternOutput objects to dictionaries for JSON serialization
+                        outputs = []
+                        for output_obj in pattern_content.get('outputs', []):
+                            if hasattr(output_obj, 'name'):  # It's a PatternOutput object
+                                output_dict = {
+                                    'name': output_obj.name,
+                                    'description': output_obj.description,
+                                    'type': output_obj.output_type.value if hasattr(output_obj.output_type, 'value') else str(output_obj.output_type),
+                                    'required': output_obj.required,
+                                    'example': output_obj.example,
+                                    'action': output_obj.action.value if hasattr(output_obj.action, 'value') else str(output_obj.action),
+                                    'write_to_file': output_obj.write_to_file,
+                                    'group': output_obj.group
+                                }
+                                outputs.append(output_dict)
+                            else:  # It's already a dictionary
+                                outputs.append(output_obj)
+
                         patterns.append({
                             'id': pattern_id,
                             'name': pattern_data.get('name', pattern_id),
                             'description': pattern_data.get('description', ''),
                             'category': pattern_data.get('category', 'general'),
-                            'inputs': pattern_content.get('inputs', []),
-                            'outputs': pattern_content.get('outputs', [])
+                            'inputs': inputs,
+                            'outputs': outputs
                         })
                 except Exception as e:
                     current_app.logger.warning(f"Failed to load pattern {pattern_data}: {e}")
@@ -107,8 +143,7 @@ class PatternDetail(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            patterns_dir = os.path.join(project_root, "patterns")
-            pattern_manager = PatternManager(patterns_dir, config)
+            pattern_manager = PatternManager(project_root, config)
 
             # Load specific pattern
             pattern_content = pattern_manager.get_pattern_content(pattern_id)
@@ -116,13 +151,50 @@ class PatternDetail(Resource):
             if not pattern_content:
                 return {'error': f'Pattern not found: {pattern_id}'}, 404
 
+            # Convert PatternInput objects to dictionaries for JSON serialization
+            inputs = []
+            for input_obj in pattern_content.get('inputs', []):
+                if hasattr(input_obj, 'name'):  # It's a PatternInput object
+                    input_dict = {
+                        'name': input_obj.name,
+                        'description': input_obj.description,
+                        'type': input_obj.input_type.value if hasattr(input_obj.input_type, 'value') else str(input_obj.input_type),
+                        'required': input_obj.required,
+                        'default': input_obj.default,
+                        'options': input_obj.options,
+                        'min_value': input_obj.min_value,
+                        'max_value': input_obj.max_value,
+                        'group': input_obj.group
+                    }
+                    inputs.append(input_dict)
+                else:  # It's already a dictionary
+                    inputs.append(input_obj)
+
+            # Convert PatternOutput objects to dictionaries for JSON serialization
+            outputs = []
+            for output_obj in pattern_content.get('outputs', []):
+                if hasattr(output_obj, 'name'):  # It's a PatternOutput object
+                    output_dict = {
+                        'name': output_obj.name,
+                        'description': output_obj.description,
+                        'type': output_obj.output_type.value if hasattr(output_obj.output_type, 'value') else str(output_obj.output_type),
+                        'required': output_obj.required,
+                        'example': output_obj.example,
+                        'action': output_obj.action.value if hasattr(output_obj.action, 'value') else str(output_obj.action),
+                        'write_to_file': output_obj.write_to_file,
+                        'group': output_obj.group
+                    }
+                    outputs.append(output_dict)
+                else:  # It's already a dictionary
+                    outputs.append(output_obj)
+
             return {
                 'id': pattern_id,
                 'name': pattern_content.get('name', pattern_id),
                 'description': pattern_content.get('description', ''),
                 'category': pattern_content.get('category', 'general'),
-                'inputs': pattern_content.get('inputs', []),
-                'outputs': pattern_content.get('outputs', [])
+                'inputs': inputs,
+                'outputs': outputs
             }
 
         except Exception as e:
@@ -148,8 +220,7 @@ class PatternCategories(Resource):
                 return {'error': 'Failed to load configuration'}, 500
 
             # Initialize pattern manager
-            patterns_dir = os.path.join(project_root, "patterns")
-            pattern_manager = PatternManager(patterns_dir, config)
+            pattern_manager = PatternManager(project_root, config)
 
             # Get all patterns and extract categories
             available_patterns = pattern_manager.list_patterns()
@@ -157,7 +228,7 @@ class PatternCategories(Resource):
 
             for pattern_data in available_patterns:
                 try:
-                    pattern_id = pattern_data.get('id', '')
+                    pattern_id = pattern_data.get('pattern_id', '')
                     pattern_content = pattern_manager.get_pattern_content(pattern_id)
 
                     if pattern_content:

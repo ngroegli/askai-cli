@@ -188,10 +188,14 @@ class ConfigurationValidation(Resource):
                 }
 
             # Validate required fields
-            required_fields = ['api_key', 'base_url', 'default_model']
-            for field in required_fields:
-                if not config.get(field):
-                    issues.append(f"Required field '{field}' is missing or empty")
+            if not config.get('api_key'):
+                issues.append("API key is missing - api_key must be set")
+
+            if not config.get('base_url'):
+                issues.append("Base URL is missing")
+
+            if not config.get('default_model'):
+                warnings.append("Default model not configured - may cause issues with some requests")
 
             # Validate API key format (basic check)
             api_key = config.get('api_key', '')
@@ -205,15 +209,16 @@ class ConfigurationValidation(Resource):
                 issues.append("Base URL should start with 'http' or 'https'")
 
             # Check optional configurations
-            if not config.get('private_patterns_path'):
+            patterns_config = config.get('patterns', {})
+            if not patterns_config.get('private_patterns_path'):
                 suggestions.append("Consider setting a private patterns path for custom patterns")
 
             if not config.get('chat', {}).get('storage_path'):
                 warnings.append("Chat storage path not configured - chat functionality may be limited")
 
             # Check logging configuration
-            logging_config = config.get('logging', {})
-            if logging_config.get('level') not in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
+            log_level = config.get('log_level')
+            if log_level and log_level not in ['DEBUG', 'INFO', 'WARNING', 'ERROR']:
                 warnings.append("Invalid logging level - should be DEBUG, INFO, WARNING, or ERROR")
 
             return {
