@@ -13,6 +13,12 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from presentation.cli.cli_parser import CLIParser
+from presentation.cli.command_handler import CommandHandler
+from presentation.cli.banner_argument_parser import BannerArgumentParser
+
+
+
 
 
 class TestCLIParser(BaseUnitTest):
@@ -29,7 +35,7 @@ class TestCLIParser(BaseUnitTest):
     def test_cli_parser_initialization(self):
         """Test CLI parser initialization."""
         try:
-            from presentation.cli.cli_parser import CLIParser
+
 
             parser = CLIParser()
 
@@ -52,7 +58,7 @@ class TestCLIParser(BaseUnitTest):
     def test_parse_question_arguments(self):
         """Test parsing question arguments."""
         try:
-            from presentation.cli.cli_parser import CLIParser
+
 
             parser = CLIParser()
 
@@ -82,7 +88,10 @@ class TestCLIParser(BaseUnitTest):
 
                 except SystemExit:
                     # argparse might call sys.exit on help or error
-                    self.add_result("parse_question_system_exit", True, "Parser handled arguments (may have shown help)")
+                    self.add_result(
+                        "parse_question_system_exit", True,
+                        "Parser handled arguments (may have shown help)"
+                    )
 
         except Exception as e:
             self.add_result("parse_question_error", False, f"Question argument parsing failed: {e}")
@@ -90,7 +99,7 @@ class TestCLIParser(BaseUnitTest):
     def test_parse_pattern_arguments(self):
         """Test parsing pattern arguments."""
         try:
-            from presentation.cli.cli_parser import CLIParser
+
 
             parser = CLIParser()
 
@@ -128,7 +137,7 @@ class TestCLIParser(BaseUnitTest):
     def test_invalid_arguments(self):
         """Test handling of invalid arguments."""
         try:
-            from presentation.cli.cli_parser import CLIParser
+
 
             parser = CLIParser()
 
@@ -163,7 +172,7 @@ class TestCommandHandler(BaseUnitTest):
     def test_command_handler_initialization(self):
         """Test command handler initialization."""
         try:
-            from presentation.cli.command_handler import CommandHandler
+
 
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
@@ -195,7 +204,7 @@ class TestCommandHandler(BaseUnitTest):
     def test_handle_pattern_commands(self):
         """Test handling pattern commands."""
         try:
-            from presentation.cli.command_handler import CommandHandler
+
 
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
@@ -252,7 +261,7 @@ class TestCommandHandler(BaseUnitTest):
     def test_handle_chat_commands(self):
         """Test handling chat commands."""
         try:
-            from presentation.cli.command_handler import CommandHandler
+
 
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
@@ -300,7 +309,7 @@ class TestBannerArgumentParser(BaseUnitTest):
     def test_banner_parser_initialization(self):
         """Test banner argument parser initialization."""
         try:
-            from presentation.cli.banner_argument_parser import BannerArgumentParser
+
 
             parser = BannerArgumentParser()
 
@@ -316,7 +325,7 @@ class TestBannerArgumentParser(BaseUnitTest):
     def test_banner_display(self):
         """Test banner display functionality."""
         try:
-            from presentation.cli.banner_argument_parser import BannerArgumentParser
+
 
             parser = BannerArgumentParser()
 

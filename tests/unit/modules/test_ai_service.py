@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.ai.ai_service import AIService
 
 
 class TestAIService(BaseUnitTest):
@@ -46,8 +47,6 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-
-                from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
@@ -87,8 +86,6 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-
-                from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
@@ -161,8 +158,6 @@ class TestAIService(BaseUnitTest):
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
 
-                from modules.ai.ai_service import AIService
-
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)
 
@@ -218,8 +213,6 @@ class TestAIService(BaseUnitTest):
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
-
-                from modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)

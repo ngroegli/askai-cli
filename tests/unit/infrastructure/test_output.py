@@ -13,6 +13,9 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from infrastructure.output.output_coordinator import OutputCoordinator
+from infrastructure.output.processors.content_extractor import ContentExtractor
+from infrastructure.output.file_writers.file_writer_chain import FileWriterChain
 
 
 class TestOutputCoordinator(BaseUnitTest):
@@ -28,8 +31,6 @@ class TestOutputCoordinator(BaseUnitTest):
     def test_output_coordinator_initialization(self):
         """Test output coordinator initialization."""
         try:
-            from infrastructure.output.output_coordinator import OutputCoordinator
-
             coordinator = OutputCoordinator()
 
             self.assert_not_none(
@@ -51,8 +52,6 @@ class TestOutputCoordinator(BaseUnitTest):
     def test_process_output_success(self):
         """Test successful output processing."""
         try:
-            from infrastructure.output.output_coordinator import OutputCoordinator
-
             coordinator = OutputCoordinator()
 
             # Mock response data
@@ -100,8 +99,6 @@ class TestOutputCoordinator(BaseUnitTest):
     def test_process_output_formats(self):
         """Test different output formats."""
         try:
-            from infrastructure.output.output_coordinator import OutputCoordinator
-
             coordinator = OutputCoordinator()
 
             mock_response = {
@@ -150,8 +147,6 @@ class TestContentExtractor(BaseUnitTest):
     def test_content_extractor_initialization(self):
         """Test content extractor initialization."""
         try:
-            from infrastructure.output.processors.content_extractor import ContentExtractor
-
             extractor = ContentExtractor()
 
             self.assert_not_none(
@@ -166,8 +161,6 @@ class TestContentExtractor(BaseUnitTest):
     def test_extract_json_content(self):
         """Test extracting valid JSON content."""
         try:
-            from infrastructure.output.processors.content_extractor import ContentExtractor
-
             extractor = ContentExtractor()
 
             # Test with valid JSON response
@@ -194,8 +187,6 @@ class TestContentExtractor(BaseUnitTest):
     def test_extract_malformed_json(self):
         """Test handling of malformed JSON content."""
         try:
-            from infrastructure.output.processors.content_extractor import ContentExtractor
-
             extractor = ContentExtractor()
 
             # Test with malformed JSON
@@ -242,8 +233,6 @@ class TestFileWriterChain(BaseUnitTest):
     def test_file_writer_chain_initialization(self):
         """Test file writer chain initialization."""
         try:
-            from infrastructure.output.file_writers.file_writer_chain import FileWriterChain
-
             writer_chain = FileWriterChain()
 
             self.assert_not_none(
@@ -258,8 +247,6 @@ class TestFileWriterChain(BaseUnitTest):
     def test_write_text_file(self):
         """Test writing text files."""
         try:
-            from infrastructure.output.file_writers.file_writer_chain import FileWriterChain
-
             writer_chain = FileWriterChain()
 
             # Mock file writing
@@ -292,8 +279,6 @@ class TestFileWriterChain(BaseUnitTest):
     def test_write_json_file(self):
         """Test writing JSON files."""
         try:
-            from infrastructure.output.file_writers.file_writer_chain import FileWriterChain
-
             writer_chain = FileWriterChain()
 
             # Mock file writing

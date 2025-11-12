@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.chat.chat_manager import ChatManager
 
 
 class TestChatManager(BaseUnitTest):
@@ -33,8 +34,6 @@ class TestChatManager(BaseUnitTest):
     def test_chat_manager_initialization(self):
         """Test ChatManager initialization with various configurations."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             # Test with default config
             config = {"chat": {"storage_path": "~/.askai/chats", "max_history": 10}}
             mock_logger = Mock()
@@ -71,8 +70,6 @@ class TestChatManager(BaseUnitTest):
     def test_chat_persistence_and_loading(self):
         """Test chat save/load operations with realistic data."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             # Create temporary directory for testing
             with tempfile.TemporaryDirectory() as temp_dir:
                 config = {"chat": {"storage_path": temp_dir, "max_history": 10}}
@@ -83,8 +80,16 @@ class TestChatManager(BaseUnitTest):
                 test_chat_data = {
                     "id": "test-chat-123",
                     "messages": [
-                        {"role": "user", "content": "Hello, how are you?", "timestamp": "2025-01-01T10:00:00"},
-                        {"role": "assistant", "content": "I'm doing well, thank you!", "timestamp": "2025-01-01T10:00:01"}
+                        {
+                            "role": "user",
+                            "content": "Hello, how are you?",
+                            "timestamp": "2025-01-01T10:00:00"
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "I'm doing well, thank you!",
+                            "timestamp": "2025-01-01T10:00:01"
+                        }
                     ],
                     "created_at": "2025-01-01T10:00:00",
                     "updated_at": "2025-01-01T10:00:01"
@@ -158,8 +163,6 @@ class TestChatManager(BaseUnitTest):
     def test_context_building_logic(self):
         """Test chat context building and message assembly."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             config = {"chat": {"storage_path": "/tmp/test", "max_history": 3}}
             mock_logger = Mock()
             chat_manager = ChatManager(config, mock_logger)
@@ -218,8 +221,6 @@ class TestChatManager(BaseUnitTest):
     def test_chat_repair_functionality(self):
         """Test chat repair and recovery functionality."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             config = {"chat": {"storage_path": "/tmp/test", "max_history": 10}}
             mock_logger = Mock()
             chat_manager = ChatManager(config, mock_logger)
@@ -270,8 +271,6 @@ class TestChatManager(BaseUnitTest):
     def test_chat_limits_and_cleanup(self):
         """Test chat history limits and cleanup operations."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             config = {"chat": {"storage_path": "/tmp/test", "max_history": 3}}
             mock_logger = Mock()
             chat_manager = ChatManager(config, mock_logger)
@@ -280,8 +279,16 @@ class TestChatManager(BaseUnitTest):
             large_message_list = []
             for i in range(10):  # More than max_history
                 large_message_list.extend([
-                    {"role": "user", "content": f"User message {i}", "timestamp": f"2025-01-01T10:{i:02d}:00"},
-                    {"role": "assistant", "content": f"Assistant response {i}", "timestamp": f"2025-01-01T10:{i:02d}:01"}
+                    {
+                        "role": "user",
+                        "content": f"User message {i}",
+                        "timestamp": f"2025-01-01T10:{i:02d}:00"
+                    },
+                    {
+                        "role": "assistant",
+                        "content": f"Assistant response {i}",
+                        "timestamp": f"2025-01-01T10:{i:02d}:01"
+                    }
                 ])
 
             # Test message trimming logic (using available methods since trim_messages doesn't exist)
@@ -328,8 +335,6 @@ class TestChatManager(BaseUnitTest):
     def test_error_handling(self):
         """Test ChatManager error handling and edge cases."""
         try:
-            from modules.chat.chat_manager import ChatManager
-
             config = {"chat": {"storage_path": "/invalid/path", "max_history": 10}}
             mock_logger = Mock()
 

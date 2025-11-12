@@ -1,7 +1,9 @@
 """
 Unit tests for infrastructure file operations - comprehensive coverage with mocking.
 """
+import json
 import os
+import re
 import sys
 from unittest.mock import patch, mock_open
 
@@ -59,8 +61,6 @@ class TestFileWriters(BaseUnitTest):
     def test_json_file_writer(self):
         """Test JSON file writing with mocked filesystem."""
         try:
-            import json
-
             mock_file = mock_open()
 
             with patch('builtins.open', mock_file):
@@ -173,8 +173,6 @@ class TestContentProcessors(BaseUnitTest):
     def test_json_content_extraction(self):
         """Test JSON content extraction from responses."""
         try:
-            import json
-
             # Test valid JSON extraction
             response_with_json = """Here's the JSON data you requested:
 
@@ -189,7 +187,6 @@ class TestContentProcessors(BaseUnitTest):
 This is the extracted data."""
 
             # Simulate JSON extraction logic
-            import re
             json_pattern = r'```json\s*(.*?)\s*```'
             json_matches = re.findall(json_pattern, response_with_json, re.DOTALL)
 
@@ -240,7 +237,6 @@ function greet(name) {
 """
 
             # Simulate code block extraction
-            import re
             code_pattern = r'```(\w+)?\s*(.*?)\s*```'
             code_blocks = re.findall(code_pattern, response_with_code, re.DOTALL)
 
@@ -291,8 +287,6 @@ print("Hello, World!")
 """
 
             # Test markdown structure detection
-            import re
-
             # Headers
             headers = re.findall(r'^#+\s+(.+)', markdown_content, re.MULTILINE)
             self.assert_true(
@@ -379,7 +373,10 @@ class TestOutputCoordinatorAdvanced(BaseUnitTest):
         try:
             # Mock response data
             mock_response = {
-                "content": "# Test Response\n\nThis is a test response with JSON:\n\n```json\n{\"key\": \"value\"}\n```",
+                "content": (
+                    "# Test Response\n\nThis is a test response with JSON:\n\n"
+                    "```json\n{\"key\": \"value\"}\n```"
+                ),
                 "model": "test-model",
                 "usage": {"tokens": 100}
             }

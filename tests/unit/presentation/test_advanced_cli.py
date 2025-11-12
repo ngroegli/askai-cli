@@ -2,6 +2,7 @@
 Unit tests for presentation layer - comprehensive coverage with mocking.
 """
 import os
+import re
 import sys
 from unittest.mock import Mock, patch
 
@@ -163,8 +164,6 @@ class TestCLIArgumentValidation(BaseUnitTest):
     def test_url_argument_validation(self):
         """Test URL argument validation."""
         try:
-            import re
-
             # URL validation regex (simplified)
             url_pattern = re.compile(
                 r'^https?://'  # http:// or https://

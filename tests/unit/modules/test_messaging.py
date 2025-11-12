@@ -13,6 +13,10 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from modules.messaging.builder import MessageBuilder
+from modules.patterns.pattern_manager import PatternManager
+
+
 
 
 class TestMessageBuilder(BaseUnitTest):
@@ -33,8 +37,6 @@ class TestMessageBuilder(BaseUnitTest):
             # Mock all dependencies
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
-
-            from modules.messaging.builder import MessageBuilder
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
@@ -59,7 +61,7 @@ class TestMessageBuilder(BaseUnitTest):
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
 
-            from modules.messaging.builder import MessageBuilder
+
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
@@ -102,7 +104,7 @@ class TestMessageBuilder(BaseUnitTest):
             }
             mock_logger = Mock()
 
-            from modules.messaging.builder import MessageBuilder
+
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
@@ -151,7 +153,7 @@ class TestMessageBuilder(BaseUnitTest):
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
 
-            from modules.messaging.builder import MessageBuilder
+
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
@@ -188,7 +190,7 @@ class TestMessageBuilder(BaseUnitTest):
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
 
-            from modules.messaging.builder import MessageBuilder
+
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
@@ -245,7 +247,7 @@ class TestMessageBuilder(BaseUnitTest):
                 mock_logger_instance = Mock()
                 mock_logger.return_value = mock_logger_instance
 
-                from modules.messaging.builder import MessageBuilder
+
 
                 builder = MessageBuilder(mock_manager, mock_logger_instance)
 
@@ -298,7 +300,7 @@ class TestPatternManager(BaseUnitTest):
                  patch('os.listdir', return_value=['pattern1.md', 'pattern2.md']), \
                  patch('os.path.isdir', return_value=True):
 
-                from modules.patterns.pattern_manager import PatternManager
+
 
                 # Provide required base_path parameter with patterns directory
                 manager = PatternManager("/mock/patterns/path/patterns")
@@ -312,7 +314,7 @@ class TestPatternManager(BaseUnitTest):
         except ImportError:
             # If import fails, test the alternative import path
             try:
-                from modules.patterns import PatternManager
+
                 manager = PatternManager("/mock/patterns/path/patterns")
                 self.add_result("pattern_manager_alt_init", True, "Pattern manager accessible via alternative import")
             except Exception as e:
@@ -342,7 +344,7 @@ This is a test pattern for {topic}.
                  patch('os.path.isdir', return_value=True):
 
                 try:
-                    from modules.patterns.pattern_manager import PatternManager
+
                     manager = PatternManager("/mock/patterns/path/patterns")
 
                     # Test pattern loading method

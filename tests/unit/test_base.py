@@ -34,9 +34,9 @@ class TestResult:
         status = "PASS" if self.passed else "FAIL"
 
         # ANSI color codes
-        GREEN = "\033[92m"  # Bright green
-        RED = "\033[91m"    # Bright red
-        RESET = "\033[0m"   # Reset color
+        GREEN = "\033[92m"  # Bright green  # pylint: disable=invalid-name
+        RED = "\033[91m"    # Bright red    # pylint: disable=invalid-name
+        RESET = "\033[0m"   # Reset color   # pylint: disable=invalid-name
 
         # Color the status
         if self.passed:
@@ -232,9 +232,9 @@ class BaseUnitTest(ABC):
         failed = sum(1 for r in self.results if not r.passed)
 
         # ANSI color codes
-        GREEN = "\033[92m"  # Bright green
-        RED = "\033[91m"    # Bright red
-        RESET = "\033[0m"   # Reset color
+        GREEN = "\033[92m"  # Bright green  # pylint: disable=invalid-name
+        RED = "\033[91m"    # Bright red    # pylint: disable=invalid-name
+        RESET = "\033[0m"   # Reset color   # pylint: disable=invalid-name
 
         # Determine the color formatting based on test results
         if passed > 0 and failed == 0:

@@ -12,7 +12,10 @@ sys.path.insert(0, os.path.join(project_root, "python"))
 sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
+from argparse import Namespace
 from unit.test_base import BaseUnitTest
+from modules.questions.processor import QuestionProcessor
+
 
 
 class TestQuestionProcessor(BaseUnitTest):
@@ -36,9 +39,10 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'):
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 # Mock dependencies and patterns directory
                 mock_config = {
@@ -82,7 +86,8 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
                 # Configure the mocks to return the expected values
                 mock_pattern_manager = Mock()
@@ -110,7 +115,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_coordinator.process_output.return_value = ("Formatted response", [])
                 mock_coordinator_class.return_value = mock_coordinator
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 # Setup mocks with patterns directory support
                 mock_config = {"openrouter_api_key": "test-key", "model": "test-model"}
@@ -128,7 +133,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 test_question = "What is the capital of France?"
 
                 # Create mock args for the method
-                from argparse import Namespace
+
                 mock_args = Namespace(
                     question=test_question,
                     format="rawtext",
@@ -179,9 +184,10 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'):
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
@@ -228,13 +234,22 @@ class TestQuestionProcessor(BaseUnitTest):
                             "role": "user",
                             "content": [
                                 {"type": "text", "text": scenario["question"]},
-                                {"type": "file", "file": {"filename": "document.pdf", "file_data": "data:application/pdf;base64,..."}}
+                                {
+                                    "type": "file",
+                                    "file": {
+                                        "filename": "document.pdf",
+                                        "file_data": "data:application/pdf;base64,..."
+                                    }
+                                }
                             ]
                         }]
                     else:  # URL
                         mock_messages = [{
                             "role": "user",
-                            "content": f"Please analyze the content from this URL: {scenario['url']}\n\nQuestion: {scenario['question']}"
+                            "content": (
+                                f"Please analyze the content from this URL: {scenario['url']}\n\n"
+                                f"Question: {scenario['question']}"
+                            )
                         }]
 
                     mock_builder.build_messages.return_value = (mock_messages, None)
@@ -254,7 +269,7 @@ class TestQuestionProcessor(BaseUnitTest):
 
                         try:
                             # Create mock args namespace for process_question
-                            from argparse import Namespace
+
                             mock_args = Namespace(**kwargs)
                             processor.process_question(mock_args)
                             self.add_result(
@@ -293,9 +308,10 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'):
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
@@ -343,7 +359,7 @@ class TestQuestionProcessor(BaseUnitTest):
                     if hasattr(processor, 'process_question'):
                         try:
                             # Create mock args for process_question
-                            from argparse import Namespace
+
                             mock_args = Namespace(question=test_question, format=fmt)
                             processor.process_question(mock_args)
                             self.add_result(
@@ -377,9 +393,10 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder'), \
                  patch('modules.chat.ChatManager'), \
                  patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'):
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 mock_config = {"openrouter_api_key": "test-key"}
                 mock_logger = Mock()
@@ -457,7 +474,8 @@ class TestQuestionProcessor(BaseUnitTest):
                  patch('modules.messaging.MessageBuilder') as mock_builder_class, \
                  patch('modules.chat.ChatManager') as mock_chat_manager_class, \
                  patch('modules.ai.AIService') as mock_ai_service_class, \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
+                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
+                 patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
                 # Test complete flow with realistic data
                 test_question = "Explain the concept of recursion in programming"
@@ -493,7 +511,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 mock_coordinator.process_output.return_value = ("Formatted response about recursion...", ["output.txt"])
                 mock_coordinator_class.return_value = mock_coordinator
 
-                from modules.questions.processor import QuestionProcessor
+
 
                 mock_config = {
                     "openrouter_api_key": "test-key",
@@ -514,7 +532,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 if hasattr(processor, 'process_question'):
                     try:
                         # Create mock args for process_question
-                        from argparse import Namespace
+
                         mock_args = Namespace(
                             question=test_question,
                             format="rawtext",

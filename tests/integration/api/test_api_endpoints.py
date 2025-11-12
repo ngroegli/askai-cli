@@ -13,8 +13,17 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "python"))
 
+# pylint: disable=wrong-import-position
 from tests.integration.test_base import AutomatedTest
 from tests.integration.test_utils import TestResult
+
+# Try to import Flask app - will be None if not available
+try:
+    from presentation.api.app import create_app
+    HAS_FLASK_APP = True
+except ImportError:
+    create_app = None
+    HAS_FLASK_APP = False
 
 
 class APIEndpointsTest(AutomatedTest):
@@ -28,9 +37,13 @@ class APIEndpointsTest(AutomatedTest):
         """Run API endpoint tests."""
         self.results = []
 
-        try:
-            from presentation.api.app import create_app
+        if not HAS_FLASK_APP or create_app is None:
+            result = TestResult("api_import_error")
+            result.set_failed("Flask app could not be imported - skipping API tests")
+            self.results.append(result)
+            return self.results
 
+        try:
             # Create test app
             app = create_app({'TESTING': True})
 
@@ -182,9 +195,13 @@ class APIQuestionsTest(AutomatedTest):
         """Run API questions endpoint tests."""
         self.results = []
 
-        try:
-            from presentation.api.app import create_app
+        if not HAS_FLASK_APP or create_app is None:
+            result = TestResult("api_questions_import_error")
+            result.set_failed("Flask app could not be imported - skipping API questions tests")
+            self.results.append(result)
+            return self.results
 
+        try:
             # Create test app
             app = create_app({'TESTING': True})
 
@@ -316,9 +333,13 @@ class APIPatternsTest(AutomatedTest):
         """Run API patterns endpoint tests."""
         self.results = []
 
-        try:
-            from presentation.api.app import create_app
+        if not HAS_FLASK_APP or create_app is None:
+            result = TestResult("api_patterns_import_error")
+            result.set_failed("Flask app could not be imported - skipping API patterns tests")
+            self.results.append(result)
+            return self.results
 
+        try:
             # Create test app
             app = create_app({'TESTING': True})
 
