@@ -3,6 +3,7 @@ Flask application factory and main entry point for AskAI API.
 """
 import os
 import sys
+import json
 import logging
 from flask import Flask, redirect, jsonify
 from flask_restx import Api
@@ -13,8 +14,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "python"))
 
+# pylint: disable=wrong-import-position
 from shared.config.loader import load_config
 from shared.logging.setup import setup_logger
+from shared.logging import get_logger
 from .routes.questions import questions_ns
 from .routes.health import health_ns
 from .routes.patterns import patterns_ns
@@ -22,14 +25,15 @@ from .routes.openrouter import openrouter_ns
 from .routes.config import config_ns
 
 
-def get_logger():
-    """Get the CLI logger instance for the current Flask app.
+def get_application_logger():
+    """Get the application logger instance.
+
+    Returns the same logger used by CLI and other components.
 
     Returns:
-        logging.Logger: CLI logger if available, otherwise Flask app logger
+        logging.Logger: The application logger instance
     """
-    from flask import current_app
-    return current_app.config.get('CLI_LOGGER') or current_app.logger
+    return get_logger()
 
 
 def create_app(config=None):
@@ -57,24 +61,23 @@ def create_app(config=None):
     if config:
         app.config.update(config)
 
-    # Configure CLI logger for consistency with CLI application
+    # Configure shared logger for consistency with CLI application
     try:
         askai_config = load_config()
         if askai_config:
-            cli_logger = setup_logger(askai_config, debug=app.config.get('DEBUG', False))
-            # Store the CLI logger in app config for use in error handlers
-            app.config['CLI_LOGGER'] = cli_logger
+            # Initialize the shared application logger
+            setup_logger(askai_config, debug=app.config.get('DEBUG', False))
+            app.logger.info("Initialized shared application logger")
         else:
             # Fallback to basic Flask logging if config fails
             if not app.config['TESTING']:
                 logging.basicConfig(level=logging.INFO)
-            app.config['CLI_LOGGER'] = None
+            app.logger.warning("Failed to load config, using basic Flask logging")
     except Exception as e:
-        # Fallback to basic Flask logging if CLI logger setup fails
+        # Fallback to basic Flask logging if shared logger setup fails
         if not app.config['TESTING']:
             logging.basicConfig(level=logging.INFO)
-        app.logger.warning("Failed to setup CLI logger, using Flask logger: %s", e)
-        app.config['CLI_LOGGER'] = None
+        app.logger.warning("Failed to setup shared logger, using Flask logger: %s", e)
 
     # Initialize Flask-RESTX API with Swagger documentation
     api = Api(
@@ -134,9 +137,9 @@ def create_app(config=None):
     @app.errorhandler(404)
     def not_found(error):
         """Handle 404 errors with helpful information."""
-        # Use CLI logger if available, otherwise Flask logger
-        logger = app.config.get('CLI_LOGGER') or app.logger
-        logger.warning(f"404 Not Found: {error}")
+        # Use shared application logger with JSON formatting
+        logger = get_application_logger()
+        logger.warning(json.dumps({"log_message": "404 Not Found", "error": str(error)}))
         return jsonify({
             'error': 'Not Found',
             'message': 'The requested endpoint was not found.',
@@ -157,9 +160,9 @@ def create_app(config=None):
     @app.errorhandler(500)
     def internal_error(error):
         """Handle 500 errors."""
-        # Use CLI logger if available, otherwise Flask logger
-        logger = app.config.get('CLI_LOGGER') or app.logger
-        logger.error(f"Internal Server Error: {error}")
+        # Use shared application logger with JSON formatting
+        logger = get_application_logger()
+        logger.error(json.dumps({"log_message": "Internal Server Error", "error": str(error)}))
         return jsonify({
             'error': 'Internal Server Error',
             'message': 'An unexpected error occurred.',
