@@ -97,8 +97,9 @@ class BaseWriter(ABC):
         Returns:
             str: Cleaned content
         """
-        if not isinstance(content, str):
-            return str(content)
+        if content is None:
+            return ""
+        content = str(content)
 
         # Remove generic code block markers
         content = re.sub(r'^```\w*\s*', '', content)
@@ -132,9 +133,9 @@ class BaseWriter(ABC):
                 content = ""
                 self.logger.warning(f"Null content provided for {file_path}, using empty string")
 
-            if not isinstance(content, str):
-                content = str(content)
-                self.logger.warning("Non-string content converted for %s", file_path)
+            content = str(content)
+            if not content:
+                self.logger.warning("Empty content for %s", file_path)
 
             # Write the file
             with open(file_path, 'w', encoding='utf-8', errors='replace') as f:

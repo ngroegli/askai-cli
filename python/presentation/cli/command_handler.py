@@ -6,6 +6,8 @@ Handles all CLI commands like listing, viewing systems and chats.
 import json
 import os
 from modules.ai import OpenRouterClient
+from modules.questions.processor import QuestionProcessor
+from shared.config.loader import load_config
 from shared.utils import print_error_or_warnings
 from shared.config import (
     ASKAI_DIR, CONFIG_PATH, CHATS_DIR, LOGS_DIR, TEST_DIR,
@@ -13,20 +15,88 @@ from shared.config import (
     get_config_path, is_test_environment, create_test_config_from_production
 )
 
+# TUI imports only for interactive mode
+try:
+    from presentation.tui import is_tui_available
+    from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
+    TUI_IMPORTS_AVAILABLE = True
+except ImportError:
+    TUI_IMPORTS_AVAILABLE = False
+    def is_tui_available() -> bool:
+        """
+        Fallback function when TUI imports are not available.
+
+        Returns:
+            bool: Always False when TUI dependencies are missing
+        """
+        return False
+
 
 
 class CommandHandler:
     """Handles various CLI commands for patterns and chats."""
 
-    def __init__(self, pattern_manager, chat_manager, logger):
+    def __init__(self, pattern_manager, chat_manager, logger, question_processor=None):
         self.pattern_manager = pattern_manager
         self.chat_manager = chat_manager
         self.logger = logger
+        self.question_processor = question_processor
+
+    def handle_interactive_mode(self, args):
+        """
+        Handle full interactive TUI mode.
+
+        Args:
+            args: Parsed command line arguments
+
+        Returns:
+            bool: True if interactive mode was handled
+        """
+        if not getattr(args, 'interactive', False):
+            return False
+
+        if not TUI_IMPORTS_AVAILABLE or not is_tui_available():
+            print("Interactive TUI mode is not available. Falling back to CLI.")
+            return False
+
+        try:
+            self.logger.info(json.dumps({"log_message": "Launching interactive TUI mode"}))
+
+            # Ensure we have a question processor for the unified TUI
+            question_processor = self.question_processor
+            if question_processor is None:
+                # Create a question processor on-demand
+                config = load_config()
+                base_path = os.path.abspath('.')
+                question_processor = QuestionProcessor(config, self.logger, base_path)
+                self.logger.info(json.dumps({"log_message": "Created question processor for TUI mode"}))
+
+            # Launch the tabbed TUI interface
+            run_tabbed_tui(
+                pattern_manager=self.pattern_manager,
+                chat_manager=self.chat_manager,
+                question_processor=question_processor
+            )
+
+            print("Interactive session ended.")
+            return True
+
+        except Exception as e:
+            self.logger.error(json.dumps({
+                "log_message": f"Interactive TUI mode failed: {e}"
+            }))
+            print(f"Interactive mode failed: {e}")
+            return False
 
     def handle_pattern_commands(self, args):
-        """Handle pattern-related commands."""
+        """Handle pattern-related commands (CLI only, except for interactive mode)."""
+        if not args.list_patterns and args.view_pattern is None:
+            return False
+
         if args.list_patterns:
             self.logger.info(json.dumps({"log_message": "User requested to list all available pattern files"}))
+
+            # CLI listing only
             patterns = self.pattern_manager.list_patterns()
             if not patterns:
                 print("No pattern files found.")
@@ -63,7 +133,11 @@ class CommandHandler:
         return False
 
     def handle_chat_commands(self, args):
-        """Handle chat-related commands."""
+        """Handle chat-related commands (CLI only, except for interactive mode)."""
+        # Check if interactive TUI mode should be used
+        if self.handle_interactive_mode(args):
+            return True
+
         # Check for incompatible combinations
         using_pattern = args.use_pattern is not None
         using_pattern_commands = args.list_patterns or args.view_pattern is not None or using_pattern
@@ -78,6 +152,8 @@ class CommandHandler:
 
         if args.list_chats:
             self.logger.info(json.dumps({"log_message": "User requested to list all available chats"}))
+
+            # CLI listing only
             chats = self.chat_manager.list_chats()
 
             # Also check for corrupted files

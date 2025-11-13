@@ -1,0 +1,233 @@
+# TUI Architecture Diagram
+title: "AskAI TUI Architecture & Flow"
+
+# Main Application Layer
+unified_app: "UnifiedTUIApp" {
+  shape: rectangle
+  style.fill: "#E3F2FD"
+
+  main_menu: "Main Menu Screen" {
+    shape: rectangle
+    style.fill: "#90CAF9"
+
+    question_option: "Question Logic"
+    pattern_option: "Pattern Logic"
+    system_option: "System Management"
+  }
+
+  navigation: "Global Navigation" {
+    shape: rectangle
+    style.fill: "#90CAF9"
+
+    back_shortcut: "Ctrl+B: Back"
+    quit_shortcut: "Ctrl+Q: Quit"
+    help_shortcut: "F1: Help"
+  }
+}
+
+# Question Workflow
+question_flow: "Question Workflow" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+
+  builder: "QuestionBuilder Screen" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    text_input: "Text Input Area"
+    action_buttons: "Execute/Clear Buttons"
+    status_display: "Status Display"
+    file_attachment: "File Attachment"
+  }
+
+  processing: "AI Processing" {
+    shape: rectangle
+    style.fill: "#A5D6A7"
+
+    input_validation: "Input Validation"
+    context_assembly: "Context Assembly"
+    api_call: "AI API Call"
+    response_streaming: "Response Streaming"
+  }
+
+  response: "Response Viewer" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    formatted_display: "Formatted Display"
+    scrollable_content: "Scrollable Content"
+    navigation_actions: "Navigation Actions"
+    copy_save_options: "Copy/Save Options"
+  }
+}
+
+# Pattern Workflow
+pattern_flow: "Pattern Workflow" {
+  shape: rectangle
+  style.fill: "#F3E5F5"
+
+  browser: "PatternBrowser Screen" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    search_filter: "Search/Filter Bar"
+    pattern_list: "Pattern List Pane"
+    preview_pane: "Preview Pane"
+    action_buttons: "Action Buttons"
+  }
+
+  execution: "Pattern Execution" {
+    shape: rectangle
+    style.fill: "#A5D6A7"
+
+    template_loading: "Template Loading"
+    variable_substitution: "Variable Substitution"
+    prompt_generation: "Prompt Generation"
+    ai_processing: "AI Processing"
+  }
+
+  results: "Results Display" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    formatted_output: "Formatted Output"
+    export_options: "Export Options"
+    save_results: "Save Results"
+    share_capabilities: "Share Capabilities"
+  }
+}
+
+# System Management
+system_flow: "System Management" {
+  shape: rectangle
+  style.fill: "#FAFAFA"
+
+  dashboard: "System Dashboard" {
+    shape: rectangle
+    style.fill: "#BDBDBD"
+
+    config_editor: "Configuration Editor"
+    api_management: "API Key Management"
+    logs_viewer: "Logs Viewer"
+    health_monitor: "Health Monitor"
+  }
+
+  config: "Configuration" {
+    shape: rectangle
+    style.fill: "#A5D6A7"
+
+    tui_preferences: "TUI Preferences"
+    ai_model_settings: "AI Model Settings"
+    pattern_config: "Pattern Config"
+    system_settings: "System Settings"
+  }
+}
+
+# Shared Components Layer
+components: "Shared Components" {
+  shape: rectangle
+  style.fill: "#FFEBEE"
+
+  loading: "Loading Screen" {
+    shape: rectangle
+    style.fill: "#EF9A9A"
+
+    progress_indicators: "Progress Indicators"
+    status_messages: "Status Messages"
+    cancellation_support: "Cancellation Support"
+    loading_animation: "Loading Animation"
+  }
+
+  widgets: "Custom Widgets" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    enhanced_input: "Enhanced Input"
+    syntax_display: "Syntax Highlighting"
+    file_browser: "File Browser"
+    search_components: "Search Components"
+  }
+
+  utils: "TUI Utils" {
+    shape: rectangle
+    style.fill: "#BDBDBD"
+
+    tui_detection: "TUI Detection"
+    graceful_fallback: "Graceful Fallback"
+    style_management: "Style Management"
+    config_helpers: "Config Helpers"
+  }
+}
+
+# External Dependencies
+external: "External Systems" {
+  shape: rectangle
+  style.fill: "#FFF3E0"
+
+  textual: "Textual Framework" {
+    shape: rectangle
+    style.fill: "#FFCC80"
+
+    app_class: "App Class"
+    screen_management: "Screen Management"
+    widget_library: "Widget Library"
+    event_system: "Event System"
+  }
+
+  ai_apis: "AI APIs" {
+    shape: rectangle
+    style.fill: "#FFCC80"
+
+    openrouter_api: "OpenRouter API"
+    ai_models: "AI Models"
+    response_streaming: "Response Streaming"
+    context_handling: "Context Handling"
+  }
+
+  cli: "CLI Fallback" {
+    shape: rectangle
+    style.fill: "#CE93D8"
+
+    cli_commands: "CLI Commands"
+    argument_parsing: "Argument Parsing"
+    logic_processors: "Logic Processors"
+    text_output: "Text Output"
+  }
+}
+
+# Workflow Connections
+unified_app.main_menu -> question_flow.builder: "1. Question Logic"
+unified_app.main_menu -> pattern_flow.browser: "2. Pattern Logic"
+unified_app.main_menu -> system_flow.dashboard: "3. System Mgmt"
+
+question_flow.builder -> question_flow.processing: "Execute"
+question_flow.processing -> question_flow.response: "Response"
+question_flow.response -> unified_app.main_menu: "Back/New"
+
+pattern_flow.browser -> pattern_flow.execution: "Select Pattern"
+pattern_flow.execution -> pattern_flow.results: "Generate"
+pattern_flow.results -> unified_app.main_menu: "Back/Browse"
+
+system_flow.dashboard -> system_flow.config: "Configure"
+system_flow.config -> system_flow.dashboard: "Save/Apply"
+
+# Global Navigation
+unified_app.navigation -> unified_app.main_menu: "Global Shortcuts"
+unified_app.navigation -> question_flow: "Global Navigation"
+unified_app.navigation -> pattern_flow: "Global Navigation"
+unified_app.navigation -> system_flow: "Global Navigation"
+
+# Component Usage
+components.loading -> question_flow.processing: "Progress UI"
+components.loading -> pattern_flow.execution: "Progress UI"
+components.widgets -> question_flow.builder: "UI Components"
+components.widgets -> pattern_flow.browser: "UI Components"
+components.widgets -> system_flow.dashboard: "UI Components"
+components.utils -> unified_app: "TUI Support"
+
+# External Dependencies
+external.textual -> unified_app: "Framework"
+external.textual -> components: "Widget Base"
+external.ai_apis -> question_flow.processing: "AI Calls"
+external.ai_apis -> pattern_flow.execution: "AI Calls"
+external.cli -> unified_app: "Fallback Mode"

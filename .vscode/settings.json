@@ -1,12 +1,13 @@
 {
-    "python.analysis.extraPaths": [".", "./python"],
+    "python.analysis.extraPaths": [".", "./python", "./tests"],
     "python.linting.pylintPath": "${workspaceFolder}/venv/bin/pylint",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.linting.pylintArgs": ["--rcfile=${workspaceFolder}/.pylintrc"],
-    "python.languageServer": "Pylance",
+    "python.languageServer": "Default",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticMode": "workspace",
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python3.12",
     "editor.formatOnSave": true,
     "editor.rulers": [120],
     "editor.codeActionsOnSave": {

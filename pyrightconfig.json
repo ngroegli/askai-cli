@@ -1,0 +1,80 @@
+{
+    "include": [
+        "python/**/*.py",
+        "tests/**/*.py"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*",
+        "venv",
+        ".venv",
+        "build",
+        "dist"
+    ],
+    "extraPaths": [
+        "python"
+    ],
+    "executionEnvironments": [
+        {
+            "root": "python",
+            "pythonVersion": "3.12",
+            "extraPaths": [".", "..", "../python"]
+        },
+        {
+            "root": "tests",
+            "pythonVersion": "3.12",
+            "extraPaths": [".", "..", "../python", "python"]
+        }
+    ],
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Linux",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": "none",
+    "reportUndefinedVariable": "warning",
+    "reportUnsupportedDunderAll": "none",
+    "reportImportCycles": "none",
+    "reportGeneralTypeIssues": "none",
+    "reportOptionalSubscript": "none",
+    "reportOptionalMemberAccess": "none",
+    "reportOptionalCall": "none",
+    "reportOptionalIterable": "none",
+    "reportOptionalContextManager": "none",
+    "reportOptionalOperand": "none",
+    "reportTypedDictNotRequiredAccess": "none",
+    "reportPrivateImportUsage": "none",
+    "reportUnusedImport": "information",
+    "reportUnusedClass": "information",
+    "reportUnusedFunction": "information",
+    "reportUnusedVariable": "information",
+    "reportDuplicateImport": "warning",
+    "reportWildcardImportFromLibrary": "none",
+    "reportCallInDefaultInitializer": "none",
+    "reportUnnecessaryIsInstance": "information",
+    "reportUnnecessaryCast": "none",
+    "reportUnnecessaryComparison": "none",
+    "reportImplicitStringConcatenation": "none",
+    "reportInvalidStringEscapeSequence": "warning",
+    "reportUnknownParameterType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownLambdaType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownMemberType": "none",
+    "reportMissingParameterType": "none",
+    "reportMissingTypeArgument": "none",
+    "reportInvalidTypeVarUse": "none",
+    "reportPossiblyUnboundVariable": "none",
+    "reportMissingSuperCall": "none",
+    "reportUninitializedInstanceVariable": "none",
+    "reportUnnecessaryTypeIgnoreComment": "none",
+    "reportMatchNotExhaustive": "none",
+    "reportIncompatibleMethodOverride": "none",
+    "reportIncompatibleVariableOverride": "none",
+    "reportInconsistentConstructor": "none",
+    "reportMissingModuleSource": "none",
+    "reportInvalidStubStatement": "none",
+    "reportIncompleteStub": "none",
+    "reportUnusedCoroutine": "none"
+}

@@ -46,12 +46,12 @@ class ModelConfiguration:
 
     def __post_init__(self):
         """Convert provider to ModelProvider enum if it's a string."""
-        if isinstance(self.provider, str):
-            provider_str = self.provider.lower()
-        elif isinstance(self.provider, ModelProvider):
-            # Use the value property of the enum which is a string
-            provider_str = self.provider.value.lower()
+        # Handle the provider conversion safely
+        if hasattr(self.provider, 'value'):
+            # Already a ModelProvider enum
+            provider_str = self.provider.value.lower()  # type: ignore
         else:
+            # Convert to string first
             provider_str = str(self.provider).lower()
         try:
             self.provider = ModelProvider(provider_str)

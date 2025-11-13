@@ -275,8 +275,9 @@ class PatternOutput:
         Returns:
             bool: True if the text appears to be a Linux command
         """
-        if not isinstance(text, str) or not text.strip():
+        if not text or not str(text).strip():
             return False
+        text = str(text)
 
         # For simple detection, check if the first word is a common command
         command_first_word = text.strip().split()[0] if text.strip() else ""
@@ -298,9 +299,10 @@ class PatternOutput:
             bool: True if the command was executed successfully
         """
         # Input validation
-        if not isinstance(command, str) or not command.strip():
+        if not command or not str(command).strip():
             print("\n❌ Error: Empty or invalid command")
             return False
+        command = str(command)
 
         # Clean up command - remove any markdown formatting
         cleaned_command = PatternOutput._clean_command(command)

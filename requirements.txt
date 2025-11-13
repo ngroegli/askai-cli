@@ -2,6 +2,7 @@ requests
 PyYAML
 tqdm
 rich
+textual>=0.40.0
 termcolor
 jsonschema
 setuptools

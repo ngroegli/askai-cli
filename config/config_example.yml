@@ -27,3 +27,14 @@ web_search:
 chat:
   storage_path: "~/.askai/chats" # Where to store chat history files
   max_history: 10 # Number of past conversations to include as context
+
+# User interface configuration
+interface:
+  default_mode: "cli" # "cli" or "tui" - default interface mode
+  tui_features:
+    enabled: true # Enable TUI functionality (requires textual package)
+    auto_fallback: true # Automatically fall back to CLI if TUI fails
+    theme: "dark" # TUI theme: "dark", "light", or "auto"
+    animations: true # Enable TUI animations and transitions
+    preview_pane: true # Show preview pane in browsers
+    search_highlight: true # Highlight search terms in lists

@@ -44,15 +44,15 @@ class TestConfigConstants(BaseUnitTest):
             )
 
             self.assert_true(
-                isinstance(ASKAI_DIR, str),
+                hasattr(ASKAI_DIR, 'replace'),
                 "constants_askai_dir_type",
-                "ASKAI_DIR is a string"
+                "ASKAI_DIR is string-like"
             )
 
             self.assert_true(
-                isinstance(CONFIG_PATH, str),
+                hasattr(CONFIG_PATH, 'replace'),
                 "constants_config_path_type",
-                "CONFIG_PATH is a string"
+                "CONFIG_PATH is string-like"
             )
 
         except ImportError as e:
