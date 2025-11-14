@@ -337,7 +337,7 @@ Basic prompt without proper structure.
 
                         if processed_inputs:
                             self.assert_true(
-                                isinstance(processed_inputs, dict),
+                                isinstance(processed_inputs, dict),  # type: ignore[reportUnnecessaryIsInstance]
                                 "pattern_input_format",
                                 "Processed inputs are in correct format"
                             )
@@ -353,7 +353,7 @@ Basic prompt without proper structure.
                     # Test basic input validation logic
                     for key, value in test_input_values.items():
                         self.assert_true(
-                            isinstance(key, str) and isinstance(value, str),
+                            (isinstance(key, str) and isinstance(value, str)),  # type: ignore
                             f"input_validation_{key}",
                             f"Input {key} has valid format"
                         )
@@ -416,7 +416,7 @@ Basic prompt without proper structure.
 
                     if patterns_list:
                         self.assert_true(
-                            isinstance(patterns_list, list),
+                            isinstance(patterns_list, list),  # type: ignore[reportUnnecessaryIsInstance]
                             "pattern_listing_format",
                             "Pattern listing returns list"
                         )
@@ -429,7 +429,7 @@ Basic prompt without proper structure.
 
                         # Validate pattern list structure
                         for pattern in patterns_list:
-                            if isinstance(pattern, dict):
+                            if isinstance(pattern, dict):  # type: ignore[reportUnnecessaryIsInstance]
                                 required_fields = ['pattern_id']
                                 for field in required_fields:
                                     self.assert_in(

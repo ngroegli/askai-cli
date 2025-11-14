@@ -188,7 +188,7 @@ class TestChatManager(BaseUnitTest):
                         "Context building returns result"
                     )
 
-                    if isinstance(context, list):
+                    if isinstance(context, list):  # type: ignore[reportUnnecessaryIsInstance]
                         self.assert_true(
                             len(context) <= chat_manager.max_history * 2,  # user + assistant pairs
                             "context_building_limits",
@@ -239,7 +239,7 @@ class TestChatManager(BaseUnitTest):
                 repair_success = chat_manager.repair_chat_file("malformed_chat_id")
 
                 self.assert_true(
-                    isinstance(repair_success, bool),
+                    isinstance(repair_success, bool),  # type: ignore[reportUnnecessaryIsInstance]
                     "chat_repair_success",
                     "Chat repair operation completed"
                 )

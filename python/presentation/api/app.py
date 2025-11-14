@@ -100,12 +100,12 @@ def create_app(config=None):
 
     # Add custom root endpoints as regular Flask routes
     @app.route('/', endpoint='api_root')
-    def api_root():
+    def api_root():  # type: ignore[reportUnusedFunction]
         """Root endpoint - redirect to documentation."""
         return redirect('/docs/', code=302)
 
     @app.route('/api', endpoint='api_info_endpoint')
-    def api_info():
+    def api_info():  # type: ignore[reportUnusedFunction]
         """API information endpoint."""
         return jsonify({
             'name': 'AskAI API',
@@ -129,13 +129,13 @@ def create_app(config=None):
     # Note: /api/v1 is handled by Flask-RESTX automatically
 
     @app.route('/favicon.ico', endpoint='favicon_endpoint')
-    def favicon():
+    def favicon():  # type: ignore[reportUnusedFunction]
         """Simple favicon handler to prevent 404s."""
         return '', 204
 
     # Error handlers
     @app.errorhandler(404)
-    def not_found(error):
+    def not_found(error):  # type: ignore[reportUnusedFunction]
         """Handle 404 errors with helpful information."""
         # Use shared application logger with JSON formatting
         logger = get_application_logger()
@@ -158,7 +158,7 @@ def create_app(config=None):
         }), 404
 
     @app.errorhandler(500)
-    def internal_error(error):
+    def internal_error(error):  # type: ignore[reportUnusedFunction]
         """Handle 500 errors."""
         # Use shared application logger with JSON formatting
         logger = get_application_logger()

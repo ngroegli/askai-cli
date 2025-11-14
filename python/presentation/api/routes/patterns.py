@@ -584,7 +584,7 @@ class PatternExecution(Resource):
         logger.info("Successfully executed pattern '%s'", pattern_id)
 
         # Process response
-        if isinstance(ai_response, dict):
+        if isinstance(ai_response, dict):  # type: ignore[reportUnnecessaryIsInstance]
             formatted_output = ai_response.get('content', str(ai_response))
         else:
             formatted_output = str(ai_response)
@@ -628,7 +628,10 @@ class PatternFileExecution(Resource):
             # Ensure this is multipart data
             if not request.content_type or not request.content_type.startswith('multipart/form-data'):
                 return {
-                    'error': 'This endpoint requires multipart/form-data. Use /patterns/execute for JSON-only patterns.',
+                    'error': (
+                        'This endpoint requires multipart/form-data. '
+                        'Use /patterns/execute for JSON-only patterns.'
+                    ),
                     'success': False
                 }, 400
 
@@ -777,9 +780,9 @@ class PatternFileExecution(Resource):
             formatted_output = str(ai_response)
             created_files = []
 
-            if isinstance(ai_response, dict):
+            if isinstance(ai_response, dict):  # type: ignore[reportUnnecessaryIsInstance]
                 formatted_output = ai_response.get('content', str(ai_response))
-            elif isinstance(ai_response, str):
+            elif isinstance(ai_response, str):  # type: ignore[reportUnnecessaryIsInstance]
                 formatted_output = ai_response
             else:
                 formatted_output = str(ai_response)

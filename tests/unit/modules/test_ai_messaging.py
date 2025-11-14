@@ -19,6 +19,7 @@ sys.modules['shared.config.loader'] = MagicMock()
 from unit.test_base import BaseUnitTest
 from modules.ai.ai_service import AIService
 from modules.messaging.builder import MessageBuilder
+from modules.patterns.pattern_inputs import PatternInput, InputType
 
 # Mock the config system before any imports
 sys.modules['shared.config'] = MagicMock()
@@ -297,8 +298,6 @@ class TestMessageBuilder(BaseUnitTest):
             mock_logger = Mock()
 
             # Mock pattern data with proper input structure
-            from modules.patterns.pattern_inputs import PatternInput, InputType
-
             mock_input = PatternInput(
                 name='input',
                 description='Test Input',
@@ -313,7 +312,8 @@ class TestMessageBuilder(BaseUnitTest):
             }
 
             mock_pattern_manager.get_pattern_content.return_value = mock_pattern_data
-            mock_pattern_manager.process_pattern_inputs.return_value = {'input': 'test value'}  # Return the actual inputs
+            # Return the actual inputs
+            mock_pattern_manager.process_pattern_inputs.return_value = {'input': 'test value'}
 
             message_builder = MessageBuilder(mock_pattern_manager, mock_logger)
 

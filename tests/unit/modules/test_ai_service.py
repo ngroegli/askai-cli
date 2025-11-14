@@ -123,7 +123,11 @@ class TestAIService(BaseUnitTest):
                         )
 
                         # Also check the actual response structure for debugging
-                        actual_content = response.get('content', '') if isinstance(response, dict) else str(response)
+                        # Also check the actual response structure for debugging
+                        actual_content = (
+                            response.get('content', '') if isinstance(response, dict)  # type: ignore
+                            else str(response)
+                        )
 
                         self.assert_equal(
                             'Test AI response',

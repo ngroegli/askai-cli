@@ -244,7 +244,7 @@ class TestCommandHandler(BaseUnitTest):
 
             # Should return True if command was handled
             self.assert_true(
-                isinstance(result, bool),
+                isinstance(result, bool),  # type: ignore[reportUnnecessaryIsInstance]
                 "handle_pattern_commands_bool",
                 "Pattern command handler returns boolean"
             )
@@ -282,7 +282,7 @@ class TestCommandHandler(BaseUnitTest):
 
             # Should return True if command was handled
             self.assert_true(
-                isinstance(result, bool),
+                isinstance(result, bool),  # type: ignore[reportUnnecessaryIsInstance]
                 "handle_chat_commands_bool",
                 "Chat command handler returns boolean"
             )

@@ -42,13 +42,13 @@ class TestConfigConstants(BaseUnitTest):
             )
 
             self.assert_true(
-                isinstance(ASKAI_DIR, str),
+                isinstance(ASKAI_DIR, str),  # type: ignore[reportUnnecessaryIsInstance]
                 "constants_askai_dir_type",
                 "ASKAI_DIR is a string"
             )
 
             self.assert_true(
-                isinstance(CONFIG_PATH, str),
+                isinstance(CONFIG_PATH, str),  # type: ignore[reportUnnecessaryIsInstance]
                 "constants_config_path_type",
                 "CONFIG_PATH is a string"
             )
