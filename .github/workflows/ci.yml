@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           # Make sure there are Python files to analyze
-          PYTHON_FILES=$(find ./python -name "*.py" | xargs)
+          PYTHON_FILES=$(find ./src -name "*.py" | xargs)
           if [ -z "$PYTHON_FILES" ]; then
             echo "No Python files found to analyze! Check the paths and file structure."
             echo "passed=true" >> $GITHUB_OUTPUT
@@ -45,7 +45,7 @@ jobs:
 
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
+          PYTHONPATH=src pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
           PYLINT_EXIT_CODE=$?
           echo "::endgroup::"
 
@@ -57,7 +57,7 @@ jobs:
 
           # Check for critical errors (error category) - fail if any are found
           echo "::group::Checking for Critical Errors"
-          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CRITICAL_ERRORS=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           # Check if there are actual errors (not just a perfect score message)
           if echo "$CRITICAL_ERRORS" | grep -E '\[[A-Z][0-9]+.*\(.*\), error\]' > /dev/null; then
@@ -79,7 +79,7 @@ jobs:
 
           # Check for warnings - report but don't fail
           echo "::group::Checking for Warnings"
-          WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          WARNINGS=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if echo "$WARNINGS" | grep -E '\[[A-Z][0-9]+.*\(.*\), warning\]' > /dev/null; then
             echo "⚠️ Warnings found (non-blocking):"
@@ -120,7 +120,7 @@ jobs:
       - name: Set up Python environment
         run: |
           # Configure Python path for the project structure
-          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests" >> $GITHUB_ENV
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:$GITHUB_WORKSPACE/tests" >> $GITHUB_ENV
 
       - name: Debug environment
         run: |
@@ -132,8 +132,8 @@ jobs:
           python -c "import sys; print('\n'.join(sys.path))"
           echo "Files in tests directory:"
           ls -la tests/
-          echo "Files in python directory:"
-          ls -la python/
+          echo "Files in src directory:"
+          ls -la src/
 
       - name: Run Unit Tests
         id: run-tests
@@ -147,7 +147,7 @@ jobs:
           cd $GITHUB_WORKSPACE
 
           # Set up Python path explicitly for the test run
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/python:$GITHUB_WORKSPACE/tests"
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:$GITHUB_WORKSPACE/tests"
 
           echo "::group::Running Unit Tests"
           echo "About to run: python tests/run_unit_tests.py"

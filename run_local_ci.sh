@@ -35,7 +35,7 @@ print_error() {
 }
 
 # Check if we're in the right directory
-if [ ! -f "pyproject.toml" ] || [ ! -d "python" ]; then
+if [ ! -f "pyproject.toml" ] || [ ! -d "src" ]; then
     print_error "Please run this script from the askai-cli project root directory"
     exit 1
 fi
@@ -50,22 +50,22 @@ else
 fi
 
 # Set up Python path
-export PYTHONPATH=".:$(pwd):$(pwd)/python:$(pwd)/tests"
+export PYTHONPATH=".:$(pwd):$(pwd)/src:$(pwd)/tests"
 
 echo ""
 print_status "Step 1/2: Running Pylint Analysis..."
 echo "======================================"
 
 # Check if Python files exist
-PYTHON_FILES=$(find ./python -name "*.py" 2>/dev/null || echo "")
+PYTHON_FILES=$(find ./src -name "*.py" 2>/dev/null || echo "")
 if [ -z "$PYTHON_FILES" ]; then
-    print_error "No Python files found in ./python directory!"
+    print_error "No Python files found in ./src directory!"
     exit 1
 fi
 
 # Run Pylint with the same configuration as CI
 print_status "Analyzing Python files with Pylint..."
-PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES 2>&1 || true
+PYTHONPATH=src pylint --rcfile=.pylintrc $PYTHON_FILES 2>&1 || true
 
 PYLINT_EXIT_CODE=$?
 

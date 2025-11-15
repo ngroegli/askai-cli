@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # pylint: disable=wrong-import-position
 # Now we can import project modules
 from tests.integration.test_base import BaseIntegrationTest, AutomatedTest, SemiAutomatedTest
-from python.shared.config.loader import (
+from askai.shared.config.loader import (
     ASKAI_DIR, CONFIG_PATH, TEST_DIR, TEST_CONFIG_PATH,
     create_directory_structure, create_test_config_from_production
 )

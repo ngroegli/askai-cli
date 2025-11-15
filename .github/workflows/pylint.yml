@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           # Make sure there are Python files to analyze
-          PYTHON_FILES=$(find ./python -name "*.py" | xargs)
+          PYTHON_FILES=$(find ./src -name "*.py" | xargs)
           if [ -z "$PYTHON_FILES" ]; then
             echo "No Python files found to analyze! Check the paths and file structure."
             exit 0
@@ -47,7 +47,7 @@ jobs:
           echo "::group::Full Pylint Output"
           # Run pylint using the project's configuration file with full output
           # Store the exit code to use it later
-          PYTHONPATH=python pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
+          PYTHONPATH=src pylint --rcfile=.pylintrc $PYTHON_FILES || echo "Pylint check found issues"
           PYLINT_EXIT_CODE=$?
 
           # Interpret the exit code - only 0, 1, and 2 are meaningful for workflow success/failure
@@ -88,7 +88,7 @@ jobs:
           # 1. Check for critical errors (error category) - fail if any are found
           echo "::group::CRITICAL ERRORS (E) - These will block merging"
           # Use the same command as in run_pylint.sh for consistency
-          CRITICAL_ERRORS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CRITICAL_ERRORS=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=C,W,R,I --enable=E --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
           CRITICAL_EXIT_CODE=${PIPESTATUS[0]}
 
           echo "Critical errors exit code: $CRITICAL_EXIT_CODE"
@@ -113,7 +113,7 @@ jobs:
           # 2. Check for warnings - these are important but we'll just report them
           echo -e "\n::group::WARNINGS (W) - These should be addressed but won't block merging"
           # Keep the warnings disabled in .pylintrc also disabled here
-          WARNINGS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          WARNINGS=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=C,E,R,I --enable=W --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$WARNINGS" ]; then
             echo "$WARNINGS"
@@ -129,7 +129,7 @@ jobs:
 
           # 3. Check for refactoring suggestions - just for information
           echo -e "\n::group::REFACTORING SUGGESTIONS (R) - Recommendations to improve code quality"
-          REFACTORING=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=C,E,W,I --enable=R --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          REFACTORING=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=C,E,W,I --enable=R --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$REFACTORING" ]; then
             echo "$REFACTORING"
@@ -145,7 +145,7 @@ jobs:
 
           # 4. Check for convention violations - just for information
           echo -e "\n::group::CONVENTION ISSUES (C) - Style suggestions"
-          CONVENTIONS=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,I --enable=C --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          CONVENTIONS=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=E,W,R,I --enable=C --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$CONVENTIONS" ]; then
             echo "$CONVENTIONS"
@@ -161,7 +161,7 @@ jobs:
 
           # 5. Check for info messages - just for information
           echo -e "\n::group::INFORMATION (I) - Additional info"
-          INFORMATION=$(PYTHONPATH=python pylint --rcfile=.pylintrc --disable=E,W,R,C --enable=I --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
+          INFORMATION=$(PYTHONPATH=src pylint --rcfile=.pylintrc --disable=E,W,R,C --enable=I --disable=$DISABLED_CHECKS --msg-template="{path}:{line}:{column}: [{msg_id}({symbol}), {category}] {msg}" $PYTHON_FILES 2>&1 || echo "")
 
           if [ -n "$INFORMATION" ]; then
             echo "$INFORMATION"

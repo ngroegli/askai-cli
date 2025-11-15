@@ -17,9 +17,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Add the python directory so modules can be imported directly
-python_dir = os.path.join(project_root, "python")
-sys.path.insert(0, python_dir)
+# Add the src directory so modules can be imported directly
+src_dir = os.path.join(project_root, "src")
+sys.path.insert(0, src_dir)
 
 # Import project modules after path setup
 # pylint: disable=wrong-import-position,import-error

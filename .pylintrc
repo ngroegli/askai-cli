@@ -30,8 +30,8 @@ good-names = i,j,k,ex,Run,_,id,f,e,GREEN,RED,BLUE,RESET
 # Add files or directories to be excluded from pylint checking
 ignore=.git,__pycache__,venv
 
-# Set Python path to include the root directory to fix import issues
-init-hook='import sys; sys.path.append(".")'
+# Set Python path to include the src directory to fix import issues
+init-hook='import sys; sys.path.append("src")'
 
 # Minimum Python version to target
 # py-version=3.8
