@@ -95,3 +95,16 @@ def setup_logger(config: Dict[str, Any], debug: bool = False) -> logging.Logger:
         logger.addHandler(handler)
 
     return logger
+
+
+def get_logger() -> logging.Logger:
+    """Get the configured application logger instance.
+
+    Returns:
+        logging.Logger: The existing logger instance, or creates a basic one if not configured
+
+    Note:
+        This function returns the logger that was previously configured with setup_logger().
+        If no logger was configured, it returns a basic logger with the application name.
+    """
+    return logging.getLogger(LOGGER_NAME)

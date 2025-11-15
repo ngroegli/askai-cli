@@ -4,6 +4,7 @@ Logging infrastructure for the AskAI CLI application.
 import logging
 
 # Import main functions for backward compatibility
+
 from .setup import setup_logger, LOGGER_NAME
 
 def get_logger() -> logging.Logger:

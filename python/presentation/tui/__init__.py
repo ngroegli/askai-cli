@@ -12,8 +12,11 @@ import sys
 try:
     import textual  # noqa: F401 # pylint: disable=unused-import # type: ignore[reportUnusedImport]
     TEXTUAL_AVAILABLE = True
+    # Store reference to avoid unused import warning
+    _TEXTUAL_MODULE = textual
 except ImportError:
     TEXTUAL_AVAILABLE = False
+    _TEXTUAL_MODULE = None
 
 
 def is_tui_available() -> bool:
