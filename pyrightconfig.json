@@ -1,6 +1,6 @@
 {
     "include": [
-        "python/**/*.py",
+        "src/**/*.py",
         "tests/**/*.py"
     ],
     "exclude": [
@@ -13,18 +13,18 @@
         "dist"
     ],
     "extraPaths": [
-        "python"
+        "src"
     ],
     "executionEnvironments": [
         {
-            "root": "python",
+            "root": "src",
             "pythonVersion": "3.12",
-            "extraPaths": [".", "..", "../python"]
+            "extraPaths": [".", "..", "../src"]
         },
         {
             "root": "tests",
             "pythonVersion": "3.12",
-            "extraPaths": [".", "..", "../python", "python"]
+            "extraPaths": [".", "..", "../src", "src"]
         }
     ],
     "pythonVersion": "3.12",

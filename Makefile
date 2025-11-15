@@ -73,10 +73,10 @@ api-dev:
 	@echo "Starting AskAI API development server..."
 	@if [ -d "venv" ]; then \
 		echo "Using virtual environment..."; \
-		. venv/bin/activate && cd python/presentation/api && python run.py --debug; \
+		. venv/bin/activate && cd src/askai/presentation/api && python run.py --debug; \
 	elif command -v flask >/dev/null 2>&1; then \
 		echo "Using system Flask installation..."; \
-		cd python/presentation/api && $(PYTHON) run.py --debug; \
+		cd src/askai/presentation/api && $(PYTHON) run.py --debug; \
 	else \
 		echo "Error: Flask not found. Please install API dependencies:"; \
 		echo "  pip install flask flask-restx flask-cors marshmallow gunicorn"; \
@@ -85,7 +85,7 @@ api-dev:
 	fi
 
 api-test:
-	$(PYTHON) python/presentation/api/test_api.py
+	$(PYTHON) src/askai/presentation/api/test_api.py
 
 api-docker:
 	docker-compose up --build
