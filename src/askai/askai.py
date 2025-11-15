@@ -8,6 +8,13 @@ import json
 import os
 import sys
 
+# Add the src directory to the path when running the script directly
+# This allows the script to work both when installed as a package and when run directly
+script_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(script_dir)  # Go up from src/askai to src
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 # Local application imports - grouped by package  
 from askai.infrastructure.output.output_coordinator import OutputCoordinator
 
