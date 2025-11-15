@@ -10,7 +10,7 @@ import os
 import sys
 
 try:
-    import textual  # noqa: F401
+    import textual  # noqa: F401 # pylint: disable=unused-import # type: ignore[reportUnusedImport]
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False

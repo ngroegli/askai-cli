@@ -26,8 +26,10 @@ class TestPersistentChat(AutomatedTest):
         """Run the test cases."""
         # Safety check: Ensure we're in test environment to avoid affecting production chats
         if not os.environ.get('ASKAI_TESTING'):
-            raise RuntimeError("ASKAI_TESTING environment variable not set - " \
-            "refusing to run tests that could affect production chats")
+            raise RuntimeError(
+                "ASKAI_TESTING environment variable not set - "
+                "refusing to run tests that could affect production chats"
+            )
 
         # Clean up any existing test chats to ensure test isolation
         self._cleanup_test_chats()

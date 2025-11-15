@@ -4,9 +4,7 @@ Integration tests for pattern file integrity and structure validation.
 import os
 import re
 from typing import Dict, List, Tuple
-
 import yaml
-
 from tests.integration.test_base import AutomatedTest
 
 

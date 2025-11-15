@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from shared.utils import print_error_or_warnings
 import shared.utils
+from shared.utils import print_error_or_warnings
 
 
 class TestProgressSpinner(BaseUnitTest):
@@ -106,6 +106,7 @@ class TestPrintUtilities(BaseUnitTest):
         try:
             # Mock print to capture calls without output
             with patch('builtins.print') as mock_print:
+
                 test_message = "Test error message"
                 print_error_or_warnings(test_message)
 
@@ -127,6 +128,7 @@ class TestPrintUtilities(BaseUnitTest):
         """Test warning printing capabilities."""
         try:
             with patch('builtins.print') as mock_print:
+
                 # Test with different types of messages
                 test_cases = [
                     "Warning: test message",

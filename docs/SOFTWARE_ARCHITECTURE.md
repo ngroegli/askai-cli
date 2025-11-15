@@ -1,7 +1,23 @@
 # AskAI CLI - Software Architecture Documentation
 
 ## Table of Contents
-1. [System Overview](#system-overview)
+1. [System ### Presentation Layer Package (`presentation/`)
+**Components**:
+- **CLI Package** (`cli/`):
+  - `CLIParser`: Argument parsing and validation
+  - `CommandHandler`: Command execution routing
+  - `BannerArgumentParser`: Enhanced help display
+- **API Package** (`api/`):
+  - `Flask Application`: REST API application factory
+  - `Questions Routes`: Question processing endpoints
+  - `Patterns Routes`: Pattern management endpoints
+  - `Health Routes`: Health check and status endpoints
+
+**Responsibilities**:
+- **CLI Interface**: Parse and validate command-line arguments, route commands, provide help and documentation
+- **REST API Interface**: HTTP-based access to core functionality, JSON request/response handling, Swagger documentation
+- Handle user interaction through multiple interfaces (CLI and HTTP API)
+- Provide comprehensive help and API documentationsystem-overview)
 2. [Architecture Layers](#architecture-layers)
 3. [Core Components](#core-components)
 4. [Data Flow](#data-flow)
@@ -39,7 +55,7 @@ The system follows a layered architecture pattern with clear separation of conce
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Presentation Layer                       │
-│                   (CLI Interface)                          │
+│               (CLI Interface & REST API)                   │
 ├─────────────────────────────────────────────────────────────┤
 │                    Application Layer                        │
 │              (Business Logic & Orchestration)              │
@@ -54,7 +70,7 @@ The system follows a layered architecture pattern with clear separation of conce
 
 ### Layer Responsibilities
 
-**Presentation Layer**: Command-line argument parsing, user interaction, help display
+**Presentation Layer**: Command-line argument parsing, user interaction, help display, REST API endpoints, Swagger documentation
 **Application Layer**: Main orchestration logic, workflow coordination, component initialization
 **Service Layer**: AI communication, pattern processing, output handling, chat management
 **Infrastructure Layer**: Configuration loading, logging, file I/O, system integration
@@ -196,6 +212,13 @@ Pattern Output Processing → File Generation/Display
 User Input → CLI Parser (presentation/cli) → Question Processing (modules/questions) →
 Message Building (modules/messaging) → AI Service (modules/ai) → OpenRouter API →
 Response Processing → Output Handler (infrastructure/output) → Standard Formatting → Display
+```
+
+### API-Based Processing Flow (NEW)
+```
+HTTP Request → Flask Routes (presentation/api) → Question/Pattern Processing (modules) →
+Message Building (modules/messaging) → AI Service (modules/ai) → OpenRouter API →
+Response Processing → Output Handler (infrastructure/output) → JSON Response → HTTP Client
 ```
 
 ### Chat-Based Processing Flow
@@ -470,7 +493,116 @@ Each writer is independently testable:
 - **Integration Tests**: Complete chain functionality
 - **Content Tests**: Validation of output quality for each file type
 
-### CLI Integration with `-q` and `-o` Flags
+### REST API Architecture
+
+AskAI CLI provides a comprehensive REST API that exposes core functionality through HTTP endpoints, enabling integration with web applications, external systems, and programmatic access to AI capabilities.
+
+### API Design Principles
+- **RESTful Design**: Standard HTTP methods (GET, POST) with resource-based URLs
+- **JSON Communication**: Request and response payloads in JSON format
+- **Swagger Documentation**: Automatic API documentation generation with interactive testing
+- **Shared Core Logic**: API routes use the same core modules as CLI for consistency
+- **Flask-RESTX Framework**: Modern Flask extension with built-in Swagger support
+
+### API Endpoints Structure
+```
+/api/v1/
+├── health/
+│   └── GET /health          # Health check and system status
+├── questions/
+│   └── POST /ask            # Process standalone questions with AI
+└── patterns/
+    ├── GET /                # List available patterns
+    ├── GET /{pattern_id}    # Get pattern details
+    └── POST /{pattern_id}   # Execute pattern with inputs
+```
+
+### Core API Features
+
+#### 1. Question Processing Endpoint
+**Endpoint**: `POST /api/v1/questions/ask`
+**Purpose**: Process standalone questions through AI with support for various input formats
+
+**Request Format**:
+```json
+{
+    "question": "Your question text",
+    "format": "text|json|markdown",
+    "image_path": "/path/to/image.jpg",
+    "pdf_path": "/path/to/document.pdf",
+    "url": "https://example.com",
+    "model": "anthropic/claude-3-haiku"
+}
+```
+
+**Response Format**:
+```json
+{
+    "success": true,
+    "response": "AI response content",
+    "model_used": "anthropic/claude-3-haiku",
+    "tokens_used": 150,
+    "processing_time": 1.23
+}
+```
+
+#### 2. Pattern Management Endpoints
+**List Patterns**: `GET /api/v1/patterns/`
+- Returns all available patterns with metadata
+- Includes both built-in and private patterns
+
+**Pattern Details**: `GET /api/v1/patterns/{pattern_id}`
+- Returns detailed pattern information including inputs and outputs
+- Provides pattern configuration and requirements
+
+**Execute Pattern**: `POST /api/v1/patterns/{pattern_id}`
+- Executes specified pattern with provided inputs
+- Returns structured results based on pattern outputs
+
+#### 3. Health and Status Endpoint
+**Health Check**: `GET /api/v1/health/health`
+- System health and configuration status
+- API availability confirmation
+- Component status verification
+
+### API Integration Features
+
+#### CLI Logger Integration
+- Uses same logging configuration as CLI application
+- Consistent log format and levels across interfaces
+- Shared logger setup through `setup_logger()` function
+
+#### Shared Core Components
+- **Question Processing**: Uses same `QuestionProcessor` as CLI
+- **Pattern Management**: Leverages existing `PatternManager`
+- **AI Service**: Identical AI interaction logic
+- **Output Processing**: Same output coordination and formatting
+
+#### Error Handling
+- Standardized JSON error responses
+- HTTP status codes following REST conventions
+- Detailed error messages with context
+
+### Docker Deployment
+- Multi-stage Docker build for production deployment
+- Gunicorn WSGI server for production workloads
+- nginx reverse proxy configuration
+- Health checks and container orchestration support
+
+### Security Considerations
+- API key validation through configuration
+- Request validation using Marshmallow schemas
+- CORS support for web application integration
+- Input sanitization and size limits
+
+### API Documentation
+- **Swagger UI**: Interactive API documentation at `/docs/`
+- **OpenAPI Specification**: Machine-readable API definition
+- **Request/Response Examples**: Comprehensive examples for all endpoints
+
+The REST API provides a powerful, standards-compliant interface to AskAI CLI functionality while maintaining consistency with the CLI experience through shared core components.
+
+## CLI Integration with `-q` and `-o` Flags
 
 The file writing system seamlessly integrates with the command-line interface, particularly with the question (`-q`) and output directory (`-o`) flags:
 
@@ -875,6 +1007,9 @@ The following diagrams illustrate key aspects of the AskAI CLI architecture. Eac
 
 **AI Service Integration Architecture**
 ![AI Integration](drawings/ai_integration.png)
+
+**REST API Architecture & Integration**
+![API Architecture](drawings/api_architecture.png)
 
 **Error Handling and Recovery System**
 ![Error Handling](drawings/error_handling.png)

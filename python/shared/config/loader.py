@@ -377,8 +377,43 @@ def load_config():
     Raises:
         SystemExit: If setup is incomplete or configuration cannot be loaded
     """
-    # In test environment, return minimal config to avoid setup
+    # In test environment, try to load test configuration or fall back to production config
     if is_test_environment():
+        # First, try to load test configuration if it exists
+        if os.path.exists(TEST_CONFIG_PATH):
+            try:
+                with open(TEST_CONFIG_PATH, "r", encoding="utf-8") as f:
+                    test_config = yaml.safe_load(f)
+                    # Ensure test config has valid base_url and api_key
+                    if (test_config.get('base_url') == 'https://test.api.com' or
+                        test_config.get('api_key') == 'test-key'):
+                        # This is a dummy config, try to fall back to production
+                        pass
+                    else:
+                        return test_config
+            except Exception as e:
+                print(f"Warning: Could not load test config: {e}")
+
+        # If test config doesn't exist or has dummy values, check for production config
+        if os.path.exists(CONFIG_PATH):
+            try:
+                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                    prod_config = yaml.safe_load(f)
+                    # Use production config but modify paths for testing
+                    prod_config['enable_logging'] = False
+                    prod_config['log_path'] = '/tmp/test.log'
+                    prod_config['log_level'] = 'ERROR'
+                    if 'chat' in prod_config:
+                        prod_config['chat']['storage_path'] = '/tmp/test-chats'
+                    if 'interface' in prod_config and 'tui_features' in prod_config['interface']:
+                        prod_config['interface']['tui_features']['enabled'] = False
+                        prod_config['interface']['tui_features']['animations'] = False
+                    return prod_config
+            except Exception as e:
+                print(f"Warning: Could not load production config for testing: {e}")
+
+        # Last resort: return minimal config with warnings
+        print("Warning: Using minimal test configuration. Integration tests may fail.")
         return {
             'api_key': 'test-key',
             'default_model': 'test-model',

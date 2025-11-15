@@ -1,10 +1,10 @@
 """
 Unit tests for infrastructure file operations - comprehensive coverage with mocking.
 """
-import os
-import sys
 import json
+import os
 import re
+import sys
 from unittest.mock import patch, mock_open
 
 # Setup paths for imports
@@ -287,7 +287,6 @@ print("Hello, World!")
 """
 
             # Test markdown structure detection
-
             # Headers
             headers = re.findall(r'^#+\s+(.+)', markdown_content, re.MULTILINE)
             self.assert_true(
@@ -374,8 +373,10 @@ class TestOutputCoordinatorAdvanced(BaseUnitTest):
         try:
             # Mock response data
             mock_response = {
-                "content": ("# Test Response\n\nThis is a test response with JSON:\n\n"
-                           "```json\n{\"key\": \"value\"}\n```"),
+                "content": (
+                    "# Test Response\n\nThis is a test response with JSON:\n\n"
+                    "```json\n{\"key\": \"value\"}\n```"
+                ),
                 "model": "test-model",
                 "usage": {"tokens": 100}
             }
@@ -391,10 +392,7 @@ class TestOutputCoordinatorAdvanced(BaseUnitTest):
                 elif fmt == "md":
                     processed = f"# Output\n\n{mock_response['content']}"
                 elif fmt == "json":
-                    processed = {
-                        "response": mock_response["content"],
-                        "metadata": {"model": mock_response["model"]}
-                    }
+                    processed = {"response": mock_response["content"], "metadata": {"model": mock_response["model"]}}
                 else:
                     processed = f"Unknown format: {fmt}"
 

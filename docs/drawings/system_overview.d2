@@ -1,4 +1,4 @@
-# AskAI CLI - High-Level System Architecture (Layered Architecture)
+# AskAI CLI - High-Level System Architecture (Layered Architecture with API)
 title: "AskAI CLI - System Overview"
 
 user: "User" {
@@ -6,30 +6,23 @@ user: "User" {
   style.fill: "#90CAF9" # Light Blue (core app, user)
 }
 
+web_client: "Web Client" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external client)
+}
+
 # Presentation Layer
 presentation: "Presentation Layer" {
   shape: rectangle
-  style.fill: "#F3E5F5" # Light Purple (CLI group)
+  style.fill: "#F3E5F5" # Light Purple (CLI/API group)
 
-  cli_interface: "CLI Interface" {
-    shape: rectangle
-    style.fill: "#E1BEE7" # Darker purple for CLI group
+  cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
+  command_handler: "Command Handler" { style.fill: "#CE93D8" }
+  banner_parser: "Banner Display" { style.fill: "#CE93D8" }
 
-    cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
-    command_handler: "Command Handler" { style.fill: "#CE93D8" }
-    banner_parser: "Banner Display" { style.fill: "#CE93D8" }
-  }
-
-  tui_interface: "TUI Interface" {
-    shape: rectangle
-    style.fill: "#C8E6C9" # Light green for TUI group
-
-    unified_app: "Unified TUI App" { style.fill: "#A5D6A7" }
-    question_builder: "Question Builder" { style.fill: "#A5D6A7" }
-    pattern_browser: "Pattern Browser" { style.fill: "#A5D6A7" }
-    system_dashboard: "System Dashboard" { style.fill: "#A5D6A7" }
-    loading_components: "Loading & Response" { style.fill: "#A5D6A7" }
-  }
+  api_routes: "REST API Routes" { style.fill: "#BA68C8" }
+  flask_app: "Flask Application" { style.fill: "#BA68C8" }
+  swagger_docs: "Swagger Documentation" { style.fill: "#BA68C8" }
 }
 
 # Application Core
@@ -83,22 +76,19 @@ external: "External Services" {
 }
 
 # Layer Connections
-user -> presentation.cli_interface: "CLI Commands"
-user -> presentation.tui_interface: "Interactive TUI"
-presentation.cli_interface -> app: "Parsed CLI Arguments"
-presentation.tui_interface -> app: "TUI Event Calls"
+user -> presentation: "CLI Commands & Input"
+web_client -> presentation: "HTTP Requests"
+presentation -> app: "Parsed Arguments"
 app -> modules: "Business Logic Calls"
 modules -> infrastructure: "Output Processing"
 modules -> external: "API Requests"
 external -> modules: "AI Responses"
-infrastructure -> presentation.cli_interface: "Text Output"
-infrastructure -> presentation.tui_interface: "Structured Data"
-presentation.cli_interface -> user: "Terminal Text"
-presentation.tui_interface -> user: "Interactive UI"
+infrastructure -> presentation: "Formatted Output"
+presentation -> user: "CLI Results & Feedback"
+presentation -> web_client: "HTTP Responses"
 
 # Shared services connections (all layers use shared)
-presentation.cli_interface -> shared: "Common Services"
-presentation.tui_interface -> shared: "Common Services"
+presentation -> shared: "Common Services"
 app -> shared: "Common Services"
 modules -> shared: "Common Services"
 infrastructure -> shared: "Common Services"
