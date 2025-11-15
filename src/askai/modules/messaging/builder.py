@@ -5,7 +5,7 @@ Handles construction of messages for AI interaction based on various inputs.
 
 import json
 import os
-from shared.utils import (get_piped_input, get_file_input, build_format_instruction,
+from askai.shared.utils import (get_piped_input, get_file_input, build_format_instruction,
                    encode_file_to_base64, generate_output_format_template)
 
 

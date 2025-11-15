@@ -9,7 +9,7 @@ import json
 import os
 from typing import Optional, Dict, List, Tuple, Any, Union
 
-from modules.patterns.pattern_outputs import PatternOutput, OutputAction
+from askai.modules.patterns.pattern_outputs import PatternOutput, OutputAction
 from .display_formatters.terminal_formatter import TerminalFormatter
 from .display_formatters.markdown_formatter import MarkdownFormatter
 from .file_writers.file_writer_chain import FileWriterChain

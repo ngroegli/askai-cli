@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from modules.messaging.builder import MessageBuilder
-from modules.patterns.pattern_manager import PatternManager
+from askai.modules.messaging.builder import MessageBuilder
+from askai.modules.patterns.pattern_manager import PatternManager
 
 
 

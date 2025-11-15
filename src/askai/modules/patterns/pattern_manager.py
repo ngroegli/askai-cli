@@ -11,7 +11,7 @@ import os
 import logging
 from typing import List, Dict, Any, Optional, Union, Tuple
 import yaml
-from shared.utils import print_error_or_warnings
+from askai.shared.utils import print_error_or_warnings
 from .pattern_inputs import PatternInput, InputGroup, InputType
 from .pattern_outputs import PatternOutput
 from .pattern_configuration import (

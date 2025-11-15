@@ -5,11 +5,11 @@ Handles all CLI commands like listing, viewing systems and chats.
 
 import json
 import os
-from modules.ai import OpenRouterClient
-from modules.questions.processor import QuestionProcessor
-from shared.config.loader import load_config
-from shared.utils import print_error_or_warnings
-from shared.config import (
+from askai.modules.ai import OpenRouterClient
+from askai.modules.questions.processor import QuestionProcessor
+from askai.shared.config.loader import load_config
+from askai.shared.utils import print_error_or_warnings
+from askai.shared.config import (
     ASKAI_DIR, CONFIG_PATH, CHATS_DIR, LOGS_DIR, TEST_DIR,
     TEST_CHATS_DIR, TEST_CONFIG_PATH, TEST_LOGS_DIR,
     get_config_path, is_test_environment, create_test_config_from_production
@@ -17,8 +17,8 @@ from shared.config import (
 
 # TUI imports only for interactive mode
 try:
-    from presentation.tui import is_tui_available
-    from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
+    from askai.presentation.tui import is_tui_available
+    from askai.presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
     TUI_IMPORTS_AVAILABLE = True
 except ImportError:
     TUI_IMPORTS_AVAILABLE = False

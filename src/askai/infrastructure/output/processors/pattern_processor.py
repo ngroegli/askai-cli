@@ -10,7 +10,7 @@ import logging
 from typing import List, Tuple, Dict, Union, Optional
 from pathlib import Path
 
-from modules.patterns.pattern_outputs import PatternOutput, OutputAction
+from askai.modules.patterns.pattern_outputs import PatternOutput, OutputAction
 
 logger = logging.getLogger(__name__)
 

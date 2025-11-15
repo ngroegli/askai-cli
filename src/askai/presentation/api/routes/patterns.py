@@ -18,11 +18,11 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
 # pylint: disable=wrong-import-position
-from modules.ai.ai_service import AIService
-from modules.messaging.builder import MessageBuilder
-from modules.patterns.pattern_manager import PatternManager
-from shared.config.loader import load_config
-from shared.logging import get_logger
+from askai.modules.ai.ai_service import AIService
+from askai.modules.messaging.builder import MessageBuilder
+from askai.modules.patterns.pattern_manager import PatternManager
+from askai.shared.config.loader import load_config
+from askai.shared.logging import get_logger
 
 # Create namespace
 patterns_ns = Namespace('patterns', description='Pattern management operations')

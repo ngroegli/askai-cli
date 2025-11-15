@@ -13,7 +13,7 @@ from ..common import (
 )
 
 try:
-    from modules.ai import OpenRouterClient
+    from askai.modules.ai import OpenRouterClient
 except ImportError:
     if not TYPE_CHECKING:
         OpenRouterClient = object
@@ -25,7 +25,7 @@ except ImportError:
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ProgressBar
     from textual.containers import Vertical, Horizontal, VerticalScroll
-    from modules.ai import OpenRouterClient
+    from askai.modules.ai import OpenRouterClient
 
 
 class CreditsTab(BaseTabComponent, StatusMixin):

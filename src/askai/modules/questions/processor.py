@@ -8,11 +8,11 @@ import os
 import sys
 from typing import Tuple
 
-from modules.ai import AIService
-from modules.chat import ChatManager
-from modules.messaging import MessageBuilder
-from modules.patterns import PatternManager
-from infrastructure.output.output_coordinator import OutputCoordinator
+from askai.modules.ai import AIService
+from askai.modules.chat import ChatManager
+from askai.modules.messaging import MessageBuilder
+from askai.modules.patterns import PatternManager
+from askai.infrastructure.output.output_coordinator import OutputCoordinator
 from .models import QuestionContext, QuestionResponse
 
 

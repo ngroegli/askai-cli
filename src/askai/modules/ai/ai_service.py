@@ -5,9 +5,9 @@ Manages AI response generation and model configuration logic.
 
 import json
 import threading
-from shared.utils import tqdm_spinner
-from shared.config import load_config
-from modules.patterns.pattern_configuration import ModelConfiguration, ModelProvider
+from askai.shared.utils import tqdm_spinner
+from askai.shared.config import load_config
+from askai.modules.patterns.pattern_configuration import ModelConfiguration, ModelProvider
 from .openrouter_client import OpenRouterClient
 
 

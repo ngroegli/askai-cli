@@ -38,7 +38,7 @@ class TestAIServiceMinimal(BaseUnitTest):
                  patch('os.makedirs', return_value=True):
 
                 # Import and instantiate
-                from modules.ai.ai_service import AIService
+                from askai.modules.ai.ai_service import AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)

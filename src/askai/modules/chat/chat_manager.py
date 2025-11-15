@@ -10,7 +10,7 @@ import uuid
 import sys
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from shared.utils import print_error_or_warnings
+from askai.shared.utils import print_error_or_warnings
 
 
 class ChatManager:

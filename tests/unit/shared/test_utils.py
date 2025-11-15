@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-import shared.utils
-from shared.utils import print_error_or_warnings
+import askai.shared.utils
+from askai.shared.utils import print_error_or_warnings
 
 
 class TestProgressSpinner(BaseUnitTest):

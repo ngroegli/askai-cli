@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from modules.chat.chat_manager import ChatManager
+from askai.modules.chat.chat_manager import ChatManager
 
 
 class TestChatManager(BaseUnitTest):

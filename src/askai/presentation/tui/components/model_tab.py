@@ -12,7 +12,7 @@ from ..common import (
 )
 
 try:
-    from modules.ai import OpenRouterClient
+    from askai.modules.ai import OpenRouterClient
 except ImportError:
     if not TYPE_CHECKING:
         OpenRouterClient = object
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label, Input
     from textual.containers import Vertical, Horizontal, VerticalScroll
     from textual.message import Message
-    from modules.ai import OpenRouterClient
+    from askai.modules.ai import OpenRouterClient
 
 
 class ModelTab(BaseTabComponent, StatusMixin):

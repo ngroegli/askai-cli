@@ -11,9 +11,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-from modules.questions.processor import QuestionProcessor
-from shared.config.loader import load_config
-from shared.logging.setup import setup_logger
+from askai.modules.questions.processor import QuestionProcessor
+from askai.shared.config.loader import load_config
+from askai.shared.logging.setup import setup_logger
 
 # Create namespace
 questions_ns = Namespace('questions', description='Question processing operations')

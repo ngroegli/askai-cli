@@ -15,9 +15,9 @@ from typing import List, Dict, Any, Optional, Callable
 
 import requests
 
-from shared.config import load_config
-from shared.logging import setup_logger
-from shared.utils import print_error_or_warnings
+from askai.shared.config import load_config
+from askai.shared.logging import setup_logger
+from askai.shared.utils import print_error_or_warnings
 
 
 class OpenRouterClient:

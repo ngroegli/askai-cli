@@ -19,7 +19,7 @@ from tests.integration.test_utils import TestResult
 
 # Try to import Flask app - will be None if not available
 try:
-    from presentation.api.app import create_app
+    from askai.presentation.api.app import create_app
     HAS_FLASK_APP = True
 except ImportError:
     create_app = None

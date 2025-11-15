@@ -15,9 +15,9 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
 # pylint: disable=wrong-import-position
-from shared.config.loader import load_config
-from shared.logging.setup import setup_logger
-from shared.logging import get_logger
+from askai.shared.config.loader import load_config
+from askai.shared.logging.setup import setup_logger
+from askai.shared.logging import get_logger
 from .routes.questions import questions_ns
 from .routes.health import health_ns
 from .routes.patterns import patterns_ns

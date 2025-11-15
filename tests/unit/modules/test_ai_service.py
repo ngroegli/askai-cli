@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from modules.ai.ai_service import AIService
+from askai.modules.ai.ai_service import AIService
 
 
 class TestAIService(BaseUnitTest):

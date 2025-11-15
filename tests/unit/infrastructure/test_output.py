@@ -13,9 +13,9 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from infrastructure.output.output_coordinator import OutputCoordinator
-from infrastructure.output.processors.content_extractor import ContentExtractor
-from infrastructure.output.file_writers.file_writer_chain import FileWriterChain
+from askai.infrastructure.output.output_coordinator import OutputCoordinator
+from askai.infrastructure.output.processors.content_extractor import ContentExtractor
+from askai.infrastructure.output.file_writers.file_writer_chain import FileWriterChain
 
 
 class TestOutputCoordinator(BaseUnitTest):

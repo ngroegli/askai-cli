@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 # pylint: disable=wrong-import-position,import-error
 from argparse import Namespace
 from unit.test_base import BaseUnitTest
-from modules.questions.processor import QuestionProcessor
+from askai.modules.questions.processor import QuestionProcessor
 
 
 

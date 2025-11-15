@@ -11,7 +11,7 @@ Ha        chat_group.add_argument(
 
 import sys
 import json
-from shared.utils import print_error_or_warnings
+from askai.shared.utils import print_error_or_warnings
 from .banner_argument_parser import BannerArgumentParser
 
 
