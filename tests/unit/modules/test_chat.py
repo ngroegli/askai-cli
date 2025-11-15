@@ -80,10 +80,16 @@ class TestChatManager(BaseUnitTest):
                 test_chat_data = {
                     "id": "test-chat-123",
                     "messages": [
-                        {"role": "user", "content": "Hello, how are you?",
-                         "timestamp": "2025-01-01T10:00:00"},
-                        {"role": "assistant", "content": "I'm doing well, thank you!",
-                         "timestamp": "2025-01-01T10:00:01"}
+                        {
+                            "role": "user",
+                            "content": "Hello, how are you?",
+                            "timestamp": "2025-01-01T10:00:00"
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "I'm doing well, thank you!",
+                            "timestamp": "2025-01-01T10:00:01"
+                        }
                     ],
                     "created_at": "2025-01-01T10:00:00",
                     "updated_at": "2025-01-01T10:00:01"
@@ -182,7 +188,7 @@ class TestChatManager(BaseUnitTest):
                         "Context building returns result"
                     )
 
-                    if hasattr(context, '__len__'):
+                    if isinstance(context, list):  # type: ignore[reportUnnecessaryIsInstance]
                         self.assert_true(
                             len(context) <= chat_manager.max_history * 2,  # user + assistant pairs
                             "context_building_limits",
@@ -233,7 +239,7 @@ class TestChatManager(BaseUnitTest):
                 repair_success = chat_manager.repair_chat_file("malformed_chat_id")
 
                 self.assert_true(
-                    repair_success in [True, False],
+                    isinstance(repair_success, bool),  # type: ignore[reportUnnecessaryIsInstance]
                     "chat_repair_success",
                     "Chat repair operation completed"
                 )
@@ -273,9 +279,16 @@ class TestChatManager(BaseUnitTest):
             large_message_list = []
             for i in range(10):  # More than max_history
                 large_message_list.extend([
-                    {"role": "user", "content": f"User message {i}", "timestamp": f"2025-01-01T10:{i:02d}:00"},
-                    {"role": "assistant", "content": f"Assistant response {i}",
-                     "timestamp": f"2025-01-01T10:{i:02d}:01"}
+                    {
+                        "role": "user",
+                        "content": f"User message {i}",
+                        "timestamp": f"2025-01-01T10:{i:02d}:00"
+                    },
+                    {
+                        "role": "assistant",
+                        "content": f"Assistant response {i}",
+                        "timestamp": f"2025-01-01T10:{i:02d}:01"
+                    }
                 ])
 
             # Test message trimming logic (using available methods since trim_messages doesn't exist)

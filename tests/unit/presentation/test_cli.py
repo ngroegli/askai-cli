@@ -18,6 +18,9 @@ from presentation.cli.command_handler import CommandHandler
 from presentation.cli.banner_argument_parser import BannerArgumentParser
 
 
+
+
+
 class TestCLIParser(BaseUnitTest):
     """Test the CLI parser functionality."""
 
@@ -30,21 +33,22 @@ class TestCLIParser(BaseUnitTest):
         return self.results
 
     def test_cli_parser_initialization(self):
-        """Test CLI parser initialization and basic setup."""
+        """Test CLI parser initialization."""
         try:
-            # Test basic parser initialization
+
+
             parser = CLIParser()
 
             self.assert_not_none(
                 parser,
-                "cli_parser_initialization",
+                "cli_parser_init",
                 "CLI parser initializes successfully"
             )
 
-            # Test that parser has required methods
+            # Check if parser has expected methods
             self.assert_true(
                 hasattr(parser, 'parse_arguments'),
-                "cli_parser_has_parse_method",
+                "cli_parser_parse_method",
                 "CLI parser has parse_arguments method"
             )
 
@@ -54,6 +58,8 @@ class TestCLIParser(BaseUnitTest):
     def test_parse_question_arguments(self):
         """Test parsing question arguments."""
         try:
+
+
             parser = CLIParser()
 
             # Mock sys.argv for question parsing
@@ -83,8 +89,7 @@ class TestCLIParser(BaseUnitTest):
                 except SystemExit:
                     # argparse might call sys.exit on help or error
                     self.add_result(
-                        "parse_question_system_exit",
-                        True,
+                        "parse_question_system_exit", True,
                         "Parser handled arguments (may have shown help)"
                     )
 
@@ -94,6 +99,8 @@ class TestCLIParser(BaseUnitTest):
     def test_parse_pattern_arguments(self):
         """Test parsing pattern arguments."""
         try:
+
+
             parser = CLIParser()
 
             # Mock sys.argv for pattern parsing
@@ -130,6 +137,8 @@ class TestCLIParser(BaseUnitTest):
     def test_invalid_arguments(self):
         """Test handling of invalid arguments."""
         try:
+
+
             parser = CLIParser()
 
             # Test with invalid arguments
@@ -163,6 +172,8 @@ class TestCommandHandler(BaseUnitTest):
     def test_command_handler_initialization(self):
         """Test command handler initialization."""
         try:
+
+
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
             mock_logger = Mock()
@@ -193,6 +204,8 @@ class TestCommandHandler(BaseUnitTest):
     def test_handle_pattern_commands(self):
         """Test handling pattern commands."""
         try:
+
+
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
             mock_logger = Mock()
@@ -231,7 +244,7 @@ class TestCommandHandler(BaseUnitTest):
 
             # Should return True if command was handled
             self.assert_true(
-                result in [True, False],
+                isinstance(result, bool),  # type: ignore[reportUnnecessaryIsInstance]
                 "handle_pattern_commands_bool",
                 "Pattern command handler returns boolean"
             )
@@ -248,6 +261,8 @@ class TestCommandHandler(BaseUnitTest):
     def test_handle_chat_commands(self):
         """Test handling chat commands."""
         try:
+
+
             mock_pattern_manager = Mock()
             mock_chat_manager = Mock()
             mock_logger = Mock()
@@ -267,7 +282,7 @@ class TestCommandHandler(BaseUnitTest):
 
             # Should return True if command was handled
             self.assert_true(
-                result in [True, False],
+                isinstance(result, bool),  # type: ignore[reportUnnecessaryIsInstance]
                 "handle_chat_commands_bool",
                 "Chat command handler returns boolean"
             )
@@ -294,6 +309,8 @@ class TestBannerArgumentParser(BaseUnitTest):
     def test_banner_parser_initialization(self):
         """Test banner argument parser initialization."""
         try:
+
+
             parser = BannerArgumentParser()
 
             self.assert_not_none(
@@ -308,6 +325,8 @@ class TestBannerArgumentParser(BaseUnitTest):
     def test_banner_display(self):
         """Test banner display functionality."""
         try:
+
+
             parser = BannerArgumentParser()
 
             # Test that banner display methods exist and are callable

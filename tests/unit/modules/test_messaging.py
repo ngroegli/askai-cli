@@ -17,6 +17,8 @@ from modules.messaging.builder import MessageBuilder
 from modules.patterns.pattern_manager import PatternManager
 
 
+
+
 class TestMessageBuilder(BaseUnitTest):
     """Test message builder with comprehensive mocking."""
 
@@ -59,6 +61,8 @@ class TestMessageBuilder(BaseUnitTest):
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
 
+
+
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
             # Mock the build_messages method to return expected structure
@@ -99,6 +103,7 @@ class TestMessageBuilder(BaseUnitTest):
                 "user_template": "Question: {question}"
             }
             mock_logger = Mock()
+
 
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
@@ -149,6 +154,7 @@ class TestMessageBuilder(BaseUnitTest):
             mock_logger = Mock()
 
 
+
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
 
             # Test message format validation
@@ -183,6 +189,7 @@ class TestMessageBuilder(BaseUnitTest):
         try:
             mock_pattern_mgr = Mock()
             mock_logger = Mock()
+
 
 
             builder = MessageBuilder(mock_pattern_mgr, mock_logger)
@@ -241,6 +248,7 @@ class TestMessageBuilder(BaseUnitTest):
                 mock_logger.return_value = mock_logger_instance
 
 
+
                 builder = MessageBuilder(mock_manager, mock_logger_instance)
 
                 # Test that errors are handled gracefully using the actual build_messages method
@@ -293,6 +301,7 @@ class TestPatternManager(BaseUnitTest):
                  patch('os.path.isdir', return_value=True):
 
 
+
                 # Provide required base_path parameter with patterns directory
                 manager = PatternManager("/mock/patterns/path/patterns")
 
@@ -305,6 +314,7 @@ class TestPatternManager(BaseUnitTest):
         except ImportError:
             # If import fails, test the alternative import path
             try:
+
                 manager = PatternManager("/mock/patterns/path/patterns")
                 self.add_result("pattern_manager_alt_init", True, "Pattern manager accessible via alternative import")
             except Exception as e:
@@ -334,6 +344,7 @@ This is a test pattern for {topic}.
                  patch('os.path.isdir', return_value=True):
 
                 try:
+
                     manager = PatternManager("/mock/patterns/path/patterns")
 
                     # Test pattern loading method

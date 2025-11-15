@@ -63,4 +63,43 @@ help:
 	@echo "  test-integration-X Run specific integration test (e.g., test-integration-cli_help)"
 	@echo "  lint               Run linting"
 	@echo "  clean              Remove build artifacts"
+	@echo "  api-dev            Start API development server"
+	@echo "  api-test           Test API endpoints"
+	@echo "  api-docker         Build and run API with Docker"
 	@echo "  help               Show this help message"
+
+# API development targets
+api-dev:
+	@echo "Starting AskAI API development server..."
+	@if [ -d "venv" ]; then \
+		echo "Using virtual environment..."; \
+		. venv/bin/activate && cd python/presentation/api && python run.py --debug; \
+	elif command -v flask >/dev/null 2>&1; then \
+		echo "Using system Flask installation..."; \
+		cd python/presentation/api && $(PYTHON) run.py --debug; \
+	else \
+		echo "Error: Flask not found. Please install API dependencies:"; \
+		echo "  pip install flask flask-restx flask-cors marshmallow gunicorn"; \
+		echo "Or activate a virtual environment with API dependencies installed."; \
+		exit 1; \
+	fi
+
+api-test:
+	$(PYTHON) python/presentation/api/test_api.py
+
+api-docker:
+	docker-compose up --build
+
+api-docker-prod:
+	docker-compose --profile production up --build
+
+api-install:
+	@echo "Installing API dependencies..."
+	@if [ -d "venv" ]; then \
+		echo "Installing into virtual environment..."; \
+		. venv/bin/activate && pip install flask flask-restx flask-cors marshmallow gunicorn python-dotenv; \
+	else \
+		echo "Installing system-wide (consider using a virtual environment)..."; \
+		$(PYTHON) -m pip install flask flask-restx flask-cors marshmallow gunicorn python-dotenv; \
+	fi
+	@echo "API dependencies installed successfully!"

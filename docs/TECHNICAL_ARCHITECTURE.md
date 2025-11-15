@@ -29,7 +29,8 @@ askai-cli/
 │   │   ├── patterns/          # Pattern management
 │   │   └── questions/         # Question processing logic (NEW)
 │   ├── presentation/          # User interface layer
-│   │   └── cli/               # Command-line interface
+│   │   ├── cli/               # Command-line interface
+│   │   └── api/               # REST API interface
 │   └── infrastructure/        # External output processing
 │       └── output/            # Output coordination and handling
 ├── patterns/                   # Built-in pattern definitions
@@ -45,7 +46,7 @@ askai-cli/
 
 **python/shared/**: Common infrastructure, configuration management, logging, and utilities
 **python/modules/**: Core business logic organized by functional domain
-**python/presentation/**: User interface components and CLI handling
+**python/presentation/**: User interface components including CLI handling and REST API
 **python/infrastructure/**: External output processing and coordination
 **patterns/**: Pattern template definitions in Markdown format
 **config/**: Configuration templates and examples
@@ -223,9 +224,11 @@ class MessageBuilder:
 - Process various input formats
 ```
 
-### Presentation Layer Package (`presentation/cli/`)
+### Presentation Layer Package (`presentation/`)
 
-#### CLI Parser (`cli_parser.py`)
+#### CLI Package (`presentation/cli/`)
+
+##### CLI Parser (`cli_parser.py`)
 ```python
 class CLIParser:
     def __init__(self)
@@ -240,7 +243,7 @@ class CLIParser:
 - OpenRouter commands (API management)
 ```
 
-#### Command Handler (`command_handler.py`)
+##### Command Handler (`command_handler.py`)
 ```python
 class CommandHandler:
     def __init__(self, pattern_manager: PatternManager, chat_manager: ChatManager, logger: logging.Logger)
@@ -257,12 +260,104 @@ class CommandHandler:
 - Configuration (setup, validate)
 ```
 
-#### Banner Argument Parser (`banner_argument_parser.py`)
+##### Banner Argument Parser (`banner_argument_parser.py`)
 ```python
 class BannerArgumentParser(argparse.ArgumentParser):
     # Enhanced argument parser with branded help display
     # ASCII art banner and formatted help output
 ```
+
+#### API Package (`presentation/api/`)
+
+##### Flask Application Factory (`app.py`)
+```python
+def create_app(config: Optional[Dict] = None) -> Flask:
+    # Application setup with CLI logger integration
+    # Route registration and Swagger configuration
+    # Error handlers and CORS setup
+
+def get_logger() -> logging.Logger:
+    # Get shared CLI logger or create fallback
+    # Ensures consistent logging across interfaces
+```
+
+##### Question Processing Routes (`routes/questions.py`)
+```python
+class QuestionsResource(Resource):
+    @api.doc('ask_question')
+    @api.expect(question_request_model)
+    @api.marshal_with(question_response_model)
+    def post(self):
+        # Process questions using shared QuestionProcessor
+        # Support for images, PDFs, URLs, and various formats
+        # Returns structured AI responses with metadata
+
+class MockArgs:
+    # CLI argument compatibility for shared modules
+    # Enables API routes to use existing CLI logic
+```
+
+##### Pattern Management Routes (`routes/patterns.py`)
+```python
+class PatternsResource(Resource):
+    @api.doc('list_patterns')
+    @api.marshal_with(patterns_list_model)
+    def get(self):
+        # List available patterns with metadata
+
+class PatternDetailResource(Resource):
+    @api.doc('get_pattern_details')
+    @api.marshal_with(pattern_detail_model)
+    def get(self, pattern_id):
+        # Get detailed pattern information
+
+class PatternExecutionResource(Resource):
+    @api.doc('execute_pattern')
+    @api.expect(pattern_execution_model)
+    @api.marshal_with(pattern_response_model)
+    def post(self, pattern_id):
+        # Execute pattern with provided inputs
+```
+
+##### Health Check Routes (`routes/health.py`)
+```python
+class HealthResource(Resource):
+    @api.doc('health_check')
+    @api.marshal_with(health_response_model)
+    def get(self):
+        # System health and configuration status
+```
+
+##### API Schemas (`schemas/`)
+```python
+# Request/Response Models using Marshmallow 4.x
+question_request = {
+    'question': fields.String(required=True, description='Question to ask AI'),
+    'format': fields.String(enum=['text', 'json', 'markdown']),
+    'image_path': fields.String(description='Path to image file'),
+    'pdf_path': fields.String(description='Path to PDF file'),
+    'url': fields.String(description='URL to analyze'),
+    'model': fields.String(description='AI model to use')
+}
+
+question_response = {
+    'success': fields.Boolean(required=True),
+    'response': fields.String(description='AI response content'),
+    'model_used': fields.String(description='Model that processed the request'),
+    'tokens_used': fields.Integer(description='Tokens consumed'),
+    'processing_time': fields.Float(description='Processing time in seconds')
+}
+```
+
+##### API Features
+- **Flask-RESTX Framework**: Modern Flask extension with automatic Swagger documentation
+- **Shared Core Logic**: Uses same modules as CLI (QuestionProcessor, PatternManager, AIService)
+- **CLI Logger Integration**: Consistent logging configuration through `setup_logger()` function
+- **JSON Request/Response**: Standardized API communication format with Marshmallow validation
+- **Error Handling**: Comprehensive error responses with proper HTTP status codes
+- **CORS Support**: Web application integration capabilities
+- **Swagger UI**: Interactive API documentation at `/docs/` endpoint
+- **Docker Ready**: Production deployment with Gunicorn and nginx support
 
 ### Pattern Management Package (`python/patterns/`)
 
@@ -554,10 +649,16 @@ Application (askai.py)
 │   ├── config/loader.py (Configuration)
 │   ├── logging/setup.py (Logging)
 │   └── utils/helpers.py (Utilities)
-├── presentation/cli/
-│   ├── CLIParser
-│   ├── CommandHandler
-│   └── BannerArgumentParser
+├── presentation/
+│   ├── cli/
+│   │   ├── CLIParser
+│   │   ├── CommandHandler
+│   │   └── BannerArgumentParser
+│   └── api/
+│       ├── Flask Application
+│       ├── QuestionsResource
+│       ├── PatternsResource
+│       └── HealthResource
 ├── modules/
 │   ├── ai/
 │   │   ├── AIService

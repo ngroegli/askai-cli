@@ -1,9 +1,14 @@
-# AskAI CLI - Pattern Processing Data Flow (Layered Architecture)
+# AskAI CLI - Pattern Processing Data Flow (CLI and API Access)
 title: "Pattern Processing Data Flow"
 
-user_input: "User Input" {
+user_input: "CLI User Input" {
   shape: oval
   style.fill: "#90CAF9" # Light Blue (core app)
+}
+
+api_request: "API HTTP Request" {
+  shape: oval
+  style.fill: "#FFB74D" # Light Orange (external)
 }
 
 # Presentation Layer
@@ -14,6 +19,11 @@ presentation: "Presentation Layer" {
   cli_parse: "CLI Parsing" {
     shape: diamond
     style.fill: "#CE93D8" # Light Purple (CLI)
+  }
+
+  api_routes: "API Routes" {
+    shape: diamond
+    style.fill: "#BA68C8" # Darker Purple (API)
   }
 }
 
@@ -90,16 +100,25 @@ external: "External Services" {
   }
 }
 
-# Layer Flow (Main Path)
-user_input -> presentation: "Command & Args"
-presentation -> modules: "Parsed Arguments"
+# Layer Flow (Main Paths)
+user_input -> presentation: "CLI Command & Args"
+api_request -> presentation: "HTTP POST Request"
+presentation -> modules: "Parsed Arguments/JSON"
 modules -> external: "AI Messages"
 external -> infrastructure: "AI Response"
 infrastructure -> presentation: "Formatted Output"
-presentation -> user_input: "Results & Feedback"
+presentation -> user_input: "CLI Results & Feedback"
+presentation -> api_request: "JSON Response"
 
-# Detailed Component Flow
+# Detailed Component Flow (CLI Path)
+user_input -> presentation.cli_parse: "Command Line"
 presentation.cli_parse -> modules.pattern_select: "Pattern ID"
+
+# Detailed Component Flow (API Path)
+api_request -> presentation.api_routes: "HTTP Request"
+presentation.api_routes -> modules.pattern_select: "Pattern ID from JSON"
+
+# Shared Module Processing
 modules.pattern_select -> modules.input_collect: "Pattern Definition"
 modules.input_collect -> modules.msg_build: "Validated Inputs"
 modules.msg_build -> modules.ai_process: "Formatted Messages"
@@ -123,7 +142,11 @@ infrastructure.order_process: {
 }
 
 # Error flows (Layer-aware)
-presentation.cli_parse -> infrastructure.display: "Help/Errors" {
+presentation.cli_parse -> infrastructure.display: "CLI Help/Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red (error)
+}
+presentation.api_routes -> infrastructure.display: "API Errors" {
   style.stroke-dash: 5
   style.stroke: "#EF9A9A" # Light Red (error)
 }

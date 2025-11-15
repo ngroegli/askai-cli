@@ -10,7 +10,7 @@ import os
 import sys
 
 try:
-    import textual
+    import textual  # noqa: F401 # pylint: disable=unused-import # type: ignore[reportUnusedImport]
     TEXTUAL_AVAILABLE = True
     # Store reference to avoid unused import warning
     _TEXTUAL_MODULE = textual
