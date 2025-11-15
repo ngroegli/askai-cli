@@ -2,14 +2,37 @@
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "askai-cli"
+version = "0.1.0"
+description = "AI-powered CLI tool for intelligent question processing and pattern management"
+authors = [{name = "AskAI Team", email = "info@askai.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
 [tool.setuptools]
-package-dir = {"" = "python"}
-packages = ["python"]
+package-dir = {"" = "src"}
+packages = ["askai"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pylint.MASTER]
-init-hook = "import sys; sys.path.append('.')"
+init-hook = "import sys; sys.path.append('src')"
 ignore-patterns = ["venv/*"]
 disable = ["import-error"]
 
 [tool.pytest.ini_options]
-pythonpath = [".", "python"]
+pythonpath = [".", "src"]

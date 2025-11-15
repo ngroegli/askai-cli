@@ -9,7 +9,7 @@ from flask_restx import Namespace, Resource, fields
 # Add project paths for imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, project_root)
-sys.path.insert(0, os.path.join(project_root, "python"))
+sys.path.insert(0, os.path.join(project_root, "src"))
 
 # pylint: disable=wrong-import-position
 from shared.config.loader import load_config, CONFIG_PATH, ASKAI_DIR

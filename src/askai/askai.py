@@ -8,26 +8,23 @@ import json
 import os
 import sys
 
-# Local application imports - grouped by package
-from infrastructure.output.output_coordinator import OutputCoordinator
+# Local application imports - grouped by package  
+from askai.infrastructure.output.output_coordinator import OutputCoordinator
 
-from modules.ai import AIService
-from modules.chat import ChatManager
-from modules.messaging import MessageBuilder
-from modules.patterns import PatternManager
-from modules.questions import QuestionProcessor
+from askai.modules.ai import AIService
+from askai.modules.chat import ChatManager
+from askai.modules.messaging import MessageBuilder
+from askai.modules.patterns import PatternManager
+from askai.modules.questions import QuestionProcessor
 
-from presentation.cli import CommandHandler
-from presentation.cli.cli_parser import CLIParser
-from presentation.tui import is_tui_available
-from presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
+from askai.presentation.cli import CommandHandler
+from askai.presentation.cli.cli_parser import CLIParser
+from askai.presentation.tui import is_tui_available
+from askai.presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
 
-from shared.config import load_config
-from shared.logging import setup_logger
-from shared.utils import print_error_or_warnings
-
-# Add the parent directory to Python path to enable local imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from askai.shared.config import load_config
+from askai.shared.logging import setup_logger
+from askai.shared.utils import print_error_or_warnings
 
 
 def display_help_fast():

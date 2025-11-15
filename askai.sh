@@ -6,8 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Activate the virtual environment located inside the repo
 source "$SCRIPT_DIR/venv/bin/activate"
 
-# Set Python path to include both the root directory and the python directory
-export PYTHONPATH="$SCRIPT_DIR:$SCRIPT_DIR/python:$PYTHONPATH"
+# Set Python path to include both the root directory and the src directory
+export PYTHONPATH="$SCRIPT_DIR:$SCRIPT_DIR/src:$PYTHONPATH"
 
 # Install the package in development mode if needed
 if [ ! -f "$SCRIPT_DIR/.dev_installed" ]; then
@@ -16,4 +16,4 @@ fi
 
 # Run askai.py using repo-relative path
 cd "$SCRIPT_DIR"
-python3 "$SCRIPT_DIR/python/askai.py" "$@"
+python3 "$SCRIPT_DIR/src/askai/askai.py" "$@"

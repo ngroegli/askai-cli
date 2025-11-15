@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch, MagicMock
 # Setup paths for imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, project_root)
-sys.path.insert(0, os.path.join(project_root, "python"))
+sys.path.insert(0, os.path.join(project_root, "src"))
 sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # Mock the config system before any imports
