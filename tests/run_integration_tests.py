@@ -12,8 +12,10 @@ from typing import Dict, Type
 # Set the testing environment variable to suppress spinner animations
 os.environ['ASKAI_TESTING'] = 'true'
 
-# Add the project root directory to sys.path FIRST
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add the project root and src directory to sys.path FIRST
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, "src"))
 
 # pylint: disable=wrong-import-position
 # Now we can import project modules

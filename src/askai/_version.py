@@ -4,13 +4,13 @@ Version information for AskAI CLI.
 This is the single source of truth for version information.
 All other files should import from here.
 """
+import re
 
-__version__ = "1.2.1-dev"
+__version__ = "1.2.0"
 
 # Parse version info, handling suffixes like -dev, -alpha, etc.
 def _parse_version(version_str):
     """Parse version string into tuple of integers, ignoring suffixes."""
-    import re
     # Extract just the numeric version part (before any suffix)
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', version_str)
     if match:
