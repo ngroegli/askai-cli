@@ -6,7 +6,7 @@ All other files should import from here.
 """
 import re
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 # Parse version info, handling suffixes like -dev, -alpha, etc.
 def _parse_version(version_str):
