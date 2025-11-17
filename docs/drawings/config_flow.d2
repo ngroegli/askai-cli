@@ -1,0 +1,116 @@
+# AskAI CLI - Configuration and Initialization Flow (Layered Architecture)
+title: "Configuration & Initialization Flow"
+
+startup: "Application Startup" {
+  shape: oval
+  style.fill: "#90CAF9" # Light Blue (core app/user)
+}
+
+# Shared Layer Configuration
+shared_config: "Shared Layer" {
+  shape: rectangle
+  style.fill: "#F5F5F5" # Light Gray background
+  style.stroke: "#757575"
+
+  dir_check: "Directory Check\n(shared/config/)" {
+    shape: diamond
+    style.fill: "#BDBDBD" # Light Gray (infra)
+  }
+
+  create_dirs: "Create Directories\n(shared/config/)" {
+    shape: rectangle
+    style.fill: "#BDBDBD" # Light Gray
+  }
+
+  config_check: "Config File Check\n(shared/config/)" {
+    shape: diamond
+    style.fill: "#BDBDBD" # Light Gray
+  }
+
+  load_config: "Load Configuration\n(shared/config/loader.py)" {
+    shape: rectangle
+    style.fill: "#BDBDBD" # Light Gray
+  }
+}
+
+# Presentation Layer Interaction
+presentation_layer: "Presentation Layer" {
+  shape: rectangle
+  style.fill: "#F3E5F5" # Light Purple background
+
+  setup_wizard: "Setup Wizard\n(shared/config/ + cli/)" {
+    shape: rectangle
+    style.fill: "#CE93D8" # Light Purple (CLI/user interaction)
+  }
+}
+
+# Application Core
+app_core: "Application Core" {
+  shape: rectangle
+  style.fill: "#E3F2FD" # Light Blue background
+
+  init_components: "Initialize Components\n(askai.py)" {
+    shape: rectangle
+    style.fill: "#90CAF9" # Light Blue (core app)
+  }
+
+  ready: "Application Ready" {
+    shape: oval
+    style.fill: "#90CAF9" # Light Blue (core app/user)
+  }
+}
+
+# Component Initialization Details
+components: "Layer Initialization" {
+  shape: rectangle
+  style.fill: "#E8F5E9" # Light Green background
+
+  shared_init: "Shared Services\n(config, logging, utils)" {
+    style.fill: "#A5D6A7"
+  }
+
+  modules_init: "Modules Layer\n(ai, patterns, chat, questions)" {
+    style.fill: "#A5D6A7"
+  }
+
+  infra_init: "Infrastructure Layer\n(output processing)" {
+    style.fill: "#A5D6A7"
+  }
+}
+
+# Flow connections
+startup -> shared_config.dir_check: "Check ~/.askai"
+shared_config.dir_check -> shared_config.create_dirs: "Missing"
+shared_config.dir_check -> shared_config.config_check: "Exists"
+shared_config.create_dirs -> shared_config.config_check: "Created"
+shared_config.config_check -> presentation_layer.setup_wizard: "Missing Config"
+shared_config.config_check -> shared_config.load_config: "Config Exists"
+presentation_layer.setup_wizard -> shared_config.load_config: "Config Created"
+shared_config.load_config -> app_core.init_components: "Valid Config"
+app_core.init_components -> components.shared_init: "Initialize Shared"
+components.shared_init -> components.modules_init: "Initialize Modules"
+components.modules_init -> components.infra_init: "Initialize Infrastructure"
+components.infra_init -> app_core.ready: "All Layers Ready"
+
+# Configuration Details
+shared_config.load_config: {
+  label: "• API keys\n• Model settings\n• Path configurations\n• Export constants to shared.config"
+}
+
+app_core.init_components: {
+  label: "• Layer-by-layer initialization\n• Dependency injection\n• Service registration"
+}
+
+# Error handling
+shared_config.dir_check -> startup: "Permission Error" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red (error)
+}
+shared_config.config_check -> startup: "Invalid Config" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red
+}
+presentation_layer.setup_wizard -> startup: "Setup Cancelled" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red
+}

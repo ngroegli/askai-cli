@@ -2,7 +2,8 @@
 # Disable specific errors and import-error to fix the GitHub validation issues
 # W0718: broad-exception-caught
 # W0719: broad-exception-raised
-disable=W0718,W0719
+# C0103: invalid-name (Allow constants to be UPPER_CASE)
+disable=W0718,W0719,C0103
 
 [FORMAT]
 # Allow any line length
@@ -12,6 +13,15 @@ max-line-length=120
 # strictness=high
 
 [BASIC]
+# Regular expression matching correct constant names (UPPER_CASE)
+const-rgx = [A-Z_][A-Z0-9_]*$
+
+# Regular expression matching correct variable names (snake_case)
+variable-rgx = [a-z_][a-z0-9_]*$
+
+# Good variable names which should always be accepted
+good-names = i,j,k,ex,Run,_,id,f,e,GREEN,RED,BLUE,RESET
+
 # Check for properly formatted docstrings
 # docstring-min-length=5
 # no-docstring-rgx=^_
@@ -20,8 +30,8 @@ max-line-length=120
 # Add files or directories to be excluded from pylint checking
 ignore=.git,__pycache__,venv
 
-# Set Python path to include the root directory to fix import issues
-init-hook='import sys; sys.path.append(".")'
+# Set Python path to include the src directory to fix import issues
+init-hook='import sys; sys.path.append("src")'
 
 # Minimum Python version to target
 # py-version=3.8

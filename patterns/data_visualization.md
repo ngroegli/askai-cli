@@ -1,10 +1,10 @@
 # Pattern: Data Visualization
 
-## Purpose:
+## Purpose
 
 The purpose of `data_visualization` is to analyze and visualize data from various sources, helping users to gain insights through graphical representations.
 
-## Functionality:
+## Functionality
 
 * Import and process data from different source formats (CSV, JSON, Excel)
 * Generate visualizations appropriate for the data structure and question being answered
@@ -13,7 +13,7 @@ The purpose of `data_visualization` is to analyze and visualize data from variou
 * Customize visualization style, colors, and annotations
 * Export visualizations in various formats for sharing or embedding
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -84,7 +84,7 @@ input_groups:
     required_inputs: 1
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -128,7 +128,7 @@ results:
       * Consider bundling Products A and B to improve their market share
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

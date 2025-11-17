@@ -1,0 +1,122 @@
+# AskAI CLI - Chat Session Management Flow (Layered Architecture)
+title: "Chat Session Management Flow"
+
+chat_request: "Chat Request" {
+  shape: oval
+  style.fill: "#90CAF9" # Light Blue (core app/user)
+}
+
+# Presentation Layer
+presentation: "Presentation Layer" {
+  shape: rectangle
+  style.fill: "#F3E5F5" # Light Purple background
+
+  cli_parse: "CLI Parsing\n(cli/)" {
+    shape: diamond
+    style.fill: "#CE93D8" # Light Purple (CLI)
+  }
+}
+
+# Modules Layer - Chat Management
+modules: "Modules Layer" {
+  shape: rectangle
+  style.fill: "#E8F5E9" # Light Green background
+
+  session_check: "Session Check\n(chat/chat_manager.py)" {
+    shape: diamond
+    style.fill: "#A5D6A7" # Light Green (data processing)
+  }
+
+  new_session: "Create New Session\n(chat/)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green
+  }
+
+  load_history: "Load Chat History\n(chat/)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green
+  }
+
+  context_build: "Build Context\n(messaging/builder.py)" {
+    shape: rectangle
+    style.fill: "#A5D6A7" # Light Green
+  }
+
+  ai_call: "AI Service Call\n(ai/ai_service.py)" {
+    shape: rectangle
+    style.fill: "#81C784" # Slightly different green for AI
+  }
+}
+
+# Infrastructure Layer - Output Processing
+infrastructure: "Infrastructure Layer" {
+  shape: rectangle
+  style.fill: "#FFF9C4" # Light Yellow background
+
+  response_process: "Process Response\n(output/output_coordinator.py)" {
+    shape: rectangle
+    style.fill: "#FFF176" # Light Yellow
+  }
+
+  display_result: "Display Result\n(output/formatters/)" {
+    shape: oval
+    style.fill: "#FFF176" # Light Yellow
+  }
+}
+
+# Shared Layer - Persistence
+shared: "Shared Layer" {
+  shape: rectangle
+  style.fill: "#FAFAFA" # Light Gray background
+
+  store_history: "Store in History\n(via chat/ using shared/utils/)" {
+    shape: rectangle
+    style.fill: "#BDBDBD" # Light Gray (infra)
+  }
+}
+
+# External Services
+external: "External Services" {
+  shape: rectangle
+  style.fill: "#FFF3E0" # Light Orange
+
+  openrouter: "OpenRouter API" {
+    shape: rectangle
+    style.fill: "#FFCC80" # Light Orange
+  }
+}
+
+# Main flow between layers
+chat_request -> presentation: "User Command"
+presentation -> modules: "Parsed Chat Request"
+modules -> external: "AI Messages"
+external -> infrastructure: "AI Response"
+infrastructure -> shared: "Store Results"
+infrastructure -> presentation: "Formatted Output"
+presentation -> chat_request: "User Feedback"
+
+# Detailed component flow
+presentation.cli_parse -> modules.session_check: "Chat ID"
+modules.session_check -> modules.new_session: "New Session"
+modules.session_check -> modules.load_history: "Existing Session"
+modules.new_session -> modules.context_build: "Empty Context"
+modules.load_history -> modules.context_build: "Historical Context"
+modules.context_build -> modules.ai_call: "Complete Messages"
+modules.ai_call -> external.openrouter: "HTTP Request"
+external.openrouter -> infrastructure.response_process: "AI Response"
+infrastructure.response_process -> shared.store_history: "Formatted Output"
+infrastructure.response_process -> infrastructure.display_result: "User Output"
+shared.store_history -> infrastructure.display_result: "Success Confirmation"
+
+# Chat Management Details
+modules.session_check: {
+  label: "• Check existing chat files\n• Validate chat ID format\n• Load metadata"
+}
+
+modules.context_build: {
+  label: "• Combine chat history\n• Add current message\n• Maintain context limits"
+}
+
+shared.store_history: {
+  label: "• JSON chat file format\n• Timestamp tracking\n• Metadata updates"
+}

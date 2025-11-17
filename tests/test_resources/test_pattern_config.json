@@ -1,0 +1,185 @@
+{
+  "patterns": [
+    {
+      "name": "data_visualization",
+      "description": "Test data visualization pattern with sample data",
+      "input": {
+        "csv_file": "/home/nicola/Git/askai-cli/tests/test_resources/test_data.csv",
+        "chart_type": "bar",
+        "title": "Sales Data Visualization",
+        "include_3d": false,
+        "x_axis_label": "Products",
+        "y_axis_label": "Sales"
+      },
+      "expected_patterns": [
+        "chart|graph|visualization|plot|bar",
+        "Product A|Product B|Product C",
+        "100|150|75"
+      ]
+    },
+    {
+      "name": "image_interpretation",
+      "description": "Test image interpretation pattern",
+      "input": {
+        "image_url": "https://example.com/test.jpg",
+        "analysis_focus": "content",
+        "detail_level": "comprehensive",
+        "include_technical_details": true,
+        "custom_instructions": "Analyze this image for content and describe what you see"
+      },
+      "expected_patterns": [
+        "No content found for output detailed_analysis - will have empty output",
+        "image_interpretation",
+        "executed"
+      ]
+    },
+    {
+      "name": "it_solution_market_analysis",
+      "description": "Test IT solution market analysis pattern",
+      "input": {
+        "product_description": "CloudSync Pro: Cloud Storage solution with real-time sync, end-to-end encryption, and multi-platform support",
+        "focus_aspects": "security, scalability, pricing",
+        "market_region": "global",
+        "max_competitors": 5
+      },
+      "expected_patterns": [
+        "CloudSync Pro|cloud storage|storage",
+        "sync|encryption|platform|security",
+        "market|analysis|competitor"
+      ]
+    },
+    {
+      "name": "kql_generation",
+      "description": "Test KQL query generation pattern",
+      "input": {
+        "question": "Find all failed login attempts in the last 24 hours from SecurityEvent table",
+        "data_source": "SecurityEvent",
+        "time_range": "24h",
+        "output_format": "table",
+        "include_comments": true
+      },
+      "expected_patterns": [
+        "SecurityEvent|security",
+        "login|authentication|failed",
+        "24|hours|time"
+      ]
+    },
+    {
+      "name": "linux_cli_command_generation",
+      "description": "Test Linux CLI command generation pattern",
+      "input": {
+        "scenario_description": "Find all files larger than 100MB in the /var/log directory",
+        "command_style": "modern",
+        "include_explanation": true,
+        "safety_level": "safe"
+      },
+      "expected_patterns": [
+        "find|locate",
+        "100MB|size|larger",
+        "/var/log|directory|files"
+      ]
+    },
+    {
+      "name": "log_interpretation",
+      "description": "Test log interpretation pattern",
+      "input": {
+        "log_file": "/home/nicola/Git/askai-cli/tests/test_resources/test.log",
+        "analysis_depth": "detailed",
+        "include_recommendations": true,
+        "focus_areas": "errors, performance, security"
+      },
+      "expected_patterns": [
+        "ERROR|error|timeout",
+        "database|connection|DatabaseConnection",
+        "30 seconds|db-prod-01"
+      ]
+    },
+    {
+      "name": "one_page_website_generation",
+      "description": "Test one page website generation pattern",
+      "skip_in_tests": true,
+      "skip_reason": "Creates files during testing - manual verification required",
+      "input": {
+        "brand_name": "Brew & Bean",
+        "website_purpose": "business landing page",
+        "business_type": "coffee shop",
+        "sections_needed": "menu, location, contact info",
+        "contact_info": "123 Coffee Street, brew@bean.com, (555) 123-4567",
+        "include_css": true,
+        "responsive_design": true
+      },
+      "expected_patterns": [
+        "Brew & Bean|coffee shop",
+        "menu|location|contact",
+        "html|website|landing page"
+      ]
+    },
+    {
+      "name": "pattern_md_generation",
+      "description": "Test pattern markdown generation",
+      "skip_in_tests": true,
+      "skip_reason": "Creates files during testing - manual verification required",
+      "input": {
+        "goal_description": "Generate email templates with recipient, subject, and body content",
+        "pattern_name": "email_template_generator",
+        "input_fields": "recipient, subject, body content",
+        "output_format": "html",
+        "include_examples": true
+      },
+      "expected_patterns": [
+        "email|template|pattern",
+        "recipient|subject|body",
+        "markdown|generation|inputs"
+      ]
+    },
+    {
+      "name": "pdf_summary",
+      "description": "Test PDF summary pattern",
+      "input": {
+        "pdf_url": "https://example.com/quarterly-report.pdf",
+        "summary_type": "executive",
+        "focus_areas": "key points, metrics, recommendations",
+        "document_context": "quarterly sales performance report",
+        "length": "concise",
+        "include_bullet_points": true
+      },
+      "expected_patterns": [
+        "No content found for output detailed_analysis - will have empty output",
+        "pdf_summary",
+        "executed"
+      ]
+    },
+    {
+      "name": "spl_generation",
+      "description": "Test SPL (Splunk) query generation pattern",
+      "input": {
+        "question": "Search for HTTP 500 errors in web server logs and count by source IP",
+        "data_source": "web server logs",
+        "time_range": "last 24 hours",
+        "include_visualization": true
+      },
+      "expected_patterns": [
+        "HTTP 500|500 error|error",
+        "web server|logs|source IP",
+        "search|count|splunk"
+      ]
+    },
+    {
+      "name": "website_content_summary",
+      "description": "Test website content summary pattern",
+      "input": {
+        "website_url": "https://example-product.com",
+        "summary_focus": "main features and benefits",
+        "content_type": "product website",
+        "summary_length": "comprehensive",
+        "include_key_metrics": true,
+        "target_audience": "technical"
+      },
+      "expected_patterns": [
+        "summary|summarize|main",
+        "features|benefits|product",
+        "website|content|analysis"
+      ]
+    }
+  ]
+}

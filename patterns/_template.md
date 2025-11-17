@@ -4,12 +4,12 @@
 # PROMPT CONTENT - PROVIDED TO AI DIRECTLY
 # ========================================
 
-## Purpose:
+## Purpose
 
 Describe the main purpose of this system. This section will be provided directly to the AI.
 The description should be clear and informative as it helps the AI understand its role.
 
-## Functionality:
+## Functionality
 
 List the key capabilities and features that will be provided to the AI:
 * Feature 1 - Detailed explanation of what this feature does
@@ -20,7 +20,7 @@ List the key capabilities and features that will be provided to the AI:
 # PATTERN CONFIGURATION - NOT IN PROMPT
 # =======================================
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
@@ -69,7 +69,7 @@ input_groups:
     required_inputs: 1
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -108,7 +108,7 @@ results:
 # MODEL CONFIGURATION - FOR API CALL CONFIGURATION
 # ================================================
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:

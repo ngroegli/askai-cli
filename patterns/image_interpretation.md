@@ -1,10 +1,10 @@
 # Pattern: Image Interpretation
 
-## Purpose:
+## Purpose
 
 The purpose of `image_interpretation` is to analyze and provide detailed descriptions of images from either local file paths or web URLs. This system helps users understand image content without needing visual access, supports accessibility needs, and extracts meaningful information from visual data.
 
-## Functionality:
+## Functionality
 
 * Analyze images from local file paths or web URLs
 * Provide detailed descriptions of image content, subjects, and context
@@ -13,12 +13,12 @@ The purpose of `image_interpretation` is to analyze and provide detailed descrip
 * Detect and describe relationships between elements in the image
 * Support accessibility needs by offering comprehensive textual alternatives to visual content
 
-## Pattern Inputs:
+## Pattern Inputs
 
 ```yaml
 inputs:
   - name: image_url
-    description: URL to an image on the web
+    description: URL to an image on the web (JPG)
     type: text
     required: true
     group: image_source
@@ -54,7 +54,7 @@ input_groups:
     required_inputs: 1
 ```
 
-## Pattern Outputs:
+## Pattern Outputs
 
 ```yaml
 results:
@@ -93,7 +93,7 @@ results:
       * **Camera Info**: DSLR with wide-angle lens
 ```
 
-## Model Configuration:
+## Model Configuration
 
 ```yaml
 model:
@@ -105,23 +105,23 @@ model:
 format_instructions: |
   When interpreting images:
   
-  1. First provide a concise summary of what's in the image (1-3 sentences)
-  2. Then provide a detailed analysis with the following sections:
+  1. Your response MUST be valid JSON with the following structure:
+     ```json
+     {
+       "detailed_analysis": "Comprehensive markdown formatted analysis of the image"
+     }
+     ```
+  
+  2. The detailed_analysis should be formatted in markdown with these sections:
+     - Summary: A concise summary of what's in the image (1-3 sentences)
      - Description: A comprehensive description of the image contents
-     - Key Elements: List of main objects, people, text, and visual elements
+     - Key Elements Identified: List of main objects, people, text, and visual elements
      - Technical Analysis: Style, composition, color palette, and artistic elements
      - Context: Cultural, historical, or other relevant contextual information when applicable
   
+  3. IMPORTANT: Always wrap your entire response in a JSON code block.
+     The "detailed_analysis" field MUST be present.
+  
   Your analysis should be thorough, objective, and accessible, helping users understand 
   all important aspects of the visual content.
-```
-
-## Model Configuration:
-
-```yaml
-model:
-  provider: openrouter
-  model_name: anthropic/claude-3.5-sonnet
-  temperature: 0.2
-  max_tokens: 2000
 ```

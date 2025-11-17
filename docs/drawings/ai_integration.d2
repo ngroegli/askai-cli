@@ -1,0 +1,105 @@
+# AskAI CLI - AI Service Integration Architecture (Layered Architecture)
+title: "AI Service Integration Architecture"
+
+# Application Core
+app_core: "Application Core" {
+  style.fill: "#E3F2FD" # Light Blue (group)
+
+  main_orchestrator: "Main Orchestrator (askai.py)" {style.fill: "#90CAF9"} # Light Blue (node)
+}
+
+# Modules Layer - AI Services
+ai_modules: "Modules Layer - AI" {
+  style.fill: "#E8F5E9" # Light Green (group)
+
+  ai_service: "ai/ai_service.py" {style.fill: "#A5D6A7"} # Light Green (node)
+  openrouter_client: "ai/openrouter_client.py" {style.fill: "#A5D6A7"}
+  model_config: "Model Configuration" {style.fill: "#A5D6A7"}
+}
+
+# Modules Layer - Messaging
+messaging_modules: "Modules Layer - Messaging" {
+  style.fill: "#E8F5E9" # Light Green (group)
+
+  message_builder: "messaging/builder.py" {style.fill: "#A5D6A7"} # Light Green (node)
+  content_encoder: "Content Encoder" {style.fill: "#A5D6A7"}
+  format_handler: "Format Handler" {style.fill: "#A5D6A7"}
+}
+
+# Infrastructure Layer - Output Processing
+output_infrastructure: "Infrastructure Layer - Output" {
+  style.fill: "#FFF9C4" # Light Yellow (group)
+
+  output_coordinator: "output/output_coordinator.py" {style.fill: "#FFF176"} # Light Yellow (node)
+  content_extractor: "output/processors/content_extractor.py" {style.fill: "#FFF176"}
+  response_normalizer: "output/processors/response_normalizer.py" {style.fill: "#FFF176"}
+  pattern_processor: "output/processors/pattern_processor.py" {style.fill: "#FFF176"}
+  directory_manager: "output/processors/directory_manager.py" {style.fill: "#FFF176"}
+}
+
+# Shared Layer
+shared_services: "Shared Layer" {
+  style.fill: "#FAFAFA" # Light Gray (group)
+
+  config_loader: "config/loader.py" {style.fill: "#BDBDBD"} # Light Gray (node)
+  utils_helpers: "utils/helpers.py" {style.fill: "#BDBDBD"}
+  logging_setup: "logging/setup.py" {style.fill: "#BDBDBD"}
+}
+
+# External Services
+external: "External Services" {
+  style.fill: "#FFF3E0" # Light Orange (group)
+
+  openrouter_api: "OpenRouter API" {style.fill: "#FFCC80"} # Light Orange (node)
+  ai_models: "AI Models (Claude, GPT, etc.)" {style.fill: "#FFCC80"}
+  web_services: "Web Search Services" {style.fill: "#FFCC80"}
+}
+
+# Layer-to-Layer Connections
+app_core -> ai_modules: "AI service calls"
+app_core -> messaging_modules: "Message building"
+ai_modules -> output_infrastructure: "Response processing"
+ai_modules -> shared_services: "Configuration & utilities"
+messaging_modules -> shared_services: "Common services"
+output_infrastructure -> shared_services: "Logging & utilities"
+
+# External Integration
+ai_modules -> external: "API requests"
+external -> ai_modules: "AI responses"
+
+# Detailed Component Flows
+app_core.main_orchestrator -> ai_modules.ai_service: "Coordinate AI interactions"
+ai_modules.ai_service -> ai_modules.model_config: "Configure models"
+ai_modules.model_config -> ai_modules.openrouter_client: "Model settings"
+
+messaging_modules.message_builder -> messaging_modules.content_encoder: "Encode content"
+messaging_modules.content_encoder -> messaging_modules.format_handler: "Format messages"
+messaging_modules.format_handler -> ai_modules.openrouter_client: "Formatted messages"
+
+ai_modules.openrouter_client -> external.openrouter_api: "HTTP requests"
+external.openrouter_api -> external.ai_models: "Route to models"
+external.ai_models -> external.openrouter_api: "Model responses"
+external.openrouter_api -> output_infrastructure.content_extractor: "Raw responses"
+
+output_infrastructure.content_extractor -> output_infrastructure.response_normalizer: "Extracted content"
+output_infrastructure.response_normalizer -> output_infrastructure.output_coordinator: "Normalized responses"
+output_infrastructure.output_coordinator -> app_core.main_orchestrator: "Processed results"
+
+# Shared Services Integration
+ai_modules.ai_service -> shared_services.config_loader: "API keys & settings"
+messaging_modules.message_builder -> shared_services.utils_helpers: "File encoding & utilities"
+ai_modules.ai_service -> shared_services.logging_setup: "Logging services"
+output_infrastructure.output_coordinator -> shared_services.logging_setup: "Logging services"
+
+# Multimodal and Web Search
+messaging_modules.content_encoder: {
+  label: "• Image encoding (base64)\n• PDF text extraction\n• URL content fetching"
+}
+
+ai_modules.openrouter_client: {
+  label: "• Web search plugin integration\n• Multimodal content support\n• Error handling & retries"
+}
+
+output_infrastructure.content_extractor: {
+  label: "• JSON response parsing\n• Malformed JSON fallback\n• Pattern content extraction"
+}

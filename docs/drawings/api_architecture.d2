@@ -1,0 +1,164 @@
+# AskAI API - Containerized REST API Service Architecture
+title: "AskAI API Service Architecture"
+
+# External Clients
+web_client: "Web Client" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external)
+}
+
+curl_client: "cURL/Postman" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external)
+}
+
+external_app: "External Application" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external)
+}
+
+# Docker Infrastructure
+docker_infra: "Docker Infrastructure" {
+  shape: rectangle
+  style.fill: "#E3F2FD" # Light Blue background
+  style.stroke: "#2196F3"
+
+  nginx: "nginx\n(Reverse Proxy)" {
+    style.fill: "#90CAF9"
+    label: "• Request routing\n• Load balancing\n• SSL termination\n• Port 80/443"
+  }
+
+  api_container: "AskAI API Container" {
+    shape: rectangle
+    style.fill: "#BBDEFB" # Lighter blue
+    style.stroke: "#1976D2"
+
+    gunicorn: "Gunicorn\n(WSGI Server)" {
+      style.fill: "#64B5F6"
+      label: "• Production WSGI server\n• Worker processes\n• Port 8080"
+    }
+
+    flask_app: "Flask Application\n(app.py)" {
+      style.fill: "#42A5F5"
+      label: "• CORS configuration\n• Error handlers\n• Swagger UI setup\n• Route registration"
+    }
+
+    api_routes: "API Routes" {
+      shape: rectangle
+      style.fill: "#E3F2FD" # Very light blue
+
+      questions_route: "Questions Route\n(/api/v1/questions/ask)" {
+        style.fill: "#90CAF9"
+        label: "• POST: Process questions\n• Multimodal support\n• Format options"
+      }
+
+      patterns_route: "Patterns Routes\n(/api/v1/patterns/)" {
+        style.fill: "#90CAF9"
+        label: "• GET: List patterns\n• GET /{id}: Pattern details\n• POST /{id}: Execute pattern"
+      }
+
+      health_route: "Health Route\n(/api/v1/health/)" {
+        style.fill: "#90CAF9"
+        label: "• GET: System health\n• Configuration status"
+      }
+    }
+
+    swagger_ui: "Swagger UI\n(/docs/)" {
+      style.fill: "#42A5F5"
+      label: "• Interactive API docs\n• Request testing\n• Schema validation"
+    }
+
+    api_schemas: "Request/Response Schemas\n(Marshmallow)" {
+      style.fill: "#42A5F5"
+      label: "• JSON validation\n• Error handling\n• Type conversion"
+    }
+
+    core_services: "Core Services" {
+      shape: rectangle
+      style.fill: "#E8F5E9" # Light Green background
+
+      question_processor: "QuestionProcessor" {
+        style.fill: "#A5D6A7"
+        label: "• Multimodal processing\n• Format handling\n• Input validation"
+      }
+
+      pattern_manager: "PatternManager" {
+        style.fill: "#A5D6A7"
+        label: "• Pattern discovery\n• Input validation\n• Output processing"
+      }
+
+      ai_service: "AIService" {
+        style.fill: "#A5D6A7"
+        label: "• OpenRouter integration\n• Model configuration\n• Response handling"
+      }
+
+      message_builder: "MessageBuilder" {
+        style.fill: "#A5D6A7"
+        label: "• Content encoding\n• Message formatting\n• Template application"
+      }
+
+      output_coordinator: "OutputCoordinator" {
+        style.fill: "#A5D6A7"
+        label: "• Response formatting\n• JSON serialization\n• Error standardization"
+      }
+    }
+  }
+}
+
+# External Services
+external_services: "External Services" {
+  shape: rectangle
+  style.fill: "#FFF3E0" # Light Orange background
+  style.stroke: "#FF9800"
+
+  openrouter_api: "OpenRouter API" {
+    style.fill: "#FFCC80"
+    label: "• AI model access\n• Multimodal support\n• Web search integration"
+  }
+}
+
+# HTTP Request Flow
+web_client -> docker_infra.nginx: "HTTP/HTTPS Requests"
+curl_client -> docker_infra.nginx: "API Calls"
+external_app -> docker_infra.nginx: "Integration Requests"
+
+docker_infra.nginx -> docker_infra.api_container.gunicorn: "Proxied Requests"
+docker_infra.api_container.gunicorn -> docker_infra.api_container.flask_app: "WSGI Requests"
+
+# Flask Application Internal Flow
+docker_infra.api_container.flask_app -> docker_infra.api_container.swagger_ui: "Documentation Serving"
+docker_infra.api_container.flask_app -> docker_infra.api_container.api_routes: "Route Registration"
+docker_infra.api_container.api_routes -> docker_infra.api_container.api_schemas: "Request Validation"
+
+# API Routes to Core Services
+docker_infra.api_container.api_routes.questions_route -> docker_infra.api_container.core_services.question_processor: "Question Processing"
+docker_infra.api_container.api_routes.patterns_route -> docker_infra.api_container.core_services.pattern_manager: "Pattern Operations"
+docker_infra.api_container.api_routes.health_route -> docker_infra.api_container.core_services: "System Status"
+
+# Core Service Interactions (Within Container)
+docker_infra.api_container.core_services.question_processor -> docker_infra.api_container.core_services.message_builder: "Message Construction"
+docker_infra.api_container.core_services.question_processor -> docker_infra.api_container.core_services.ai_service: "AI Interaction"
+docker_infra.api_container.core_services.pattern_manager -> docker_infra.api_container.core_services.ai_service: "Pattern Execution"
+docker_infra.api_container.core_services.ai_service -> external_services.openrouter_api: "AI API Requests"
+
+# Response Processing
+external_services.openrouter_api -> docker_infra.api_container.core_services.output_coordinator: "AI Responses"
+docker_infra.api_container.core_services.output_coordinator -> docker_infra.api_container.api_routes: "JSON Responses"
+
+# HTTP Response Flow
+docker_infra.api_container.api_routes -> docker_infra.api_container.gunicorn: "HTTP Responses"
+docker_infra.api_container.gunicorn -> docker_infra.nginx: "Proxied Responses"
+docker_infra.nginx -> web_client: "HTTP/HTTPS Responses"
+docker_infra.nginx -> curl_client: "API Responses"
+docker_infra.nginx -> external_app: "Integration Responses"
+
+# Error Handling Flow
+docker_infra.api_container.api_schemas -> docker_infra.api_container.api_routes: "Validation Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red
+}
+
+external_services.openrouter_api -> docker_infra.api_container.core_services.output_coordinator: "API Errors" {
+  style.stroke-dash: 5
+  style.stroke: "#EF9A9A" # Light Red
+}

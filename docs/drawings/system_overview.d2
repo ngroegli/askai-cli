@@ -1,0 +1,94 @@
+# AskAI CLI - High-Level System Architecture (Layered Architecture with API)
+title: "AskAI CLI - System Overview"
+
+user: "User" {
+  shape: person
+  style.fill: "#90CAF9" # Light Blue (core app, user)
+}
+
+web_client: "Web Client" {
+  shape: rectangle
+  style.fill: "#FFB74D" # Light Orange (external client)
+}
+
+# Presentation Layer
+presentation: "Presentation Layer" {
+  shape: rectangle
+  style.fill: "#F3E5F5" # Light Purple (CLI/API group)
+
+  cli_parser: "CLI Parser" { style.fill: "#CE93D8" }
+  command_handler: "Command Handler" { style.fill: "#CE93D8" }
+  banner_parser: "Banner Display" { style.fill: "#CE93D8" }
+
+  api_routes: "REST API Routes" { style.fill: "#BA68C8" }
+  flask_app: "Flask Application" { style.fill: "#BA68C8" }
+  swagger_docs: "Swagger Documentation" { style.fill: "#BA68C8" }
+}
+
+# Application Core
+app: "Application Core" {
+  shape: rectangle
+  style.fill: "#E3F2FD" # Light Blue (core app group)
+
+  orchestrator: "Main Orchestrator (askai.py)" { style.fill: "#90CAF9" }
+  workflow: "Workflow Coordinator" { style.fill: "#90CAF9" }
+}
+
+# Modules Layer (Core Business Logic)
+modules: "Modules Layer" {
+  shape: rectangle
+  style.fill: "#E8F5E9" # Light Green (business logic group)
+
+  ai_module: "AI Services" { style.fill: "#A5D6A7" }
+  patterns_module: "Pattern System" { style.fill: "#A5D6A7" }
+  questions_module: "Question Processing" { style.fill: "#A5D6A7" }
+  chat_module: "Chat Management" { style.fill: "#A5D6A7" }
+  messaging_module: "Message Building" { style.fill: "#A5D6A7" }
+}
+
+# Infrastructure Layer
+infrastructure: "Infrastructure Layer" {
+  shape: rectangle
+  style.fill: "#FFF9C4" # Light Yellow (infrastructure group)
+
+  output_infra: "Output Processing" { style.fill: "#FFF176" }
+  file_operations: "File Operations" { style.fill: "#FFF176" }
+  formatters: "Display Formatters" { style.fill: "#FFF176" }
+}
+
+# Shared Layer
+shared: "Shared Layer" {
+  shape: rectangle
+  style.fill: "#FAFAFA" # Light Gray (shared services group)
+
+  config: "Configuration" { style.fill: "#BDBDBD" }
+  logging: "Logging" { style.fill: "#BDBDBD" }
+  utils: "Utilities" { style.fill: "#BDBDBD" }
+}
+
+# External Services
+external: "External Services" {
+  shape: rectangle
+  style.fill: "#FFF3E0" # Light Orange (AI integration group)
+
+  openrouter: "OpenRouter API" { style.fill: "#FFCC80" }
+  ai_models: "AI Models" { style.fill: "#FFCC80" }
+}
+
+# Layer Connections
+user -> presentation: "CLI Commands & Input"
+web_client -> presentation: "HTTP Requests"
+presentation -> app: "Parsed Arguments"
+app -> modules: "Business Logic Calls"
+modules -> infrastructure: "Output Processing"
+modules -> external: "API Requests"
+external -> modules: "AI Responses"
+infrastructure -> presentation: "Formatted Output"
+presentation -> user: "CLI Results & Feedback"
+presentation -> web_client: "HTTP Responses"
+
+# Shared services connections (all layers use shared)
+presentation -> shared: "Common Services"
+app -> shared: "Common Services"
+modules -> shared: "Common Services"
+infrastructure -> shared: "Common Services"
