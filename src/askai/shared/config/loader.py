@@ -400,11 +400,13 @@ def load_config():
                 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                     prod_config = yaml.safe_load(f)
                     # Use production config but modify paths for testing
+                    import tempfile
+                    temp_dir = tempfile.gettempdir()
                     prod_config['enable_logging'] = False
-                    prod_config['log_path'] = '/tmp/test.log'
+                    prod_config['log_path'] = os.path.join(temp_dir, 'test.log')
                     prod_config['log_level'] = 'ERROR'
                     if 'chat' in prod_config:
-                        prod_config['chat']['storage_path'] = '/tmp/test-chats'
+                        prod_config['chat']['storage_path'] = os.path.join(temp_dir, 'test-chats')
                     if 'interface' in prod_config and 'tui_features' in prod_config['interface']:
                         prod_config['interface']['tui_features']['enabled'] = False
                         prod_config['interface']['tui_features']['animations'] = False
@@ -414,12 +416,14 @@ def load_config():
 
         # Last resort: return minimal config with warnings
         print("Warning: Using minimal test configuration. Integration tests may fail.")
+        import tempfile
+        temp_dir = tempfile.gettempdir()
         return {
             'api_key': 'test-key',
             'default_model': 'test-model',
             'base_url': 'https://test.api.com',
             'enable_logging': False,
-            'log_path': '/tmp/test.log',
+            'log_path': os.path.join(temp_dir, 'test.log'),
             'log_level': 'ERROR',
             'patterns': {
                 'private_patterns_path': ''
@@ -430,7 +434,7 @@ def load_config():
                 'max_results': 5
             },
             'chat': {
-                'storage_path': '/tmp/test-chats',
+                'storage_path': os.path.join(temp_dir, 'test-chats'),
                 'max_history': 10
             },
             'interface': {

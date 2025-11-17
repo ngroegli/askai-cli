@@ -20,12 +20,16 @@ from askai.presentation.api.app import create_app
 def main():
     """Main entry point for the API server."""
     parser = argparse.ArgumentParser(description='Start the AskAI API server')
-    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
+    parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (default: 127.0.0.1, use 0.0.0.0 for all interfaces)')
     parser.add_argument('--port', type=int, default=8080, help='Port to bind to (default: 8080)')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('--config', help='Path to configuration file')
 
     args = parser.parse_args()
+
+    # Warn if binding to all interfaces
+    if args.host == '0.0.0.0':
+        print("⚠️  Warning: Binding to all interfaces (0.0.0.0). Ensure this is intended and secure.")
 
     # Set environment variables
     os.environ['FLASK_HOST'] = args.host

@@ -318,7 +318,22 @@ class PatternOutput:
         # Execute the command
         print("\n📄 Executing command...\n")
         try:
-            subprocess.run(cleaned_command, shell=True, check=True)
+            # Use shlex.split for safer command execution
+            import shlex
+            # For complex shell commands, we need to use shell=True but validate input
+            if any(char in cleaned_command for char in ['|', '&', ';', '$', '`']):
+                # Complex shell command - warn user and get confirmation
+                print("⚠️  Warning: Complex shell command detected. This will be executed with shell=True.")
+                print(f"Command: {cleaned_command}")
+                confirm = input("Do you want to continue? (y/N): ").lower().strip()
+                if confirm != 'y':
+                    print("Command execution cancelled.")
+                    return False
+                subprocess.run(cleaned_command, shell=True, check=True)
+            else:
+                # Simple command - use safer approach
+                args = shlex.split(cleaned_command)
+                subprocess.run(args, check=True)
             print("\n✅ Command executed successfully")
             return True
         except Exception as e:

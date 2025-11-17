@@ -18,9 +18,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from askai._version import __version__ as current_version
 
 def run_command(cmd, check=True):
-    """Run shell command."""
+    """Run shell command safely."""
+    import shlex
     print(f"Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, check=False)
+    
+    try:
+        # Try to use safer execution
+        if any(char in cmd for char in ['|', '&', ';', '$', '`']):
+            # Complex shell command - use shell=True but note it's for docker commands only
+            result = subprocess.run(cmd, shell=True, check=False)
+        else:
+            # Simple command - use safer approach  
+            args = shlex.split(cmd)
+            result = subprocess.run(args, check=False)
+    except (ValueError, OSError):
+        # Fallback for complex docker commands that need shell=True
+        result = subprocess.run(cmd, shell=True, check=False)
+    
     if check and result.returncode != 0:
         print(f"Command failed with exit code {result.returncode}")
         sys.exit(1)

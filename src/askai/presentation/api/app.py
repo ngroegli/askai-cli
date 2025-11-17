@@ -176,10 +176,15 @@ def main():
     """Main entry point for running the Flask development server."""
     app = create_app()
 
-    # Get configuration from environment
-    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    # Get configuration from environment with secure defaults
+    # Default to localhost for development, use 0.0.0.0 only when explicitly set
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')  # Changed from '0.0.0.0' to '127.0.0.1'
     port = int(os.environ.get('FLASK_PORT', 8080))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+
+    # Warn if binding to all interfaces
+    if host == '0.0.0.0':
+        print("⚠️  Warning: Binding to all interfaces (0.0.0.0). Ensure this is intended for production.")
 
     app.run(host=host, port=port, debug=debug)
 

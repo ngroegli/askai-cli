@@ -19,19 +19,39 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from askai._version import __version__ as current_version
 
 def run_command(cmd, check=True, capture=False):
-    """Run shell command."""
-    if capture:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
-        if check and result.returncode != 0:
-            print(f"Command failed: {cmd}")
-            print(f"Error: {result.stderr}")
-            sys.exit(1)
-        return result.stdout.strip()
-
-    result = subprocess.run(cmd, shell=True, check=False)
+    """Run shell command safely."""
+    import shlex
+    
+    try:
+        # Try safer execution for simple commands
+        if any(char in cmd for char in ['|', '&', ';', '$', '`', '>']):
+            # Complex shell command - use shell=True (needed for git operations)
+            if capture:
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+            else:
+                result = subprocess.run(cmd, shell=True, check=False)
+        else:
+            # Simple command - use safer approach
+            args = shlex.split(cmd)
+            if capture:
+                result = subprocess.run(args, capture_output=True, text=True, check=False)
+            else:
+                result = subprocess.run(args, check=False)
+    except (ValueError, OSError):
+        # Fallback for complex git commands
+        if capture:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+        else:
+            result = subprocess.run(cmd, shell=True, check=False)
+    
     if check and result.returncode != 0:
         print(f"Command failed: {cmd}")
+        if capture:
+            print(f"Error: {result.stderr}")
         sys.exit(1)
+    
+    if capture:
+        return result.stdout.strip()
     return result.returncode
 
 def get_git_commits_since_tag(tag):

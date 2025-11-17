@@ -76,8 +76,8 @@ jobs:
       - name: Run Bandit Security Linter
         run: |
           echo "🔍 Scanning code for security issues..."
-          bandit -r src/ -f json -o bandit-report.json || true
-          bandit -r src/ -f txt
+          bandit -c .bandit -r src/ -f json -o bandit-report.json || true
+          bandit -c .bandit -r src/ -f txt
 
       - name: Upload Bandit Report
         if: always()

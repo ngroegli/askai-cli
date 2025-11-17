@@ -51,7 +51,7 @@ def bump_version(version_str, bump_type, suffix=None):
         raise ValueError(f"Invalid bump type: {bump_type}")
 
     base_version = f"{major}.{minor}.{patch}"
-    
+
     if suffix:
         return f"{base_version}-{suffix}"
     return base_version

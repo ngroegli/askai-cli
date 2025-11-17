@@ -187,7 +187,7 @@ jobs:
           image-ref: "ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }}"
           format: "table"
           severity: "CRITICAL,HIGH"
-          vuln-type: "library"  # Focus on application dependencies, not OS packages
+          vuln-type: "library" # Focus on application dependencies, not OS packages
           exit-code: "1" # Fail if critical/high vulnerabilities found in application
 
       - name: Show OS vulnerabilities (informational only)
@@ -309,7 +309,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: main  # Explicitly checkout main branch, not the tag
+          ref: main # Explicitly checkout main branch, not the tag
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
