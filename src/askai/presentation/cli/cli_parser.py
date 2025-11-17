@@ -1,17 +1,12 @@
 """
 CLI argument parsing and validation module.
-Ha        chat_group.add_argument(
-            '-pc', '--persistent-chat',
-            nargs='?',
-            const='new',
-            metavar='CHAT_ID',
-            help='Enable persistent chat. Use without value to create new chat, '
-        ) all command-line argument setup, parsing, and validation logic.
+Handles all command-line argument setup, parsing, and validation logic.
 """
 
 import sys
 import json
 from askai.shared.utils import print_error_or_warnings
+from askai import __version__, get_full_version
 from .banner_argument_parser import BannerArgumentParser
 
 
@@ -24,6 +19,10 @@ class CLIParser:
     def _setup_argument_parser(self):
         """Setup and configure the argument parser for the CLI."""
         parser = BannerArgumentParser(description="AskAI - AI assistant for your terminal")
+
+        # Add version argument
+        parser.add_argument('--version', action='version',
+                          version=f'AskAI CLI {get_full_version()}')
 
         # Question-related options (grouped together)
         question_group = parser.add_argument_group('Question logic (ignored when using patterns)')

@@ -6,7 +6,9 @@ manage patterns, and provide intelligent responses through multiple interfaces i
 traditional CLI, TUI, and REST API.
 """
 
-__version__ = "0.1.0"
+# Import version from centralized location
+from ._version import __version__, get_version, get_version_info, get_full_version
+
 __author__ = "AskAI Team"
 __email__ = "info@askai.com"
 __license__ = "MIT"
@@ -20,6 +22,9 @@ __all__ = [
     '__author__',
     '__email__',
     '__license__',
+    'get_version',
+    'get_version_info',
+    'get_full_version',
     'load_config',
     'setup_logger',
     'get_logger',
