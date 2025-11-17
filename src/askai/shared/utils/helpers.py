@@ -7,15 +7,16 @@ Contains core util            # Open and read the file in binary mode
                 return file_contentdling, command execution, and formatting.
 """
 
-import os
-import sys
-import itertools
-import time
-import subprocess
 import base64
+import itertools
 import json
-from tqdm import tqdm
+import os
+import shlex
+import subprocess
+import sys
+import time
 from termcolor import colored, cprint
+from tqdm import tqdm
 
 
 def tqdm_spinner(stop_event):
@@ -230,7 +231,6 @@ This is not a suggestion - this is a strict formatting requirement that must be 
 
 def capture_command_output(command):
     """Run a shell command and capture output, return stdout as string."""
-    import shlex
     # Try to use safer execution first
     try:
         # If command is a string with shell operators, use shell=True but warn
@@ -251,8 +251,6 @@ def capture_command_output(command):
     if result.returncode:
         raise subprocess.SubprocessError(f"Command failed: {result.stderr}")
     return result.stdout
-
-
 def print_error_or_warnings(text, warning_only=False):
     """
     Print error or warning messages with appropriate background colors.

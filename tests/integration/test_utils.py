@@ -46,8 +46,8 @@ def run_cli_command(args: List[str], input_text: Optional[str] = None) -> Tuple[
         if not python_executable.startswith(os.path.join(PROJECT_ROOT, "venv")):
             python_executable = venv_python
 
-    # Use the Python interpreter directly with the correct module
-    cmd = [python_executable, os.path.join(PROJECT_ROOT, "python/askai.py")] + args
+    # Use the shell script which handles the Python path correctly
+    cmd = [CLI_SCRIPT] + args
 
     # Set up the subprocess parameters
     process = subprocess.Popen(

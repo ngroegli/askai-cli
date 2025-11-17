@@ -7,6 +7,7 @@ with proper version management integration.
 """
 
 import argparse
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -19,7 +20,6 @@ from askai._version import __version__ as current_version
 
 def run_command(cmd, check=True):
     """Run shell command safely."""
-    import shlex
     print(f"Running: {cmd}")
 
     try:

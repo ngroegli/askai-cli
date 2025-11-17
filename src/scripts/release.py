@@ -7,6 +7,7 @@ git tagging, and semantic versioning.
 """
 
 import argparse
+import shlex
 import subprocess
 import sys
 from datetime import datetime
@@ -20,7 +21,6 @@ from askai._version import __version__ as current_version
 
 def run_command(cmd, check=True, capture=False):
     """Run shell command safely."""
-    import shlex
 
     try:
         # Try safer execution for simple commands

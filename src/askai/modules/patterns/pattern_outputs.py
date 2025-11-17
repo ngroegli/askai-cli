@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, ClassVar
 import builtins
 import json
 import logging
+import shlex
 import subprocess
 import sys
 
@@ -318,8 +319,6 @@ class PatternOutput:
         # Execute the command
         print("\n📄 Executing command...\n")
         try:
-            # Use shlex.split for safer command execution
-            import shlex
             # For complex shell commands, we need to use shell=True but validate input
             if any(char in cleaned_command for char in ['|', '&', ';', '$', '`']):
                 # Complex shell command - warn user and get confirmation
@@ -329,7 +328,8 @@ class PatternOutput:
                 if confirm != 'y':
                     print("Command execution cancelled.")
                     return False
-                subprocess.run(cleaned_command, shell=True, check=True)  # nosec B602 - intentional with user confirmation
+                # nosec B602 - intentional with user confirmation
+                subprocess.run(cleaned_command, shell=True, check=True)
             else:
                 # Simple command - use safer approach
                 args = shlex.split(cleaned_command)
