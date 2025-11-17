@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AskAI CLI Version
-VERSION="1.2.1"
+VERSION="1.2.2-dev"
 
 # Resolve the directory of the script, even if called via symlink
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

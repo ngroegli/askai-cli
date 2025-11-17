@@ -13,6 +13,7 @@ services:
       - FLASK_HOST=0.0.0.0
       - FLASK_PORT=8080
       - ASKAI_VERSION=1.2.1
+      - ASKAI_VERSION=1.2.2-dev
     volumes:
       # Mount source code for development
       - ./src:/app/src
