@@ -236,8 +236,12 @@ class TestPatternBrowserIntegration(unittest.TestCase):
             pattern_browser_fallback(self.mock_pattern_manager)
 
         # Check that print was called with pattern information
-        print_calls = [call[0][0] for call in mock_print.call_args_list]
-        output_text = " ".join(print_calls)
+        print_calls = []
+        for call in mock_print.call_args_list:
+            if call[0]:  # Only process calls with arguments
+                print_calls.append(call[0][0])
+        
+        output_text = " ".join(str(call) for call in print_calls)
 
         self.assertIn("Available patterns:", output_text)
         self.assertIn("test_pattern_1", output_text)
@@ -248,7 +252,7 @@ class TestPatternBrowserIntegration(unittest.TestCase):
 
 class TestTUIIntegration(unittest.TestCase):
     """Integration tests for TUI system integration."""
-    @patch('python.presentation.tui.is_tui_available')
+    @patch('tests.integration.tui.test_pattern_browser.is_tui_available')
     def test_tui_availability_check(self, mock_tui_available):
         """Test TUI availability checking."""
         mock_tui_available.return_value = True
