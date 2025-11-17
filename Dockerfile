@@ -1,5 +1,5 @@
 # Multi-stage Docker build for AskAI API
-FROM python:3.12-slim as base
+FROM python:3.12-alpine as base
 
 LABEL version="1.2.0"
 
@@ -11,11 +11,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_HOST=0.0.0.0 \
     FLASK_PORT=8080
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies for Alpine
+RUN apk update && apk add --no-cache \
     gcc \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    linux-headers \
+    curl \
+    && rm -rf /var/cache/apk/*
 
 # Create application directory
 WORKDIR /app
@@ -34,8 +37,8 @@ COPY src/ /app/src/
 COPY config/ /app/config/
 COPY patterns/ /app/patterns/
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash askai && \
+# Create non-root user (Alpine syntax)
+RUN adduser -D -s /bin/sh askai && \
     chown -R askai:askai /app
 
 # Switch to non-root user

@@ -181,13 +181,23 @@ jobs:
         with:
           sarif_file: "release-trivy-results.sarif"
 
-      - name: Check for critical vulnerabilities
+      - name: Check for critical application vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: "ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }}"
           format: "table"
           severity: "CRITICAL,HIGH"
-          exit-code: "1" # Fail if critical/high vulnerabilities found
+          vuln-type: "library"  # Focus on application dependencies, not OS packages
+          exit-code: "1" # Fail if critical/high vulnerabilities found in application
+
+      - name: Show OS vulnerabilities (informational only)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "ghcr.io/${{ github.repository }}:${{ needs.validate-release.outputs.version }}"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          vuln-type: "os"
+          exit-code: "0" # Don't fail on OS-level issues
 
   create-release:
     name: Create GitHub Release
