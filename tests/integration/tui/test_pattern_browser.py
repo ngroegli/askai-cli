@@ -240,7 +240,7 @@ class TestPatternBrowserIntegration(unittest.TestCase):
         for call in mock_print.call_args_list:
             if call[0]:  # Only process calls with arguments
                 print_calls.append(call[0][0])
-        
+
         output_text = " ".join(str(call) for call in print_calls)
 
         self.assertIn("Available patterns:", output_text)
