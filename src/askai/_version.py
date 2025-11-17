@@ -5,7 +5,7 @@ This is the single source of truth for version information.
 All other files should import from here.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1-dev"
 __version_info__ = tuple(map(int, __version__.split(".")))
 
 # Build and release information
