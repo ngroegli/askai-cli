@@ -34,6 +34,7 @@ class TestTUIFallback(unittest.TestCase):
     @patch('askai.presentation.tui.utils.fallback.TEXTUAL_AVAILABLE', False)
     @patch('askai.presentation.tui.utils.fallback.os.isatty')
     @patch('askai.presentation.tui.utils.fallback.sys.stdout')
+    @patch.dict(os.environ, {'TERM': 'xterm-256color'}, clear=False)
     def test_check_tui_environment_no_textual(self, mock_stdout, mock_isatty):
         """Test environment check when textual is not available."""
         mock_stdout.fileno.return_value = 1  # Standard stdout fileno
