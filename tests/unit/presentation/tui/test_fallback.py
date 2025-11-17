@@ -31,10 +31,12 @@ class TestTUIFallback(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self.original_env)
 
-    @patch('askai.presentation.tui.utils.fallback.os.isatty')
     @patch('askai.presentation.tui.utils.fallback.TEXTUAL_AVAILABLE', False)
-    def test_check_tui_environment_no_textual(self, mock_isatty):
+    @patch('askai.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.sys.stdout')
+    def test_check_tui_environment_no_textual(self, mock_stdout, mock_isatty):
         """Test environment check when textual is not available."""
+        mock_stdout.fileno.return_value = 1  # Standard stdout fileno
         mock_isatty.return_value = True
 
         result = check_tui_environment()
