@@ -1,6 +1,8 @@
 # Multi-stage Docker build for AskAI API
 FROM python:3.12-slim as base
 
+LABEL version="1.2.0"
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

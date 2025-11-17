@@ -1,0 +1,248 @@
+name: Security Scanning
+
+on:
+  # Weekly schedule (every Monday at 2 AM UTC)
+  schedule:
+    - cron: "0 2 * * 1"
+
+  # On every merge to main or develop
+  push:
+    branches: ["main", "develop"]
+
+  # On pull requests to main or develop
+  pull_request:
+    branches: ["main", "develop"]
+
+  # Allow manual triggering
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  dependency-scanning:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install safety bandit semgrep
+
+      - name: Run Safety (Dependency Vulnerability Scan)
+        run: |
+          echo "🔍 Scanning for known vulnerabilities in dependencies..."
+          safety check --json --output safety-report.json || true
+          safety check --short-report
+
+      - name: Upload Safety Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-vulnerability-report
+          path: safety-report.json
+          retention-days: 30
+
+  code-security-scan:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+
+      - name: Run Bandit Security Linter
+        run: |
+          echo "🔍 Scanning code for security issues..."
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ -f txt
+
+      - name: Upload Bandit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
+          retention-days: 30
+
+  secret-scanning:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better secret detection
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  container-scanning:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scanning
+        run: |
+          docker build -t askai-cli:scan-target .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "askai-cli:scan-target"
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Run Trivy for human-readable output
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "askai-cli:scan-target"
+          format: "table"
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs:
+      [
+        dependency-scanning,
+        code-security-scan,
+        secret-scanning,
+        codeql-analysis,
+      ]
+    if: always()
+
+    steps:
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: security-reports
+
+      - name: Generate Security Summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Scan Results Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if reports exist and summarize
+          if [ -f "security-reports/safety-vulnerability-report/safety-report.json" ]; then
+            echo "### 📦 Dependency Vulnerabilities (Safety)" >> $GITHUB_STEP_SUMMARY
+            vulnerabilities=$(cat security-reports/safety-vulnerability-report/safety-report.json | jq '.vulnerabilities | length' || echo "0")
+            echo "- Found: **$vulnerabilities** known vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f "security-reports/bandit-security-report/bandit-report.json" ]; then
+            echo "### 🔍 Code Security Issues (Bandit)" >> $GITHUB_STEP_SUMMARY
+            high_issues=$(cat security-reports/bandit-security-report/bandit-report.json | jq '.results[] | select(.issue_severity=="HIGH") | length' | wc -l || echo "0")
+            medium_issues=$(cat security-reports/bandit-security-report/bandit-report.json | jq '.results[] | select(.issue_severity=="MEDIUM") | length' | wc -l || echo "0")
+            echo "- High severity: **$high_issues** issues" >> $GITHUB_STEP_SUMMARY
+            echo "- Medium severity: **$medium_issues** issues" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "### 🏆 Scan Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependency Scanning: ${{ needs.dependency-scanning.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Code Security: ${{ needs.code-security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Secret Detection: ${{ needs.secret-scanning.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*Reports are available in the workflow artifacts for detailed analysis.*" >> $GITHUB_STEP_SUMMARY
+          echo "*CodeQL results are available in the Security tab under Code scanning alerts.*" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail on Critical Issues
+        run: |
+          # This step will fail the workflow if critical security issues are found
+          # You can customize this logic based on your security requirements
+
+          critical_found=false
+
+          # Check Safety report for critical vulnerabilities
+          if [ -f "security-reports/safety-vulnerability-report/safety-report.json" ]; then
+            vulnerabilities=$(cat security-reports/safety-vulnerability-report/safety-report.json | jq '.vulnerabilities | length' || echo "0")
+            if [ "$vulnerabilities" -gt 5 ]; then
+              echo "❌ Too many dependency vulnerabilities found: $vulnerabilities"
+              critical_found=true
+            fi
+          fi
+
+          # Check Bandit for high severity issues
+          if [ -f "security-reports/bandit-security-report/bandit-report.json" ]; then
+            high_issues=$(cat security-reports/bandit-security-report/bandit-report.json | jq '.results[] | select(.issue_severity=="HIGH") | length' | wc -l || echo "0")
+            if [ "$high_issues" -gt 0 ]; then
+              echo "❌ High severity security issues found: $high_issues"
+              critical_found=true
+            fi
+          fi
+
+          if [ "$critical_found" = true ]; then
+            echo "🚨 Critical security issues detected. Please review and fix before merging."
+            exit 1
+          else
+            echo "✅ No critical security issues found."
+          fi
