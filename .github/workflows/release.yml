@@ -16,6 +16,7 @@ on:
 permissions:
   contents: write
   packages: write
+  security-events: write
 
 jobs:
   validate-release:
@@ -176,9 +177,9 @@ jobs:
 
       - name: Upload scan results
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: "release-trivy-results.sarif"
+          sarif_file: 'release-trivy-results.sarif'
 
       - name: Check for critical vulnerabilities
         uses: aquasecurity/trivy-action@master
