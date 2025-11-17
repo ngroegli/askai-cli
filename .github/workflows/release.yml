@@ -309,6 +309,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: main  # Explicitly checkout main branch, not the tag
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -327,13 +328,17 @@ jobs:
         run: |
           echo "🔄 Updating version for next development cycle..."
 
+          # Ensure we're on main branch
+          git checkout main
+          git pull origin main
+
           # Install requirements for version bumping
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
           # Bump to next patch version with -dev suffix
           python src/scripts/bump_version.py patch --suffix dev
 
-          # Commit the version bump
+          # Commit and push the version bump
           git add -A
           git commit -m "chore: bump version for next development cycle after ${{ needs.validate-release.outputs.tag_version }}"
           git push origin main
