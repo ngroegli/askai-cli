@@ -6,7 +6,19 @@ All other files should import from here.
 """
 
 __version__ = "1.2.1-dev"
-__version_info__ = tuple(map(int, __version__.split(".")))
+
+# Parse version info, handling suffixes like -dev, -alpha, etc.
+def _parse_version(version_str):
+    """Parse version string into tuple of integers, ignoring suffixes."""
+    import re
+    # Extract just the numeric version part (before any suffix)
+    match = re.match(r'^(\d+)\.(\d+)\.(\d+)', version_str)
+    if match:
+        return tuple(map(int, match.groups()))
+    else:
+        raise ValueError(f"Invalid version format: {version_str}")
+
+__version_info__ = _parse_version(__version__)
 
 # Build and release information
 __build__ = None
