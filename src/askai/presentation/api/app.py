@@ -183,7 +183,7 @@ def main():
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
     # Warn if binding to all interfaces
-    if host == '0.0.0.0':  # nosec B104 - this is just a warning check, not actual binding
+    if host == '0.0.0.0':  # nosec B104 - development configuration warning only
         print("⚠️  Warning: Binding to all interfaces (0.0.0.0). Ensure this is intended for production.")
 
     app.run(host=host, port=port, debug=debug)

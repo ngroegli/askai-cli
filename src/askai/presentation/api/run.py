@@ -29,7 +29,7 @@ def main():
     args = parser.parse_args()
 
     # Warn if binding to all interfaces
-    if args.host == '0.0.0.0':  # nosec B104 - this is just a warning check, not actual binding
+    if args.host == '0.0.0.0':  # nosec B104 - development configuration warning only
         print("⚠️  Warning: Binding to all interfaces (0.0.0.0). Ensure this is intended and secure.")
 
     # Set environment variables
