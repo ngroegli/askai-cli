@@ -31,7 +31,7 @@ class TestTUIFallback(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self.original_env)
 
-    @patch('python.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.os.isatty')
     def test_check_tui_environment_no_textual(self, mock_isatty):
         """Test environment check when textual is not available."""
         mock_isatty.return_value = True
@@ -46,7 +46,7 @@ class TestTUIFallback(unittest.TestCase):
         self.assertFalse(result['overall_compatible'])
         self.assertIn("Textual library not installed", str(result['issues']))
 
-    @patch('python.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.os.isatty')
     def test_check_tui_environment_no_terminal(self, mock_isatty):
         """Test environment check when not in terminal."""
         mock_isatty.return_value = False
@@ -57,7 +57,7 @@ class TestTUIFallback(unittest.TestCase):
         self.assertFalse(result['overall_compatible'])
         self.assertIn("Not running in an interactive terminal", str(result['issues']))
 
-    @patch('python.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.os.isatty')
     def test_check_tui_environment_disabled_by_env(self, mock_isatty):
         """Test environment check when TUI is disabled via environment variable."""
         mock_isatty.return_value = True
@@ -69,7 +69,7 @@ class TestTUIFallback(unittest.TestCase):
         self.assertFalse(result['overall_compatible'])
         self.assertIn("TUI disabled via ASKAI_NO_TUI", str(result['issues']))
 
-    @patch('python.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.os.isatty')
     def test_check_tui_environment_dumb_terminal(self, mock_isatty):
         """Test environment check with dumb terminal."""
         mock_isatty.return_value = True
@@ -138,7 +138,7 @@ class TestTUIFallback(unittest.TestCase):
 
     def test_configure_tui_environment_recommendations(self):
         """Test TUI environment configuration recommendations."""
-        with patch('python.presentation.tui.utils.fallback.check_tui_environment') as mock_check:
+        with patch('askai.presentation.tui.utils.fallback.check_tui_environment') as mock_check:
             mock_check.return_value = {
                 'overall_compatible': False,
                 'textual_available': False,
@@ -173,7 +173,7 @@ class TestTUIFallback(unittest.TestCase):
 
     def test_configure_tui_environment_already_configured(self):
         """Test TUI environment when already properly configured."""
-        with patch('python.presentation.tui.utils.fallback.check_tui_environment') as mock_check:
+        with patch('askai.presentation.tui.utils.fallback.check_tui_environment') as mock_check:
             mock_check.return_value = {
                 'overall_compatible': True,
                 'textual_available': True,
