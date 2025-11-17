@@ -21,7 +21,7 @@ from askai._version import __version__ as current_version
 def run_command(cmd, check=True, capture=False):
     """Run shell command safely."""
     import shlex
-    
+
     try:
         # Try safer execution for simple commands
         if any(char in cmd for char in ['|', '&', ';', '$', '`', '>']):
@@ -43,13 +43,13 @@ def run_command(cmd, check=True, capture=False):
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)  # nosec B602
         else:
             result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
-    
+
     if check and result.returncode != 0:
         print(f"Command failed: {cmd}")
         if capture:
             print(f"Error: {result.stderr}")
         sys.exit(1)
-    
+
     if capture:
         return result.stdout.strip()
     return result.returncode

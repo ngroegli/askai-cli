@@ -247,7 +247,7 @@ def capture_command_output(command):
     except (ValueError, OSError):
         # Fallback to shell=True if shlex.split fails
         result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)  # nosec B602
-    
+
     if result.returncode:
         raise subprocess.SubprocessError(f"Command failed: {result.stderr}")
     return result.stdout
