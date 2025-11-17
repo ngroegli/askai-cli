@@ -24,7 +24,6 @@ classifiers = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["askai"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
