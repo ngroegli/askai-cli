@@ -7,6 +7,7 @@ Supports proper ~/.askai directory structure with initialization and setup wizar
 # Standard library imports
 import os
 import sys
+import tempfile
 
 # Third-party imports
 import yaml
@@ -400,7 +401,6 @@ def load_config():
                 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                     prod_config = yaml.safe_load(f)
                     # Use production config but modify paths for testing
-                    import tempfile
                     temp_dir = tempfile.gettempdir()
                     prod_config['enable_logging'] = False
                     prod_config['log_path'] = os.path.join(temp_dir, 'test.log')
@@ -416,7 +416,6 @@ def load_config():
 
         # Last resort: return minimal config with warnings
         print("Warning: Using minimal test configuration. Integration tests may fail.")
-        import tempfile
         temp_dir = tempfile.gettempdir()
         return {
             'api_key': 'test-key',

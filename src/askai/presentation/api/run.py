@@ -5,22 +5,23 @@ Startup script for AskAI API.
 This script provides a simple way to start the AskAI API server
 for development and testing purposes.
 """
+import argparse
 import os
 import sys
-import argparse
 
 # Add project paths
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-from askai.presentation.api.app import create_app
+from askai.presentation.api.app import create_app  # pylint: disable=wrong-import-position
 
 
 def main():
     """Main entry point for the API server."""
     parser = argparse.ArgumentParser(description='Start the AskAI API server')
-    parser.add_argument('--host', default='127.0.0.1', help='Host to bind to (default: 127.0.0.1, use 0.0.0.0 for all interfaces)')
+    parser.add_argument('--host', default='127.0.0.1',
+                       help='Host to bind to (default: 127.0.0.1, use 0.0.0.0 for all interfaces)')
     parser.add_argument('--port', type=int, default=8080, help='Port to bind to (default: 8080)')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('--config', help='Path to configuration file')
