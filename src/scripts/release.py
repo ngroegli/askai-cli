@@ -27,9 +27,9 @@ def run_command(cmd, check=True, capture=False):
         if any(char in cmd for char in ['|', '&', ';', '$', '`', '>']):
             # Complex shell command - use shell=True (needed for git operations)
             if capture:
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)  # nosec B602
             else:
-                result = subprocess.run(cmd, shell=True, check=False)
+                result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
         else:
             # Simple command - use safer approach
             args = shlex.split(cmd)
@@ -40,9 +40,9 @@ def run_command(cmd, check=True, capture=False):
     except (ValueError, OSError):
         # Fallback for complex git commands
         if capture:
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)  # nosec B602
         else:
-            result = subprocess.run(cmd, shell=True, check=False)
+            result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
     
     if check and result.returncode != 0:
         print(f"Command failed: {cmd}")

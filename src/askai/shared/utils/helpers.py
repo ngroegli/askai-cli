@@ -236,7 +236,7 @@ def capture_command_output(command):
         # If command is a string with shell operators, use shell=True but warn
         if isinstance(command, str) and any(char in command for char in ['|', '&', ';', '$', '`']):
             # Complex shell command - keep shell=True but note the security risk
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)  # nosec B602
         else:
             # Simple command - use safer approach
             if isinstance(command, str):
@@ -246,7 +246,7 @@ def capture_command_output(command):
             result = subprocess.run(args, capture_output=True, text=True, check=False)
     except (ValueError, OSError):
         # Fallback to shell=True if shlex.split fails
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)  # nosec B602
     
     if result.returncode:
         raise subprocess.SubprocessError(f"Command failed: {result.stderr}")

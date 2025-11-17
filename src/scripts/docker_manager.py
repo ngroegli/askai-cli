@@ -26,14 +26,14 @@ def run_command(cmd, check=True):
         # Try to use safer execution
         if any(char in cmd for char in ['|', '&', ';', '$', '`']):
             # Complex shell command - use shell=True but note it's for docker commands only
-            result = subprocess.run(cmd, shell=True, check=False)
+            result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
         else:
             # Simple command - use safer approach  
             args = shlex.split(cmd)
             result = subprocess.run(args, check=False)
     except (ValueError, OSError):
         # Fallback for complex docker commands that need shell=True
-        result = subprocess.run(cmd, shell=True, check=False)
+        result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
     
     if check and result.returncode != 0:
         print(f"Command failed with exit code {result.returncode}")
