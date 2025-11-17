@@ -12,8 +12,6 @@ services:
       - FLASK_DEBUG=true
       - FLASK_HOST=0.0.0.0
       - FLASK_PORT=8080
-      - ASKAI_VERSION=1.2.0
-      - ASKAI_VERSION=1.2.1-dev
       - ASKAI_VERSION=1.2.1
     volumes:
       # Mount source code for development

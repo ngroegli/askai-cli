@@ -328,8 +328,8 @@ class PatternOutput:
                 if confirm != 'y':
                     print("Command execution cancelled.")
                     return False
-                # nosec B602 - intentional with user confirmation
-                subprocess.run(cleaned_command, shell=True, check=True)
+                
+                subprocess.run(cleaned_command, shell=True, check=True)  # nosec B602
             else:
                 # Simple command - use safer approach
                 args = shlex.split(cleaned_command)
