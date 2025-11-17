@@ -35,3 +35,6 @@ disable = ["import-error"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]

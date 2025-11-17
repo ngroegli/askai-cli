@@ -32,13 +32,12 @@ class TestTUIFallback(unittest.TestCase):
         os.environ.update(self.original_env)
 
     @patch('askai.presentation.tui.utils.fallback.os.isatty')
+    @patch('askai.presentation.tui.utils.fallback.TEXTUAL_AVAILABLE', False)
     def test_check_tui_environment_no_textual(self, mock_isatty):
         """Test environment check when textual is not available."""
         mock_isatty.return_value = True
 
-        with patch.dict('sys.modules', {'textual': None}):
-            # This will cause import to fail
-            result = check_tui_environment()
+        result = check_tui_environment()
 
         self.assertFalse(result['textual_available'])
         self.assertTrue(result['terminal_compatible'])
