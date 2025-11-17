@@ -34,8 +34,8 @@ def parse_version(version_str):
 
     return tuple(map(int, match.groups()))
 
-def bump_version(version_str, bump_type):
-    """Bump version according to type (patch, minor, major)."""
+def bump_version(version_str, bump_type, suffix=None):
+    """Bump version according to type (patch, minor, major) with optional suffix."""
     major, minor, patch = parse_version(version_str)
 
     if bump_type == "patch":
@@ -50,7 +50,11 @@ def bump_version(version_str, bump_type):
     else:
         raise ValueError(f"Invalid bump type: {bump_type}")
 
-    return f"{major}.{minor}.{patch}"
+    base_version = f"{major}.{minor}.{patch}"
+    
+    if suffix:
+        return f"{base_version}-{suffix}"
+    return base_version
 
 def validate_version(version_str):
     """Validate version format."""
@@ -223,6 +227,8 @@ def main():
                        help='Type of version bump')
     parser.add_argument('--set', dest='specific_version',
                        help='Set specific version (e.g., 2.1.0)')
+    parser.add_argument('--suffix',
+                       help='Add suffix to version (e.g., dev, alpha, beta)')
     parser.add_argument('--dry-run', action='store_true',
                        help='Show what would be changed without making changes')
     parser.add_argument('--changelog', action='store_true',
@@ -242,7 +248,7 @@ def main():
             return 1
         bump_type = "custom"
     else:
-        new_version = bump_version(old_version, args.bump_type)
+        new_version = bump_version(old_version, args.bump_type, args.suffix)
         bump_type = args.bump_type
 
     print(f"Version bump: {old_version} -> {new_version} (type: {bump_type})")
