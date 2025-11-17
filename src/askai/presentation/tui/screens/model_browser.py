@@ -5,9 +5,9 @@ from textual.containers import Vertical, Horizontal, Container
 from textual.widgets import Header, Footer, Static, Input, ListView, ListItem, Label, RichLog
 from textual.binding import Binding
 
-from python.modules.ai.openrouter_client import OpenRouterClient
-from python.presentation.tui.styles.styled_components import StyledButton, StyledStatic, StyledInput
-from python.presentation.tui.screens.base_screen import BaseScreen
+from askai.modules.ai.openrouter_client import OpenRouterClient
+from askai.presentation.tui.styles.styled_components import StyledButton, StyledStatic, StyledInput
+from askai.presentation.tui.screens.base_screen import BaseScreen
 
 
 class ModelBrowserScreen(BaseScreen):

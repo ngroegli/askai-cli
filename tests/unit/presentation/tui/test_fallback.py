@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 # Import the module under test
-from python.presentation.tui.utils.fallback import (
+from askai.presentation.tui.utils.fallback import (
     check_tui_environment,
     explain_tui_unavailable,
     smart_fallback_message,

@@ -35,11 +35,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test QuestionProcessor initialization with various configurations."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
-                 patch('modules.messaging.MessageBuilder'), \
-                 patch('modules.chat.ChatManager'), \
-                 patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+            with patch('askai.modules.patterns.PatternManager'), \
+                 patch('askai.modules.messaging.MessageBuilder'), \
+                 patch('askai.modules.chat.ChatManager'), \
+                 patch('askai.modules.ai.AIService'), \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator'), \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
 
@@ -82,11 +82,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test basic question processing end-to-end."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
-                 patch('modules.messaging.MessageBuilder') as mock_builder_class, \
-                 patch('modules.chat.ChatManager') as mock_chat_manager_class, \
-                 patch('modules.ai.AIService') as mock_ai_service_class, \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
+            with patch('askai.modules.patterns.PatternManager') as mock_pattern_class, \
+                 patch('askai.modules.messaging.MessageBuilder') as mock_builder_class, \
+                 patch('askai.modules.chat.ChatManager') as mock_chat_manager_class, \
+                 patch('askai.modules.ai.AIService') as mock_ai_service_class, \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
                 # Configure the mocks to return the expected values
@@ -180,11 +180,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test handling of images, PDFs, and URLs in question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
-                 patch('modules.messaging.MessageBuilder'), \
-                 patch('modules.chat.ChatManager'), \
-                 patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+            with patch('askai.modules.patterns.PatternManager'), \
+                 patch('askai.modules.messaging.MessageBuilder'), \
+                 patch('askai.modules.chat.ChatManager'), \
+                 patch('askai.modules.ai.AIService'), \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator'), \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
 
@@ -216,7 +216,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 }
             ]
 
-            with patch('modules.messaging.MessageBuilder') as mock_builder_class:
+            with patch('askai.modules.messaging.MessageBuilder') as mock_builder_class:
                 mock_builder = Mock()
 
                 for scenario in test_scenarios:
@@ -304,11 +304,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test different output format processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
-                 patch('modules.messaging.MessageBuilder'), \
-                 patch('modules.chat.ChatManager'), \
-                 patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+            with patch('askai.modules.patterns.PatternManager'), \
+                 patch('askai.modules.messaging.MessageBuilder'), \
+                 patch('askai.modules.chat.ChatManager'), \
+                 patch('askai.modules.ai.AIService'), \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator'), \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
 
@@ -327,8 +327,8 @@ class TestQuestionProcessor(BaseUnitTest):
                 "model": "test-model"
             }
 
-            with patch('modules.ai.AIService') as mock_ai_service_class, \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
+            with patch('askai.modules.ai.AIService') as mock_ai_service_class, \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class:
 
                 mock_ai_service = Mock()
                 mock_ai_service.get_ai_response.return_value = mock_ai_response
@@ -389,11 +389,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test error handling in question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager'), \
-                 patch('modules.messaging.MessageBuilder'), \
-                 patch('modules.chat.ChatManager'), \
-                 patch('modules.ai.AIService'), \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator'), \
+            with patch('askai.modules.patterns.PatternManager'), \
+                 patch('askai.modules.messaging.MessageBuilder'), \
+                 patch('askai.modules.chat.ChatManager'), \
+                 patch('askai.modules.ai.AIService'), \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator'), \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
 
@@ -404,7 +404,7 @@ class TestQuestionProcessor(BaseUnitTest):
                 processor = QuestionProcessor(mock_config, mock_logger, "/tmp/test")
 
             # Test API failure scenario
-            with patch('modules.ai.AIService') as mock_ai_service_class:
+            with patch('askai.modules.ai.AIService') as mock_ai_service_class:
                 mock_ai_service = Mock()
                 mock_ai_service.get_ai_response.side_effect = Exception("API Error")
                 mock_ai_service_class.return_value = mock_ai_service
@@ -470,11 +470,11 @@ class TestQuestionProcessor(BaseUnitTest):
         """Test complete integration flow of question processing."""
         try:
             # Mock all dependencies BEFORE importing QuestionProcessor
-            with patch('modules.patterns.PatternManager') as mock_pattern_class, \
-                 patch('modules.messaging.MessageBuilder') as mock_builder_class, \
-                 patch('modules.chat.ChatManager') as mock_chat_manager_class, \
-                 patch('modules.ai.AIService') as mock_ai_service_class, \
-                 patch('infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
+            with patch('askai.modules.patterns.PatternManager') as mock_pattern_class, \
+                 patch('askai.modules.messaging.MessageBuilder') as mock_builder_class, \
+                 patch('askai.modules.chat.ChatManager') as mock_chat_manager_class, \
+                 patch('askai.modules.ai.AIService') as mock_ai_service_class, \
+                 patch('askai.infrastructure.output.output_coordinator.OutputCoordinator') as mock_coordinator_class, \
                  patch('os.path.isdir', return_value=True):  # Mock patterns directory existence
 
                 # Test complete flow with realistic data

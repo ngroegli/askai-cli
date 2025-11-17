@@ -5,9 +5,9 @@ from textual.containers import Horizontal, Container
 from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 
-from python.modules.ai.openrouter_client import OpenRouterClient
-from python.presentation.tui.styles.styled_components import StyledStatic
-from python.presentation.tui.screens.base_screen import BaseScreen
+from askai.modules.ai.openrouter_client import OpenRouterClient
+from askai.presentation.tui.styles.styled_components import StyledStatic
+from askai.presentation.tui.screens.base_screen import BaseScreen
 
 
 class CreditViewScreen(BaseScreen):

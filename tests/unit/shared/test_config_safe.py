@@ -87,7 +87,7 @@ class TestConfigLoaderSafe(BaseUnitTest):
         """Test that the config loader module can be imported."""
         try:
             # Only test that we can import the module, don't call functions
-            importlib.import_module("shared.config.loader")
+            importlib.import_module("askai.shared.config.loader")
 
             self.add_result(
                 "config_loader_module_import",

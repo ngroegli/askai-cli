@@ -38,12 +38,13 @@ class TestAIService(BaseUnitTest):
             }
 
             # Comprehensive mocking to prevent config system access
-            with patch('shared.config.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.ensure_askai_setup'), \
-                 patch('shared.config.loader.create_directory_structure'), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard'), \
-                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.shared.config.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.ensure_askai_setup'), \
+                 patch('askai.shared.config.loader.create_directory_structure'), \
+                 patch('askai.shared.config.loader.run_dynamic_setup_wizard'), \
+                 patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
@@ -77,12 +78,13 @@ class TestAIService(BaseUnitTest):
             }
 
             # Comprehensive mocking to prevent config system access
-            with patch('shared.config.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.ensure_askai_setup'), \
-                 patch('shared.config.loader.create_directory_structure'), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard'), \
-                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.shared.config.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.ensure_askai_setup'), \
+                 patch('askai.shared.config.loader.create_directory_structure'), \
+                 patch('askai.shared.config.loader.run_dynamic_setup_wizard'), \
+                 patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
@@ -98,7 +100,7 @@ class TestAIService(BaseUnitTest):
                 }
 
                 # Mock the OpenRouterClient class
-                with patch('modules.ai.ai_service.OpenRouterClient') as mock_client_class:
+                with patch('askai.modules.ai.ai_service.OpenRouterClient') as mock_client_class:
                     mock_client = Mock()
                     mock_client.request_completion.return_value = mock_response
                     mock_client_class.return_value = mock_client
@@ -152,12 +154,13 @@ class TestAIService(BaseUnitTest):
             }
 
             # Comprehensive mocking to prevent config system access
-            with patch('shared.config.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.ensure_askai_setup'), \
-                 patch('shared.config.loader.create_directory_structure'), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard'), \
-                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.shared.config.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.ensure_askai_setup'), \
+                 patch('askai.shared.config.loader.create_directory_structure'), \
+                 patch('askai.shared.config.loader.run_dynamic_setup_wizard'), \
+                 patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):
@@ -208,12 +211,13 @@ class TestAIService(BaseUnitTest):
             }
 
             # Comprehensive mocking to prevent config system access
-            with patch('shared.config.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.load_config', return_value=mock_config), \
-                 patch('shared.config.loader.ensure_askai_setup'), \
-                 patch('shared.config.loader.create_directory_structure'), \
-                 patch('shared.config.loader.run_dynamic_setup_wizard'), \
-                 patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.shared.config.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.load_config', return_value=mock_config), \
+                 patch('askai.shared.config.loader.ensure_askai_setup'), \
+                 patch('askai.shared.config.loader.create_directory_structure'), \
+                 patch('askai.shared.config.loader.run_dynamic_setup_wizard'), \
+                 patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs'):

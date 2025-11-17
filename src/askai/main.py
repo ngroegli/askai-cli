@@ -12,10 +12,12 @@ import sys
 # This allows the script to work both when installed as a package and when run directly
 script_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.dirname(script_dir)  # Go up from src/askai to src
+
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-# Local application imports - grouped by package  
+# Local application imports - grouped by package
+# pylint: disable=wrong-import-position
 from askai.infrastructure.output.output_coordinator import OutputCoordinator
 
 from askai.modules.ai import AIService
@@ -32,8 +34,6 @@ from askai.presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
 from askai.shared.config import load_config
 from askai.shared.logging import setup_logger
 from askai.shared.utils import print_error_or_warnings
-
-
 def display_help_fast():
     """
     Display help information with minimal imports.
@@ -62,7 +62,7 @@ def main():
                 try:
                     if is_tui_available():
                         # Initialize minimal components for TUI
-                        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                         logger = setup_logger(config, False)
 
                         pattern_manager = PatternManager(base_path, config)
@@ -96,7 +96,7 @@ def main():
 
     # Now load configuration (needed for most commands)
     config = load_config()
-    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     # Setup logging
     logger = setup_logger(config, args.debug)

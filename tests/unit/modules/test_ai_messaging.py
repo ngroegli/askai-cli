@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.join(project_root, "src"))
 sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # Mock the config system before any imports
-sys.modules['shared.config'] = MagicMock()
-sys.modules['shared.config.loader'] = MagicMock()
+sys.modules['askai.shared.config'] = MagicMock()
+sys.modules['askai.shared.config.loader'] = MagicMock()
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
@@ -22,8 +22,8 @@ from askai.modules.messaging.builder import MessageBuilder
 from askai.modules.patterns.pattern_inputs import PatternInput, InputType
 
 # Mock the config system before any imports
-sys.modules['shared.config'] = MagicMock()
-sys.modules['shared.config.loader'] = MagicMock()
+sys.modules['askai.shared.config'] = MagicMock()
+sys.modules['askai.shared.config.loader'] = MagicMock()
 
 # Mock configuration data
 mock_config = {
@@ -33,10 +33,10 @@ mock_config = {
 }
 
 # Set up the mock to return our test config
-sys.modules['shared.config'].load_config = MagicMock(return_value=mock_config)
-sys.modules['shared.config.loader'].load_config = MagicMock(return_value=mock_config)
-sys.modules['shared.config.loader'].ensure_askai_setup = MagicMock()
-sys.modules['shared.config.loader'].create_directory_structure = MagicMock()
+sys.modules['askai.shared.config'].load_config = MagicMock(return_value=mock_config)
+sys.modules['askai.shared.config.loader'].load_config = MagicMock(return_value=mock_config)
+sys.modules['askai.shared.config.loader'].ensure_askai_setup = MagicMock()
+sys.modules['askai.shared.config.loader'].create_directory_structure = MagicMock()
 
 
 class TestAIService(BaseUnitTest):
@@ -75,7 +75,8 @@ class TestAIService(BaseUnitTest):
         """Test successful AI response retrieval."""
         try:
             # Additional runtime patches for user input
-            with patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'):
 
                 mock_logger = Mock()
@@ -89,7 +90,7 @@ class TestAIService(BaseUnitTest):
                 }
 
                 # Mock the OpenRouterClient class
-                with patch('modules.ai.ai_service.OpenRouterClient') as mock_client_class:
+                with patch('askai.modules.ai.ai_service.OpenRouterClient') as mock_client_class:
                     mock_client = Mock()
                     mock_client.request_completion.return_value = mock_response
                     mock_client_class.return_value = mock_client
@@ -132,7 +133,8 @@ class TestAIService(BaseUnitTest):
         """Test AI response handling when API fails."""
         try:
             # Additional runtime patches for user input
-            with patch('modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation', return_value=True), \
+            with patch('askai.modules.patterns.pattern_outputs.PatternOutput._get_user_confirmation',
+                       return_value=True), \
                  patch('builtins.input', return_value='y'):
 
                 mock_logger = Mock()

@@ -16,6 +16,7 @@ os.environ['ASKAI_TESTING'] = 'true'
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
+from askai.modules.ai.ai_service import AIService
 
 
 class TestAIServiceMinimal(BaseUnitTest):
@@ -30,15 +31,14 @@ class TestAIServiceMinimal(BaseUnitTest):
         """Test that AI service can be imported without triggering setup."""
         try:
             # Mock everything before import
-            with patch('shared.config.loader.ensure_askai_setup', return_value=True), \
-                 patch('shared.config.loader.load_config', return_value={'test': 'config'}), \
-                 patch('shared.config.load_config', return_value={'test': 'config'}), \
+            with patch('askai.shared.config.loader.ensure_askai_setup', return_value=True), \
+                 patch('askai.shared.config.loader.load_config', return_value={'test': 'config'}), \
+                 patch('askai.shared.config.load_config', return_value={'test': 'config'}), \
                  patch('builtins.print'), \
                  patch('os.path.exists', return_value=True), \
                  patch('os.makedirs', return_value=True):
 
-                # Import and instantiate
-                from askai.modules.ai.ai_service import AIService
+                # Import and instantiate AIService
 
                 mock_logger = Mock()
                 ai_service = AIService(mock_logger)

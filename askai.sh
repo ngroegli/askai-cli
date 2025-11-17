@@ -3,17 +3,25 @@
 # Resolve the directory of the script, even if called via symlink
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Activate the virtual environment located inside the repo
-source "$SCRIPT_DIR/venv/bin/activate"
+# Set Python path to include the src directory for package imports
+export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
 
-# Set Python path to include both the root directory and the src directory
-export PYTHONPATH="$SCRIPT_DIR:$SCRIPT_DIR/src:$PYTHONPATH"
+# Change to project directory
+cd "$SCRIPT_DIR"
 
-# Install the package in development mode if needed
-if [ ! -f "$SCRIPT_DIR/.dev_installed" ]; then
-  pip install -e "$SCRIPT_DIR" >/dev/null 2>&1 && touch "$SCRIPT_DIR/.dev_installed"
+# Use Python from virtual environment if available, otherwise system Python
+if [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+    PYTHON_CMD="$SCRIPT_DIR/venv/bin/python3"
+elif [ -f "$SCRIPT_DIR/venv/bin/python" ]; then
+    PYTHON_CMD="$SCRIPT_DIR/venv/bin/python"
+else
+    PYTHON_CMD="python3"
 fi
 
-# Run askai.py using repo-relative path
-cd "$SCRIPT_DIR"
-python3 "$SCRIPT_DIR/src/askai/askai.py" "$@"
+# Debug output (uncomment for debugging)
+# echo "SCRIPT_DIR: $SCRIPT_DIR"
+# echo "PYTHONPATH: $PYTHONPATH"
+# echo "PYTHON_CMD: $PYTHON_CMD"
+
+# Run main.py with explicit paths
+exec "$PYTHON_CMD" "$SCRIPT_DIR/src/askai/main.py" "$@"

@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-import askai.shared.utils
 from askai.shared.utils import print_error_or_warnings
+import askai.shared.utils as shared_utils
 
 
 class TestProgressSpinner(BaseUnitTest):
@@ -84,7 +84,7 @@ class TestProgressSpinner(BaseUnitTest):
             self.add_result(
                 "spinner_error_fallback",
                 True,
-                f"Spinner error handling: {shared.utils} does not have the attribute 'tqdm'"
+                f"Spinner error handling: {shared_utils} does not have the attribute 'tqdm'"
             )
 
         except Exception as e:
@@ -153,7 +153,7 @@ class TestPrintUtilities(BaseUnitTest):
         """Test colored output functions if available."""
         try:
             # Mock termcolor to prevent actual colored output
-            with patch('shared.utils.termcolor', create=True) as mock_termcolor:
+            with patch('askai.shared.utils.termcolor', create=True) as mock_termcolor:
                 mock_termcolor.colored = Mock(return_value="colored_text")
 
                 # Try to import and test colored functions

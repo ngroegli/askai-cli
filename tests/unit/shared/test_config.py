@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 from unit.test_base import BaseUnitTest
 from askai.shared.config import ASKAI_DIR, CONFIG_PATH
 from askai.shared.config.loader import load_config
-import askai.shared.config.loader  # For module existence testing
+import askai.shared.config as shared_config
 class TestConfigConstants(BaseUnitTest):
     """Test configuration constants without loading actual config files."""
 
@@ -87,7 +87,7 @@ class TestConfigLoaderSafe(BaseUnitTest):
             # Check if the module is accessible (using the top-level import)
             # Verify the module has expected attributes
             self.assert_true(
-                hasattr(shared.config.loader, 'load_config'),
+                hasattr(shared_config.loader, 'load_config'),
                 "config_loader_module_import",
                 "Config loader module imports successfully and has load_config function"
             )

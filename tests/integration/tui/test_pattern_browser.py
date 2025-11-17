@@ -10,7 +10,7 @@ import os
 # Add the project root to the path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
-from python.presentation.tui import is_tui_available, get_tui_config  # pylint: disable=wrong-import-position
+from askai.presentation.tui import is_tui_available, get_tui_config  # pylint: disable=wrong-import-position
 
 # Mock implementations for testing (since the actual modules don't exist yet)
 class PatternItem:

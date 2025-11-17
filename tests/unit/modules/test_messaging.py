@@ -237,7 +237,7 @@ class TestMessageBuilder(BaseUnitTest):
     def test_error_handling_with_patch(self):
         """Test error handling in message building with patched PatternManager and logger."""
         try:
-            with patch('modules.patterns.PatternManager') as mock_pattern_mgr, \
+            with patch('askai.modules.patterns.PatternManager') as mock_pattern_mgr, \
                  patch('logging.getLogger') as mock_logger:
                 # Mock pattern manager to raise errors
                 mock_manager = Mock()
