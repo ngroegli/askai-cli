@@ -18,22 +18,30 @@ if src_dir not in sys.path:
 
 # Local application imports - grouped by package
 # pylint: disable=wrong-import-position
-from askai.infrastructure.output.output_coordinator import OutputCoordinator
+from askai.output import OutputCoordinator
 
-from askai.modules.ai import AIService
-from askai.modules.chat import ChatManager
-from askai.modules.messaging import MessageBuilder
-from askai.modules.patterns import PatternManager
-from askai.modules.questions import QuestionProcessor
+from askai.core.ai import AIService
+from askai.core.chat import ChatManager
+from askai.core.messaging import MessageBuilder
+from askai.core.patterns import PatternManager
+from askai.core.questions import QuestionProcessor
 
 from askai.presentation.cli import CommandHandler
-from askai.presentation.cli.cli_parser import CLIParser
+from askai.presentation.cli.parser import CLIParser
 from askai.presentation.tui import is_tui_available
-from askai.presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
 
-from askai.shared.config import load_config
-from askai.shared.logging import setup_logger
-from askai.shared.utils import print_error_or_warnings
+# Try to import TUI functionality with fallback
+try:
+    from askai.presentation.tui.apps.tabbed_tui_app import run_tabbed_tui
+    TUI_AVAILABLE = True
+except ImportError:
+    TUI_AVAILABLE = False
+    def run_tabbed_tui(*args, **kwargs):  # pylint: disable=unused-argument
+        """Fallback function when TUI is not available."""
+        print("TUI functionality is not available due to import issues.")
+        return None
+
+from askai.utils import load_config, setup_logger, print_error_or_warnings
 def display_help_fast():
     """
     Display help information with minimal imports.
@@ -175,7 +183,7 @@ def main():
         }))
         print_error_or_warnings(
             "Patterns and chat features are not compatible. Chat options (-pc, -vc) will be ignored.",
-            warning_only=True
+            is_warning=True, exit_on_error=False
         )
         # Force chat features to be disabled
         args.persistent_chat = None

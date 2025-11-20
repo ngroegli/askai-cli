@@ -2,11 +2,17 @@
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Container
-from textual.widgets import Header, Footer, Static, Button
+from textual.widgets import Header, Footer, Button
 from textual.binding import Binding
 
-from askai.modules.ai.openrouter_client import OpenRouterClient
-from askai.presentation.tui.styles.styled_components import StyledStatic
+from askai.core.ai.openrouter import OpenRouterClient
+try:
+    from askai.presentation.tui.styles import StyledStatic
+    from textual.widgets import Static  # Import for query_one type hints
+except ImportError:
+    # Fallback if styled components not available
+    from textual.widgets import Static
+    StyledStatic = Static
 from askai.presentation.tui.screens.base_screen import BaseScreen
 
 

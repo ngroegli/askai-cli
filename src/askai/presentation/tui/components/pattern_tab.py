@@ -6,7 +6,8 @@ Handles pattern browsing, selection, and execution.
 from typing import Optional, TYPE_CHECKING
 from .base_tab import BaseTabComponent
 
-from ..common import (
+# pylint: disable=import-error
+from .styles import (
     Static, Button, ListView, ListItem, Label, TextArea, Input,
     Vertical, Horizontal, VerticalScroll, Message, StatusMixin
 )

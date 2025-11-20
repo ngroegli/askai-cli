@@ -12,7 +12,7 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
 # pylint: disable=wrong-import-position
-from askai.shared.config.loader import load_config, CONFIG_PATH, ASKAI_DIR
+from askai.utils.config import load_config, CONFIG_PATH, ASKAI_DIR
 
 # Create namespace
 config_ns = Namespace('config', description='Configuration management operations')

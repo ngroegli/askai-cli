@@ -2,11 +2,19 @@
 
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal, Container
-from textual.widgets import Header, Footer, Static, Input, ListView, ListItem, Label, RichLog
+from textual.widgets import Header, Footer, ListView, ListItem, Label, RichLog
 from textual.binding import Binding
 
-from askai.modules.ai.openrouter_client import OpenRouterClient
-from askai.presentation.tui.styles.styled_components import StyledButton, StyledStatic, StyledInput
+from askai.core.ai.openrouter import OpenRouterClient
+try:
+    from askai.presentation.tui.styles import StyledButton, StyledStatic, StyledInput
+    from textual.widgets import Static, Input  # Import for query_one type hints
+except ImportError:
+    # Fallback if styled components not available
+    from textual.widgets import Button, Static, Input
+    StyledButton = Button
+    StyledStatic = Static
+    StyledInput = Input
 from askai.presentation.tui.screens.base_screen import BaseScreen
 
 

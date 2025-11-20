@@ -6,10 +6,39 @@ Handles chat browsing, viewing, and management.
 from typing import Optional, TYPE_CHECKING
 from .base_tab import BaseTabComponent
 
-from ..common import (
-    Static, Button, ListView, ListItem, Label,
-    Vertical, Horizontal, Message, StatusMixin
-)
+# pylint: disable=import-error
+try:
+    from textual.widgets import Static, Button, ListView, ListItem, Label
+    from textual.containers import Vertical, Horizontal
+    from textual.message import Message
+
+    # Import or define status mixin
+    try:
+        from ..common.utils import StatusMixin
+    except ImportError:
+        class StatusMixin:
+            """Mixin for status functionality."""
+            # No implementation needed for fallback
+except ImportError:
+    # Fallback classes
+    class Static:
+        """Fallback Static widget."""
+    class Button:
+        """Fallback Button widget."""
+    class ListView:
+        """Fallback ListView widget."""
+    class ListItem:
+        """Fallback ListItem widget."""
+    class Label:
+        """Fallback Label widget."""
+    class Vertical:
+        """Fallback Vertical container."""
+    class Horizontal:
+        """Fallback Horizontal container."""
+    class Message:
+        """Fallback Message class."""
+    class StatusMixin:
+        """Fallback StatusMixin."""
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label

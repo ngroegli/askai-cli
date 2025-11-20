@@ -7,8 +7,10 @@ Each tab is now a separate, reusable component.
 from typing import TYPE_CHECKING
 
 # Import our components and common styles
-from ..common import COMMON_STYLES
-from ..components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
+# pylint: disable=import-error
+from .styles import COMMON_STYLES
+# pylint: disable=import-error
+from .components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
 
 try:
     from textual.app import App

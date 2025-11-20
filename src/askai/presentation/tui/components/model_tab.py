@@ -6,13 +6,14 @@ Handles AI model browsing and selection.
 from typing import TYPE_CHECKING
 from .base_tab import BaseTabComponent
 
-from ..common import (
+# pylint: disable=import-error
+from .styles import (
     Static, Button, ListView, ListItem, Label, Input,
     Vertical, Horizontal, VerticalScroll, Message, StatusMixin
 )
 
 try:
-    from askai.modules.ai import OpenRouterClient
+    from askai.core.ai import OpenRouterClient
 except ImportError:
     if not TYPE_CHECKING:
         OpenRouterClient = object
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from textual.widgets import Static, Button, ListView, ListItem, Label, Input
     from textual.containers import Vertical, Horizontal, VerticalScroll
     from textual.message import Message
-    from askai.modules.ai import OpenRouterClient
+    from askai.core.ai import OpenRouterClient
 
 
 class ModelTab(BaseTabComponent, StatusMixin):

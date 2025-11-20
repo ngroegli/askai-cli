@@ -2,13 +2,19 @@
 Base component for tab content in the TUI interface.
 """
 
-from typing import TYPE_CHECKING
-
-from ..common import Static, Vertical
-
-if TYPE_CHECKING:
+try:
     from textual.widgets import Static
     from textual.containers import Vertical
+except ImportError:
+    # Fallback for when textual is not available
+    class Static:
+        """Fallback Static widget."""
+        def __init__(self, text="", **kwargs):  # pylint: disable=unused-argument
+            self.text = text
+    class Vertical:
+        """Fallback Vertical container."""
+        def __init__(self, **kwargs):  # pylint: disable=unused-argument
+            pass
 
 
 class BaseTabComponent(Vertical):

@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 from datetime import datetime
 from .base_tab import BaseTabComponent
 
-from ..common import (
+# pylint: disable=import-error
+from .styles import (
     Static, Button, ProgressBar, Vertical, Horizontal,
     VerticalScroll, StatusMixin
 )
 
 try:
-    from askai.modules.ai import OpenRouterClient
+    from askai.core.ai import OpenRouterClient
 except ImportError:
     if not TYPE_CHECKING:
         OpenRouterClient = object
@@ -25,7 +26,7 @@ except ImportError:
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, ProgressBar
     from textual.containers import Vertical, Horizontal, VerticalScroll
-    from askai.modules.ai import OpenRouterClient
+    from askai.core.ai import OpenRouterClient
 
 
 class CreditsTab(BaseTabComponent, StatusMixin):

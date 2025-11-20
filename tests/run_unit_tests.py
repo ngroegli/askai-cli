@@ -39,46 +39,50 @@ def discover_tests() -> Dict[str, Type[BaseUnitTest]]:
     """
     tests = {}
 
-    # Define the test modules to scan based on our layered architecture
+    # Define the test modules to scan based on our refactored architecture
     test_categories = [
-        'shared',      # shared layer tests
-        'modules',     # modules layer tests
-        'presentation', # presentation layer tests
-        'infrastructure' # infrastructure layer tests
+        'core',          # core business logic tests
+        'output',        # output handling tests
+        'presentation',  # presentation layer tests
+        'utils'          # utility tests
     ]
 
-    # Scan each category directory for test modules
+    # Scan each category directory for test modules (recursively)
     for category in test_categories:
-        module_prefix = f"unit.{category}"
         category_dir = os.path.join(os.path.dirname(__file__), "unit", category)
 
         if not os.path.isdir(category_dir):
             continue
 
-        # Find all Python files in the category directory
-        for filename in os.listdir(category_dir):
-            if filename.startswith("test_") and filename.endswith(".py"):
-                module_name = filename[:-3]  # Remove .py extension
-                full_module_name = f"{module_prefix}.{module_name}"
+        # Walk through the category directory recursively
+        for root, _, files in os.walk(category_dir):
+            # Calculate the relative path from the unit directory
+            rel_path = os.path.relpath(root, os.path.join(os.path.dirname(__file__), "unit"))
+            module_prefix = f"unit.{rel_path.replace(os.sep, '.')}"
 
-                try:
-                    # Import the module
-                    module = importlib.import_module(full_module_name)
+            for filename in files:
+                if filename.startswith("test_") and filename.endswith(".py"):
+                    module_name = filename[:-3]  # Remove .py extension
+                    full_module_name = f"{module_prefix}.{module_name}"
 
-                    # Find all test classes in the module
-                    for name, obj in inspect.getmembers(module):
-                        if inspect.isclass(obj):
-                            # Check if it's a test class by checking if it has the run method
-                            # and is not the base class itself
-                            if (hasattr(obj, 'run') and
-                                hasattr(obj, 'add_result') and
-                                hasattr(obj, 'report') and
-                                name not in ['BaseUnitTest', 'MockMixin']):
-                                # Create a test ID based on category and class name
-                                test_id = f"{category}_{name.lower()}"
-                                tests[test_id] = obj
-                except (ImportError, AttributeError) as e:
-                    print(f"Error importing tests from {full_module_name}: {e}")
+                    try:
+                        # Import the module
+                        module = importlib.import_module(full_module_name)
+
+                        # Find all test classes in the module
+                        for name, obj in inspect.getmembers(module):
+                            if inspect.isclass(obj):
+                                # Check if it's a test class by checking if it has the run method
+                                # and is not the base class itself
+                                if (hasattr(obj, 'run') and
+                                    hasattr(obj, 'add_result') and
+                                    hasattr(obj, 'report') and
+                                    name not in ['BaseUnitTest', 'MockMixin']):
+                                    # Create a test ID based on relative path and class name
+                                    test_id = f"{rel_path.replace(os.sep, '_')}_{name.lower()}"
+                                    tests[test_id] = obj
+                    except (ImportError, AttributeError) as e:
+                        print(f"Error importing tests from {full_module_name}: {e}")
 
     return tests
 
@@ -88,7 +92,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run unit tests for askai-cli")
     parser.add_argument(
         "--layer",
-        choices=["shared", "modules", "presentation", "infrastructure"],
+        choices=["core", "output", "presentation", "utils"],
         help="Run tests from a specific architectural layer"
     )
     parser.add_argument(

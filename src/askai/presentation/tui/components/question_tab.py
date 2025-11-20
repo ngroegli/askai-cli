@@ -6,10 +6,35 @@ Handles the question creation interface with inputs, format selection, and execu
 from typing import TYPE_CHECKING
 from .base_tab import BaseTabComponent
 
-from ..common import (
-    Static, Button, TextArea, Select, Input,
-    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
-)
+try:
+    from textual.widgets import Static, Button, TextArea, Select, Input
+    from textual.containers import Vertical, Horizontal, VerticalScroll
+    from textual.message import Message
+
+    # Import the status mixin from common utils
+    from ..common.utils import StatusMixin
+except ImportError:
+    # Fallback classes when textual is not available
+    class Static:
+        """Fallback Static widget."""
+    class Button:
+        """Fallback Button widget."""
+    class TextArea:
+        """Fallback TextArea widget."""
+    class Select:
+        """Fallback Select widget."""
+    class Input:
+        """Fallback Input widget."""
+    class Vertical:
+        """Fallback Vertical container."""
+    class Horizontal:
+        """Fallback Horizontal container."""
+    class VerticalScroll:
+        """Fallback VerticalScroll container."""
+    class Message:
+        """Fallback Message class."""
+    class StatusMixin:
+        """Fallback StatusMixin class."""
 
 if TYPE_CHECKING:
     from textual.widgets import Static, Button, TextArea, Select, Input

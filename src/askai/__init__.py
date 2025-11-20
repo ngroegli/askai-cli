@@ -14,8 +14,8 @@ __email__ = "info@askai.com"
 __license__ = "MIT"
 
 # Import main components for easy access
-from .shared.config.loader import load_config
-from .shared.logging import setup_logger, get_logger
+from .utils.config import load_config
+from .utils.logging import setup_logger, get_logger
 
 __all__ = [
     '__version__',

@@ -11,8 +11,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, "src"))
 
-from askai.modules.ai.openrouter_client import OpenRouterClient
-from askai.shared.config.loader import load_config
+from askai.core.ai import OpenRouterClient
+from askai.utils import load_config
 
 # Create namespace
 openrouter_ns = Namespace('openrouter', description='OpenRouter API management operations')
