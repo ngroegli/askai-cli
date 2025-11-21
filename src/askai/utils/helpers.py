@@ -100,38 +100,45 @@ def get_file_input(file_path):
         bytes: The file content as bytes, or None if error
     """
     try:
-        if not os.path.exists(file_path):
-            print_error_or_warnings(f"File not found: {file_path}")
+        # Validate file accessibility
+        validation_error = _validate_file_access(file_path)
+        if validation_error:
+            print_error_or_warnings(validation_error)
             return None
 
-        if not os.path.isfile(file_path):
-            print_error_or_warnings(f"Path is not a file: {file_path}")
-            return None
-
-        # Check if file is readable
-        if not os.access(file_path, os.R_OK):
-            print_error_or_warnings(f"File is not readable: {file_path}")
-            return None
-
-        # Check file size (limit to 100MB for safety)
-        file_size = os.path.getsize(file_path)
-        max_size = 100 * 1024 * 1024  # 100MB
-        if file_size > max_size:
-            print_error_or_warnings(f"File too large: {file_path} ({file_size} bytes > {max_size} bytes)")
-            return None
-
-        try:
-            # Open and read the file in binary mode
-            with open(file_path, "rb") as file:
-                file_content = file.read()
-                # file_content is always bytes when reading in binary mode
-                return file_content
-        except Exception as read_error:
-            print_error_or_warnings(f"Error reading file {file_path}: {read_error}")
-            return None
+        # Read the file content
+        return _read_file_content(file_path)
 
     except Exception as e:
         print_error_or_warnings(f"Error accessing file {file_path}: {e}")
+        return None
+
+def _validate_file_access(file_path):
+    """Validate if file is accessible and within size limits."""
+    if not os.path.exists(file_path):
+        return f"File not found: {file_path}"
+
+    if not os.path.isfile(file_path):
+        return f"Path is not a file: {file_path}"
+
+    if not os.access(file_path, os.R_OK):
+        return f"File is not readable: {file_path}"
+
+    # Check file size (limit to 100MB for safety)
+    file_size = os.path.getsize(file_path)
+    max_size = 100 * 1024 * 1024  # 100MB
+    if file_size > max_size:
+        return f"File too large: {file_path} ({file_size} bytes > {max_size} bytes)"
+
+    return None
+
+def _read_file_content(file_path):
+    """Read file content in binary mode."""
+    try:
+        with open(file_path, "rb") as file:
+            return file.read()
+    except Exception as read_error:
+        print_error_or_warnings(f"Error reading file {file_path}: {read_error}")
         return None
 
 
@@ -150,11 +157,10 @@ def build_format_instruction(response_format):
             "\n\nIMPORTANT: Provide your response in valid JSON format only. "
             "Do not include any text before or after the JSON."
         )
-    elif response_format == "md":
+    if response_format == "md":
         return "\n\nIMPORTANT: Format your response using Markdown syntax for better readability."
-    else:
-        # rawtext (default) - no special formatting instruction needed
-        return ""
+    # rawtext (default) - no special formatting instruction needed
+    return ""
 
 
 def encode_file_to_base64(file_path):
@@ -251,7 +257,7 @@ def format_file_size(size_bytes):
     Returns:
         str: Formatted size string
     """
-    if size_bytes == 0:
+    if not size_bytes:
         return "0 B"
 
     size_names = ["B", "KB", "MB", "GB", "TB"]

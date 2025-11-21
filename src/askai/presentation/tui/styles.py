@@ -3,6 +3,7 @@ Consolidated styles for AskAI TUI application.
 """
 
 from rich.style import Style
+from textual.widgets import Static, Button, Input
 
 # Core color scheme
 PRIMARY = "#0066cc"
@@ -32,29 +33,26 @@ DARK_THEME = {
     "error": ERROR
 }
 
+
 # Styled components
-try:
-    from textual.widgets import Static, Button, Input
+class StyledStatic(Static):
+    """Styled Static widget with AskAI theme."""
 
-    class StyledStatic(Static):
-        def __init__(self, content="", **kwargs):
-            super().__init__(content, **kwargs)
+    def __init__(self, content="", **kwargs):
+        super().__init__(content, **kwargs)
 
-    class StyledButton(Button):
-        def __init__(self, label="", **kwargs):
-            super().__init__(label, **kwargs)
 
-    class StyledInput(Input):
-        def __init__(self, placeholder="", **kwargs):
-            super().__init__(placeholder=placeholder, **kwargs)
+class StyledButton(Button):
+    """Styled Button widget with AskAI theme."""
 
-except ImportError:
-    class _FallbackWidget:
-        def __init__(self, *args, **kwargs):
-            pass
+    def __init__(self, label="", **kwargs):
+        super().__init__(label, **kwargs)
 
-    StyledStatic = _FallbackWidget
-    StyledButton = _FallbackWidget
-    StyledInput = _FallbackWidget
+
+class StyledInput(Input):
+    """Styled Input widget with AskAI theme."""
+
+    def __init__(self, placeholder="", **kwargs):
+        super().__init__(placeholder=placeholder, **kwargs)
 
 __all__ = ['StyledStatic', 'StyledButton', 'StyledInput', 'DARK_THEME', 'BASE_STYLES']

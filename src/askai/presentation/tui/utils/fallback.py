@@ -2,13 +2,12 @@
 TUI fallback utilities for graceful degradation when Textual is unavailable.
 """
 
-import importlib.util
 import os
 import sys
 from typing import Optional
 
-# Check textual availability using importlib instead of direct import
-TEXTUAL_AVAILABLE = importlib.util.find_spec("textual") is not None
+# Textual is always available
+TEXTUAL_AVAILABLE = True
 
 
 def check_tui_environment() -> dict:
@@ -19,17 +18,12 @@ def check_tui_environment() -> dict:
         dict: Environment check results with details
     """
     result = {
-        'textual_available': False,
+        'textual_available': True,
         'terminal_compatible': False,
         'user_preference': True,
         'overall_compatible': False,
         'issues': []
     }
-
-    # Check if textual is available
-    result['textual_available'] = TEXTUAL_AVAILABLE
-    if not TEXTUAL_AVAILABLE:
-        result['issues'].append("Textual library not installed (pip install textual)")
 
     # Check terminal compatibility
     if not os.isatty(sys.stdout.fileno()):
@@ -71,9 +65,8 @@ def explain_tui_unavailable(environment_check: dict) -> str:
     if environment_check['overall_compatible']:
         return "TUI is available and compatible."
 
-    explanation = "TUI interface unavailable:"
-    for issue in environment_check['issues']:
-        explanation += f"\n  • {issue}"
+    issues = environment_check['issues']
+    explanation = "TUI interface unavailable:\n" + "\n".join(f"  • {issue}" for issue in issues)
 
     if not environment_check['textual_available']:
         explanation += "\n\nTo enable TUI features, install textual:"
@@ -103,10 +96,9 @@ def smart_fallback_message(operation: str, environment_check: Optional[dict] = N
     # Brief message for fallback
     if not environment_check['textual_available']:
         return f"TUI not available for {operation}, using simple interface..."
-    elif not environment_check['terminal_compatible']:
+    if not environment_check['terminal_compatible']:
         return f"Terminal not compatible with TUI, using simple interface for {operation}..."
-    else:
-        return f"TUI disabled, using simple interface for {operation}..."
+    return f"TUI disabled, using simple interface for {operation}..."
 
 
 def configure_tui_environment() -> dict:

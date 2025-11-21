@@ -13,9 +13,9 @@ sys.path.insert(0, os.path.join(project_root, "tests"))
 
 # pylint: disable=wrong-import-position,import-error
 from unit.test_base import BaseUnitTest
-from askai.presentation.cli.cli_parser import CLIParser
-from askai.presentation.cli.command_handler import CommandHandler
-from askai.presentation.cli.banner_argument_parser import BannerArgumentParser
+from askai.presentation.cli.parser import CLIParser
+from askai.presentation.cli.handler import CommandHandler
+from askai.presentation.cli.parser import BannerArgumentParser
 
 
 

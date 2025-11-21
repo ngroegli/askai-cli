@@ -82,83 +82,98 @@ class PatternInput:
     def validate_value(self, value: Any) -> tuple[bool, Optional[str]]:
         """Validate a value for this input."""
         if value is None:
-            if self.required:
-                return False, f"'{self.name}' is required"
+            return (False, f"'{self.name}' is required") if self.required else (True, None)
+
+        # Dispatch validation based on input type
+        validators = {
+            InputType.NUMBER: self._validate_number,
+            InputType.SELECT: self._validate_select,
+            InputType.FILE: self._validate_file,
+            InputType.IMAGE_FILE: self._validate_image_file,
+            InputType.PDF_FILE: self._validate_pdf_file,
+            InputType.URL: self._validate_url,
+        }
+
+        validator = validators.get(self.input_type)
+        return validator(value) if validator else (True, None)
+
+    def _validate_number(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate number type input."""
+        try:
+            num_value = float(value)
+            if self.min_value is not None and num_value < self.min_value:
+                return False, f"Value must be >= {self.min_value}"
+            if self.max_value is not None and num_value > self.max_value:
+                return False, f"Value must be <= {self.max_value}"
             return True, None
+        except ValueError:
+            return False, "Value must be a number"
 
-        if self.input_type == InputType.NUMBER:
-            try:
-                num_value = float(value)
-                if self.min_value is not None and num_value < self.min_value:
-                    return False, f"Value must be >= {self.min_value}"
-                if self.max_value is not None and num_value > self.max_value:
-                    return False, f"Value must be <= {self.max_value}"
-            except ValueError:
-                return False, "Value must be a number"
+    def _validate_select(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate select type input."""
+        if value not in (self.options or []):
+            return False, f"Value must be one of: {', '.join(self.options or [])}"
+        return True, None
 
-        elif self.input_type == InputType.SELECT:
-            if value not in (self.options or []):
-                return False, f"Value must be one of: {', '.join(self.options or [])}"
+    def _validate_file(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate text file input."""
+        try:
+            with open(value, 'r', encoding='utf-8') as f:
+                f.read(1)
+            return True, None
+        except FileNotFoundError:
+            return False, f"File not found: {value}"
+        except PermissionError:
+            return False, f"Permission denied when accessing file: {value}"
+        except IOError as e:
+            return False, f"I/O error when accessing file: {str(e)}"
 
-        elif self.input_type == InputType.FILE:
-            try:
-                # Just validate that the file exists and is readable
-                with open(value, 'r', encoding='utf-8') as f:
-                    f.read(1)  # Try to read one byte to verify access
-            except FileNotFoundError:
-                return False, f"File not found: {value}"
-            except PermissionError:
-                return False, f"Permission denied when accessing file: {value}"
-            except IOError as e:
-                return False, f"I/O error when accessing file: {str(e)}"
+    def _validate_image_file(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate image file input."""
+        try:
+            with open(value, 'rb') as f:
+                f.read(1)
 
-        elif self.input_type == InputType.IMAGE_FILE:
-            try:
-                # Validate that the image file exists and is readable
-                # Note: Using 'rb' mode for binary files like images
-                with open(value, 'rb') as f:
-                    f.read(1)  # Try to read one byte to verify access
-                # Check if it has an image extension
-                image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-                file_ext = os.path.splitext(value)[1].lower()
-                if file_ext not in image_extensions:
-                    formats = ', '.join(image_extensions)
-                    return False, f"File does not appear to be an image. Supported formats: {formats}"
-            except FileNotFoundError:
-                return False, f"Image file not found: {value}"
-            except PermissionError:
-                return False, f"Permission denied when accessing image file: {value}"
-            except (IOError, OSError) as e:
-                return False, f"Image file error: {str(e)}"
+            image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+            file_ext = os.path.splitext(value)[1].lower()
+            if file_ext not in image_extensions:
+                formats = ', '.join(image_extensions)
+                return False, f"File does not appear to be an image. Supported formats: {formats}"
+            return True, None
+        except FileNotFoundError:
+            return False, f"Image file not found: {value}"
+        except PermissionError:
+            return False, f"Permission denied when accessing image file: {value}"
+        except (IOError, OSError) as e:
+            return False, f"Image file error: {str(e)}"
 
-        elif self.input_type == InputType.PDF_FILE:
-            try:
-                # Validate that the PDF file exists and is readable
-                # Using 'rb' mode for binary PDF files
-                with open(value, 'rb') as f:
-                    f.read(1)  # Try to read one byte to verify access
-                # Check if it has a PDF extension
-                file_ext = os.path.splitext(value)[1].lower()
-                if file_ext != '.pdf':
-                    return False, "File does not appear to be a PDF. Only .pdf extension is supported."
-            except FileNotFoundError:
-                return False, f"PDF file not found: {value}"
-            except PermissionError:
-                return False, f"Permission denied when accessing PDF file: {value}"
-            except (IOError, OSError) as e:
-                return False, f"PDF file error: {str(e)}"
+    def _validate_pdf_file(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate PDF file input."""
+        try:
+            with open(value, 'rb') as f:
+                f.read(1)
 
-        elif self.input_type == InputType.URL:
-            # Basic URL validation using regex
-            url_pattern = re.compile(
-                r'^https?://'  # http:// or https://
-                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-                r'localhost|'  # localhost...
-                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-                r'(?::\d+)?'  # optional port
-                r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+            file_ext = os.path.splitext(value)[1].lower()
+            if file_ext != '.pdf':
+                return False, "File does not appear to be a PDF. Only .pdf extension is supported."
+            return True, None
+        except FileNotFoundError:
+            return False, f"PDF file not found: {value}"
+        except PermissionError:
+            return False, f"Permission denied when accessing PDF file: {value}"
+        except (IOError, OSError) as e:
+            return False, f"PDF file error: {str(e)}"
 
-            if not url_pattern.match(value):
-                return False, "Value must be a valid URL (http:// or https://)"
+    def _validate_url(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate URL input."""
+        url_pattern = re.compile(
+            r'^https?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
+        if not url_pattern.match(value):
+            return False, "Value must be a valid URL (http:// or https://)"
         return True, None

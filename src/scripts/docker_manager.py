@@ -35,7 +35,7 @@ def run_command(cmd, check=True):
         # Fallback for complex docker commands that need shell=True
         result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
 
-    if check and result.returncode != 0:
+    if check and result.returncode:
         print(f"Command failed with exit code {result.returncode}")
         sys.exit(1)
     return result.returncode

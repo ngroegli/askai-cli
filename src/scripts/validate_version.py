@@ -62,7 +62,7 @@ def get_docker_compose_version():
     match = re.search(r'ASKAI_VERSION[=:]([^\n\s]+)', content)
     return match.group(1) if match else None
 
-def main():
+def main():  # pylint: disable=too-many-branches,too-many-statements
     """Validate version consistency."""
     print("Checking version consistency across project files...")
     print(f"Source version: {__version__}")

@@ -33,8 +33,8 @@ class Health(Resource):
 
         Returns basic health information about the service.
         """
-        import datetime
-        import time
+        import datetime  # pylint: disable=import-outside-toplevel
+        import time  # pylint: disable=import-outside-toplevel
 
         # Get app start time (simplified for now)
         start_time = getattr(current_app, 'start_time', time.time())

@@ -46,13 +46,10 @@ class PatternProcessor:
 
         try:
             # Get output directory if needed for file outputs
-            output_dir = None
-            file_outputs_exist = any(output.action == OutputAction.WRITE for output in pattern_outputs)
-            if file_outputs_exist:
-                output_dir = self.directory_manager.get_output_directory()
-                if output_dir is None:
-                    logger.warning("No output directory available for file outputs")
-                    return created_files
+            output_dir = self._get_output_dir_if_needed(pattern_outputs)
+            if output_dir is None and any(output.action == OutputAction.WRITE for output in pattern_outputs):
+                logger.warning("No output directory available for file outputs")
+                return created_files
 
             # Extract pattern contents from response
             pattern_contents = self.extract_pattern_contents(response, pattern_outputs)
@@ -64,13 +61,7 @@ class PatternProcessor:
 
                     if output.action == OutputAction.WRITE:
                         # Process file output
-                        if content and output_dir:
-                            file_path = self._get_output_file_path(output, output_dir)
-                            if file_path:
-                                success = self.file_writer_chain.write_by_extension(content, file_path)
-                                if success:
-                                    created_files.append(file_path)
-                                    logger.info("Created file: %s", file_path)
+                        self._process_file_output(output, content, output_dir, created_files)
 
                     elif output.action == OutputAction.DISPLAY:
                         # Display output will be handled by output coordinator
@@ -109,6 +100,24 @@ class PatternProcessor:
                 command_outputs.append(output)
 
         return file_outputs, display_outputs, command_outputs
+
+    def _get_output_dir_if_needed(self, pattern_outputs: List[PatternOutput]) -> Optional[str]:
+        """Get output directory if file outputs exist."""
+        file_outputs_exist = any(output.action == OutputAction.WRITE for output in pattern_outputs)
+        if file_outputs_exist:
+            return self.directory_manager.get_output_directory()
+        return None
+
+    def _process_file_output(self, output: PatternOutput, content: str,
+                            output_dir: Optional[str], created_files: List[str]) -> None:
+        """Process a single file output."""
+        if content and output_dir:
+            file_path = self._get_output_file_path(output, output_dir)
+            if file_path:
+                success = self.file_writer_chain.write_by_extension(content, file_path)
+                if success:
+                    created_files.append(file_path)
+                    logger.info("Created file: %s", file_path)
 
     def extract_pattern_contents(
             self, response: Union[str, Dict], pattern_outputs: List[PatternOutput]

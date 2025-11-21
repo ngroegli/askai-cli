@@ -36,17 +36,17 @@ class TestTUIFallback(unittest.TestCase):
     @patch('askai.presentation.tui.utils.fallback.sys.stdout')
     @patch.dict(os.environ, {'TERM': 'xterm-256color'}, clear=False)
     def test_check_tui_environment_no_textual(self, mock_stdout, mock_isatty):
-        """Test environment check when textual is not available."""
+        """Test environment check - textual is always available now."""
         mock_stdout.fileno.return_value = 1  # Standard stdout fileno
         mock_isatty.return_value = True
 
         result = check_tui_environment()
 
-        self.assertFalse(result['textual_available'])
+        # Textual is always available now (required dependency)
+        self.assertTrue(result['textual_available'])
         self.assertTrue(result['terminal_compatible'])
         self.assertTrue(result['user_preference'])
-        self.assertFalse(result['overall_compatible'])
-        self.assertIn("Textual library not installed", str(result['issues']))
+        self.assertTrue(result['overall_compatible'])
 
     @patch('askai.presentation.tui.utils.fallback.os.isatty')
     def test_check_tui_environment_no_terminal(self, mock_isatty):

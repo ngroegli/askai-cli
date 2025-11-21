@@ -103,7 +103,7 @@ def is_placeholder_value(value):
 
     return False
 
-def get_user_input_for_setting(key, value, path="", depth=0):
+def get_user_input_for_setting(key, value, path="", depth=0):  # pylint: disable=too-many-return-statements,too-many-branches
     """
     Get user input for a specific configuration setting.
 
@@ -305,56 +305,76 @@ def ensure_askai_setup():
     if is_test_environment():
         return True
 
-    # Check if main directory structure exists
-    if not os.path.exists(ASKAI_DIR):
-        print("\n" + "="*60)
-        print("           AskAI First Time Setup")
-        print("="*60)
-        print(f"\nAskAI needs to create its directory structure at: {ASKAI_DIR}")
-        print("This will include directories for configuration, chats, and logs.")
+    # Ensure directory structure
+    if not _ensure_directory_structure():
+        return False
 
-        while True:
-            choice = input("\nWould you like to create the AskAI directory structure? (y/n): ").lower().strip()
-            if choice in ['y', 'yes']:
-                if not create_directory_structure():
-                    print("Failed to create directory structure.")
-                    return False
-                break
-            if choice in ['n', 'no']:
-                print("AskAI requires the directory structure to function. Exiting.")
+    # Ensure configuration file
+    return _ensure_configuration_file()
+
+def _ensure_directory_structure():
+    """Ensure the AskAI directory structure exists."""
+    if os.path.exists(ASKAI_DIR):
+        return True
+
+    print("\n" + "="*60)
+    print("           AskAI First Time Setup")
+    print("="*60)
+    print(f"\nAskAI needs to create its directory structure at: {ASKAI_DIR}")
+    print("This will include directories for configuration, chats, and logs.")
+
+    while True:
+        choice = input("\nWould you like to create the AskAI directory structure? (y/n): ").lower().strip()
+        if choice in ['y', 'yes']:
+            if not create_directory_structure():
+                print("Failed to create directory structure.")
                 return False
-            print("Please enter 'y' for yes or 'n' for no.")
+            return True
+        if choice in ['n', 'no']:
+            print("AskAI requires the directory structure to function. Exiting.")
+            return False
+        print("Please enter 'y' for yes or 'n' for no.")
 
-    # Check if configuration file exists
+def _ensure_configuration_file():
+    """Ensure the configuration file exists."""
     config_path = TEST_CONFIG_PATH if is_test_environment() else CONFIG_PATH
 
-    if not os.path.exists(config_path):
-        if is_test_environment():
-            # In test mode, try to create from production config
-            if os.path.exists(CONFIG_PATH):
-                # In test mode, always be non-interactive
-                print("Test configuration not found. Creating automatically from production config...")
-                create_directory_structure(test_mode=True)
-                return create_test_config_from_production()
-            print("Production configuration not found. Please run setup in production mode first.")
-            return False
-        # Production mode - run setup wizard
-        config = run_dynamic_setup_wizard()
+    if os.path.exists(config_path):
+        return True
 
-        if not config:
-            print("Setup wizard failed. Cannot continue without configuration.")
-            return False
+    # Handle test environment
+    if is_test_environment():
+        return _setup_test_configuration()
 
-        try:
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-                yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
-            print("Configuration saved successfully!")
-            return True
-        except Exception as e:
-            print(f"Error saving configuration: {str(e)}")
-            return False
+    # Handle production environment
+    return _setup_production_configuration()
 
-    return True
+def _setup_test_configuration():
+    """Set up configuration in test environment."""
+    if os.path.exists(CONFIG_PATH):
+        print("Test configuration not found. Creating automatically from production config...")
+        create_directory_structure(test_mode=True)
+        return create_test_config_from_production()
+
+    print("Production configuration not found. Please run setup in production mode first.")
+    return False
+
+def _setup_production_configuration():
+    """Set up configuration in production environment."""
+    config = run_dynamic_setup_wizard()
+
+    if not config:
+        print("Setup wizard failed. Cannot continue without configuration.")
+        return False
+
+    try:
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
+        print("Configuration saved successfully!")
+        return True
+    except Exception as e:
+        print(f"Error saving configuration: {str(e)}")
+        return False
 
 def get_config_path():
     """

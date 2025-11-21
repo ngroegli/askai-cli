@@ -15,8 +15,7 @@ def _parse_version(version_str):
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', version_str)
     if match:
         return tuple(map(int, match.groups()))
-    else:
-        raise ValueError(f"Invalid version format: {version_str}")
+    raise ValueError(f"Invalid version format: {version_str}")
 
 __version_info__ = _parse_version(__version__)
 

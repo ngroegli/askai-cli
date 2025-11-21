@@ -44,37 +44,48 @@ class PatternManager:
             raise ValueError(f"No 'patterns' directory found at {self.patterns_dir}")
 
         # Private patterns directory (optional)
-        self.private_patterns_dir = None
-        if config and 'patterns' in config and 'private_patterns_path' in config['patterns']:
-            private_path = config['patterns']['private_patterns_path']
-            if private_path and private_path.strip():  # Check for non-empty string
-                # Expand user home directory if needed
-                expanded_path = os.path.expanduser(private_path.strip())
-                if os.path.isdir(expanded_path):
-                    self.private_patterns_dir = expanded_path
-                    logger.info("Using private patterns directory: %s", expanded_path)
-                else:
-                    # Ask user if they want to create the directory (only in non-test mode)
-                    if os.environ.get('ASKAI_TESTING', '').lower() in ('true', '1', 'yes'):
-                        # In test mode, silently skip creating private patterns directory
-                        logger.debug("Private patterns directory not found in test mode: %s", expanded_path)
-                    else:
-                        print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
-                        create_dir = input(
-                            f"Would you like to create the directory '{expanded_path}'? (y/n): "
-                        ).lower().strip()
-                        if create_dir == 'y':
-                            try:
-                                os.makedirs(expanded_path, exist_ok=True)
-                                self.private_patterns_dir = expanded_path
-                                print(f"Created private patterns directory: {expanded_path}")
-                                logger.info("Created private patterns directory: %s", expanded_path)
-                            except Exception as e:
-                                print(f"Error creating directory '{expanded_path}': {str(e)}")
-                                logger.error("Error creating private patterns directory %s: %s", expanded_path, str(e))
-                        else:
-                            print("Continuing without private patterns directory.")
-                        logger.warning("Private patterns directory not created: %s", expanded_path)
+        self.private_patterns_dir = self._initialize_private_patterns_dir(config)
+
+    def _initialize_private_patterns_dir(self, config: Optional[Dict]) -> Optional[str]:
+        """Initialize private patterns directory from config."""
+        if not (config and 'patterns' in config and 'private_patterns_path' in config['patterns']):
+            return None
+
+        private_path = config['patterns']['private_patterns_path']
+        if not (private_path and private_path.strip()):
+            return None
+
+        expanded_path = os.path.expanduser(private_path.strip())
+        if os.path.isdir(expanded_path):
+            logger.info("Using private patterns directory: %s", expanded_path)
+            return expanded_path
+
+        return self._handle_missing_private_dir(expanded_path)
+
+    def _handle_missing_private_dir(self, expanded_path: str) -> Optional[str]:
+        """Handle missing private patterns directory."""
+        # In test mode, silently skip
+        if os.environ.get('ASKAI_TESTING', '').lower() in ('true', '1', 'yes'):
+            logger.debug("Private patterns directory not found in test mode: %s", expanded_path)
+            return None
+
+        # In interactive mode, ask user
+        print(f"\nWarning: Private patterns directory does not exist: {expanded_path}")
+        create_dir = input(f"Would you like to create the directory '{expanded_path}'? (y/n): ").lower().strip()
+
+        if create_dir == 'y':
+            try:
+                os.makedirs(expanded_path, exist_ok=True)
+                print(f"Created private patterns directory: {expanded_path}")
+                logger.info("Created private patterns directory: %s", expanded_path)
+                return expanded_path
+            except Exception as e:
+                print(f"Error creating directory '{expanded_path}': {str(e)}")
+                logger.error("Error creating private patterns directory %s: %s", expanded_path, str(e))
+                return None
+        else:
+            print("Continuing without private patterns directory.")
+            return None
 
     def _get_pattern_directories(self) -> List[str]:
         """Get all pattern directories to search.
@@ -497,7 +508,7 @@ class PatternManager:
 
     def process_pattern_inputs(self, pattern_id: str,
                             input_values: Optional[Dict[str, Any]] = None,
-                            interactive: bool = True) -> Optional[Dict[str, Any]]:
+                            interactive: bool = True) -> Optional[Dict[str, Any]]:  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """Process pattern inputs from JSON values or interactive input.
 
         Args:
@@ -575,36 +586,9 @@ class PatternManager:
                     continue  # All inputs in this group already provided
 
                 # Get user selection(s)
-                selections = []
-                while len(selections) < group.required_inputs:
-                    choice = input(f"Select input number (1-{len(available_inputs)}): ").strip()
-
-                    try:
-                        choice_num = int(choice)
-                        if 1 <= choice_num <= len(available_inputs):
-                            selected_input = available_inputs[choice_num - 1]
-                            if selected_input in selections:
-                                print(f"You've already selected {selected_input.name}")
-                                continue
-
-                            selections.append(selected_input)
-                            processed_group_inputs[group.name].add(selected_input.name)
-
-                            # If we've selected enough inputs, break
-                            if len(selections) >= group.required_inputs:
-                                break
-
-                            # If more selections are needed, ask if user wants to add another
-                            if len(selections) < group.required_inputs:
-                                print(f"Selected {len(selections)} of {group.required_inputs} required inputs.")
-                            elif group.required_inputs < len(available_inputs):
-                                add_more = input("Add more inputs from this group? (y/n): ").lower()
-                                if add_more != 'y':
-                                    break
-                        else:
-                            print(f"Please enter a number between 1 and {len(available_inputs)}")
-                    except ValueError:
-                        print("Please enter a valid number")
+                selections = self._get_group_input_selections(
+                    available_inputs, group.required_inputs, group.name, processed_group_inputs
+                )
 
                 # Now get values for each selected input
                 for selected_input in selections:
@@ -659,6 +643,55 @@ class PatternManager:
                 return None
 
         return result
+
+    def _get_group_input_selections(self, available_inputs: List, required_inputs: int,
+                                    group_name: str, processed_group_inputs: Dict) -> List:
+        """Get user selections for inputs from a group."""
+        selections = []
+        while len(selections) < required_inputs:
+            choice = input(f"Select input number (1-{len(available_inputs)}): ").strip()
+
+            try:
+                choice_num = int(choice)
+                if 1 <= choice_num <= len(available_inputs):
+                    selected_input = available_inputs[choice_num - 1]
+                    if selected_input in selections:
+                        print(f"You've already selected {selected_input.name}")
+                        continue
+
+                    selections.append(selected_input)
+                    processed_group_inputs[group_name].add(selected_input.name)
+
+                    # Check if we should continue selecting
+                    if not self._should_continue_group_selection(
+                        selections, required_inputs, available_inputs
+                    ):
+                        break
+                else:
+                    print(f"Please enter a number between 1 and {len(available_inputs)}")
+            except ValueError:
+                print("Please enter a valid number")
+
+        return selections
+
+    def _should_continue_group_selection(self, selections: List, required_inputs: int,
+                                        available_inputs: List) -> bool:
+        """Determine if user should continue selecting inputs from group."""
+        # If we've selected enough inputs, stop
+        if len(selections) >= required_inputs:
+            return False
+
+        # If more selections are needed, show progress
+        if len(selections) < required_inputs:
+            print(f"Selected {len(selections)} of {required_inputs} required inputs.")
+            return True
+
+        # If optional selections are available, ask user
+        if required_inputs < len(available_inputs):
+            add_more = input("Add more inputs from this group? (y/n): ").lower()
+            return add_more == 'y'
+
+        return True
 
     def _get_input_value(self, input_def: PatternInput, result: Dict[str, Any]) -> None:
         """Get and validate a value for a specific input.

@@ -39,9 +39,48 @@ except ImportError:
     def run_tabbed_tui(*args, **kwargs):  # pylint: disable=unused-argument
         """Fallback function when TUI is not available."""
         print("TUI functionality is not available due to import issues.")
-        return None
 
 from askai.utils import load_config, setup_logger, print_error_or_warnings
+
+def _process_pattern_output(resolved_pattern_id, pattern_manager, base_path, config, response, logger):
+    """Process pattern output and normalize response format."""
+    # Get pattern outputs for auto-execution handling
+    if resolved_pattern_id:
+        # Make sure pattern_manager is initialized
+        if pattern_manager is None:
+            pattern_manager = PatternManager(base_path, config)
+
+        pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
+        if pattern_data:
+            _ = pattern_data.get('outputs', [])
+
+    # Check if the response is already a properly formatted JSON with a 'results' field
+    return _normalize_json_response(response, logger)
+
+def _normalize_json_response(response, logger):
+    """Normalize JSON response if it contains nested results."""
+    try:
+        if isinstance(response, dict) and 'content' in response:
+            content = response['content']
+            if isinstance(content, str) and content.strip().startswith('{'):
+                parsed_json = _try_parse_results_json(content, logger)
+                if parsed_json is not None:
+                    return parsed_json
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        logger.debug("Error checking for direct JSON: %s", str(e))
+    return response
+
+def _try_parse_results_json(content, logger):
+    """Try to parse content as JSON with results field."""
+    try:
+        parsed_json = json.loads(content)
+        if isinstance(parsed_json, dict) and 'results' in parsed_json:
+            logger.debug("Found direct JSON with results in content")
+            return parsed_json
+    except json.JSONDecodeError:
+        logger.debug("Content is not valid JSON")
+    return None
+
 def display_help_fast():
     """
     Display help information with minimal imports.
@@ -50,7 +89,7 @@ def display_help_fast():
     cli_parser = CLIParser()
     cli_parser.parse_arguments()  # This will display help and exit
 
-def main():
+def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """Main entry point for the AskAI CLI application."""
     # Check if this is a help request (before any heavy initialization)
     # Use most efficient path for help commands
@@ -84,8 +123,7 @@ def main():
                             question_processor=question_processor
                         )
                         return
-                    else:
-                        print("TUI mode configured but not available. Falling back to CLI help.")
+                    print("TUI mode configured but not available. Falling back to CLI help.")
                 except ImportError:
                     print("TUI mode configured but dependencies not available. Falling back to CLI help.")
                 except Exception as e:
@@ -246,33 +284,9 @@ def main():
 
     # Process output based on mode
     if using_pattern:
-        # Get pattern outputs for auto-execution handling
-        if resolved_pattern_id:
-            # Make sure pattern_manager is initialized
-            if pattern_manager is None:
-                pattern_manager = PatternManager(base_path, config)
-
-            pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
-            if pattern_data:
-                _ = pattern_data.get('outputs', [])
-
-        # Check if the response is already a properly formatted JSON with a 'results' field
-        try:
-            if isinstance(response, dict) and 'content' in response:
-                content = response['content']
-                if isinstance(content, str) and content.strip().startswith('{'):
-                    # Try to parse the content as JSON
-                    try:
-                        parsed_json = json.loads(content)
-                        if isinstance(parsed_json, dict) and 'results' in parsed_json:
-                            # We have proper JSON with results, modify the response directly
-                            logger.debug("Found direct JSON with results in content")
-                            # Create a new response object with the parsed content
-                            response = parsed_json
-                    except json.JSONDecodeError:
-                        logger.debug("Content is not valid JSON")
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
-            logger.debug("Error checking for direct JSON: %s", str(e))
+        response = _process_pattern_output(
+            resolved_pattern_id, pattern_manager, base_path, config, response, logger
+        )
 
         logger.debug("Using pattern manager to handle response for %s", resolved_pattern_id)
         # Make sure pattern_manager is initialized

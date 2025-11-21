@@ -15,7 +15,7 @@ from askai.core.patterns import PatternManager
 from .models import QuestionContext, QuestionResponse
 
 
-class QuestionProcessor:
+class QuestionProcessor:  # pylint: disable=too-few-public-methods
     """Processes standalone questions without patterns."""
 
     def __init__(self, config: dict, logger, base_path: str):

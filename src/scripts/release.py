@@ -44,7 +44,7 @@ def run_command(cmd, check=True, capture=False):
         else:
             result = subprocess.run(cmd, shell=True, check=False)  # nosec B602
 
-    if check and result.returncode != 0:
+    if check and result.returncode:
         print(f"Command failed: {cmd}")
         if capture:
             print(f"Error: {result.stderr}")

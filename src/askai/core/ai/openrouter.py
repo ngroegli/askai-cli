@@ -87,63 +87,68 @@ class OpenRouterClient:
         }
 
         for msg in messages:
-            if not isinstance(msg.get("content"), list):
-                continue
-
-            content_list = msg.get("content", [])
-            for item in content_list:
-                if not isinstance(item, dict):
-                    continue
-
-                # Check for images
-                if item.get("type") == "image_url":
-                    result["has_multimodal"] = True
-                    image_url = item.get("image_url", {}).get("url", "")
-                    if "application/pdf" in image_url:
-                        result["has_pdf"] = True
-                        result["pdf_details"].append({
-                            "type": "image_url",
-                            "source": "application/pdf in URL",
-                            "url": image_url
-                        })
-
-                # Check for file attachments
-                elif item.get("type") == "file":
-                    file_data = item.get("file", {}).get("file_data", "")
-                    filename = item.get("file", {}).get("filename", "document.pdf")
-
-                    if file_data and isinstance(file_data, str):
-                        # Check for PDF URLs
-                        is_pdf_url = (file_data.startswith("http") and
-                                      file_data.lower().endswith(".pdf"))
-
-                        # Check for base64 PDFs
-                        is_pdf_base64 = "application/pdf" in file_data
-
-                        if is_pdf_url or is_pdf_base64:
-                            result["has_multimodal"] = True
-                            result["has_pdf"] = True
-
-                            if is_pdf_url:
-                                result["has_pdf_url"] = True
-                                result["pdf_details"].append({
-                                    "type": "file",
-                                    "source": "URL",
-                                    "filename": filename,
-                                    "url": file_data
-                                })
-                            else:
-                                result["pdf_details"].append({
-                                    "type": "file",
-                                    "source": "base64",
-                                    "filename": filename
-                                })
+            if isinstance(msg.get("content"), list):
+                self._check_message_content_for_multimodal(msg, result)
 
             # No need to check further if we've already found multimodal content
             if result["has_multimodal"]:
                 break
 
         return result
+
+    def _check_message_content_for_multimodal(self, msg: Dict, result: Dict) -> None:
+        """Check message content list for multimodal/PDF content."""
+        content_list = msg.get("content", [])
+        for item in content_list:
+            if isinstance(item, dict):
+                self._process_content_item(item, result)
+
+    def _process_content_item(self, item: Dict, result: Dict) -> None:
+        """Process a single content item for multimodal/PDF detection."""
+        # Check for images
+        if item.get("type") == "image_url":
+            result["has_multimodal"] = True
+            image_url = item.get("image_url", {}).get("url", "")
+            if "application/pdf" in image_url:
+                result["has_pdf"] = True
+                result["pdf_details"].append({
+                    "type": "image_url",
+                    "source": "application/pdf in URL",
+                    "url": image_url
+                })
+
+        # Check for file attachments
+        elif item.get("type") == "file":
+            self._process_file_attachment(item, result)
+
+    def _process_file_attachment(self, item: Dict, result: Dict) -> None:
+        """Process file attachment for PDF detection."""
+        file_data = item.get("file", {}).get("file_data", "")
+        filename = item.get("file", {}).get("filename", "document.pdf")
+
+        if file_data and isinstance(file_data, str):
+            # Check for PDF URLs or base64
+            is_pdf_url = file_data.startswith("http") and file_data.lower().endswith(".pdf")
+            is_pdf_base64 = "application/pdf" in file_data
+
+            if is_pdf_url or is_pdf_base64:
+                result["has_multimodal"] = True
+                result["has_pdf"] = True
+
+                if is_pdf_url:
+                    result["has_pdf_url"] = True
+                    result["pdf_details"].append({
+                        "type": "file",
+                        "source": "URL",
+                        "filename": filename,
+                        "url": file_data
+                    })
+                else:
+                    result["pdf_details"].append({
+                        "type": "file",
+                        "source": "base64",
+                        "filename": filename
+                    })
 
 
     def _configure_pdf_handling(self, payload, respect_existing_model=False):

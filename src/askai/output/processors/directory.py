@@ -43,34 +43,44 @@ class DirectoryManager:
             if directory.lower() == 'cancel':
                 return None
 
-            # Default to current directory
-            if not directory:
-                directory = "."
-
-            # Resolve path
-            directory_path = Path(os.path.expanduser(directory))
-
-            # Check if directory exists
-            if directory_path.exists():
-                if directory_path.is_dir():
-                    return str(directory_path.resolve())
-                print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
-                return str(Path(".").resolve())
-
-            # Confirm directory creation
-            print(f"📂 Directory '{directory}' does not exist.")
-            create = input("Create this directory? (y/n): ").strip().lower()
-            if create in ['y', 'yes', '']:
-                os.makedirs(directory_path, exist_ok=True)
-                return str(directory_path.resolve())
-
-            print("Using current directory instead.")
-            return str(Path(".").resolve())
+            # Process the user's directory choice
+            return self._process_directory_choice(directory or ".")
 
         except (KeyboardInterrupt, EOFError) as e:
             logger.warning("Input interrupted: %s", str(e))
             print("\nUsing current directory for output.")
             return str(Path(".").resolve())
+
+    def _process_directory_choice(self, directory: str) -> str:
+        """Process and validate the user's directory choice."""
+        directory_path = Path(os.path.expanduser(directory))
+
+        # Check if directory exists
+        if directory_path.exists():
+            return self._handle_existing_path(directory_path, directory)
+
+        # Handle non-existent directory
+        return self._handle_new_directory(directory_path)
+
+    def _handle_existing_path(self, directory_path: Path, directory: str) -> str:
+        """Handle an existing path."""
+        if directory_path.is_dir():
+            return str(directory_path.resolve())
+
+        print(f"❌ '{directory}' exists but is not a directory. Using current directory instead.")
+        return str(Path(".").resolve())
+
+    def _handle_new_directory(self, directory_path: Path) -> str:
+        """Handle creation of a new directory."""
+        print(f"📂 Directory '{directory_path}' does not exist.")
+        create = input("Create this directory? (y/n): ").strip().lower()
+
+        if create in ['y', 'yes', '']:
+            os.makedirs(directory_path, exist_ok=True)
+            return str(directory_path.resolve())
+
+        print("Using current directory instead.")
+        return str(Path(".").resolve())
 
     def ensure_directory_exists(self, directory: str) -> bool:
         """Ensure a directory exists, creating it if necessary.

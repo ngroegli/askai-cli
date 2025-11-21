@@ -9,7 +9,7 @@ from .base_tab import BaseTabComponent
 # pylint: disable=import-error
 from .styles import (
     Static, Button, ListView, ListItem, Label, TextArea, Input,
-    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
+    Vertical, Horizontal, VerticalScroll, Message
 )
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from textual.message import Message
 
 
-class PatternTab(BaseTabComponent, StatusMixin):
+class PatternTab(BaseTabComponent):
     """Pattern Browser tab component."""
 
     class PatternSelected(Message):
@@ -132,7 +132,7 @@ class PatternTab(BaseTabComponent, StatusMixin):
             except Exception:
                 pass
 
-    async def _display_pattern_info(self):
+    async def _display_pattern_info(self):  # pylint: disable=too-many-nested-blocks
         """Display information about the selected pattern."""
         if not self.selected_pattern:
             return
@@ -262,7 +262,7 @@ class PatternTab(BaseTabComponent, StatusMixin):
         elif event.button.id == "refresh-button":
             self._load_patterns()
 
-    async def _execute_pattern(self) -> None:
+    async def _execute_pattern(self) -> None:  # pylint: disable=too-many-nested-blocks
         """Execute the selected pattern with collected input values."""
         if not self.selected_pattern:
             try:

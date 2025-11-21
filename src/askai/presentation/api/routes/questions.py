@@ -26,7 +26,9 @@ question_request = questions_ns.model('QuestionRequest', {
     'response_format': fields.String(description='Response format', enum=['rawtext', 'json', 'md'], default='rawtext'),
     'model': fields.String(description='AI model to use (optional)'),
     'pattern_id': fields.String(description='Pattern ID to use (optional)'),
-    'persistent_chat': fields.String(description='Chat ID for persistent conversation (optional, use "new" for new chat)')
+    'persistent_chat': fields.String(
+        description='Chat ID for persistent conversation (optional, use "new" for new chat)'
+    )
 })
 
 # Response models
@@ -79,7 +81,7 @@ class AskQuestion(Resource):
             processor = QuestionProcessor(config, logger, base_path)
 
             # Create mock args object for compatibility
-            class MockArgs:
+            class MockArgs:  # pylint: disable=missing-class-docstring,too-few-public-methods
                 def __init__(self, data):
                     self.question = data.get('question')
                     self.file_input = data.get('file_input')
@@ -176,7 +178,7 @@ class ValidateQuestion(Resource):
                 errors.append(f"Invalid response format. Must be one of: {', '.join(valid_formats)}")
 
             # Return validation results
-            is_valid = len(errors) == 0
+            is_valid = not errors
 
             return {
                 'valid': is_valid,

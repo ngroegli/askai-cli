@@ -7,7 +7,7 @@ import re
 from .base import BaseDisplayFormatter
 
 
-class MarkdownFormatter(BaseDisplayFormatter):
+class MarkdownFormatter(BaseDisplayFormatter):  # pylint: disable=too-few-public-methods
     """Formatter for markdown output with proper syntax."""
 
     def format(self, content: str, content_type: str = 'text',

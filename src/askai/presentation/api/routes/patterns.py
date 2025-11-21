@@ -197,7 +197,7 @@ class PatternsList(Resource):
 
     @patterns_ns.doc('list_patterns')
     @patterns_ns.marshal_with(patterns_list)
-    def get(self):
+    def get(self):  # pylint: disable=too-many-nested-blocks
         """Get list of all available patterns.
 
         Returns a list of all patterns available in the system.
@@ -442,7 +442,7 @@ class PatternExecution(Resource):
     @patterns_ns.doc('execute_pattern')
     @patterns_ns.expect(pattern_execution_request, validate=True)
     @patterns_ns.marshal_with(pattern_execution_response)
-    def post(self):
+    def post(self):  # pylint: disable=too-many-return-statements
         """Execute a pattern with provided input values (text/numbers only).
 
         This endpoint handles patterns that don't require file inputs.
@@ -605,7 +605,7 @@ class PatternFileExecution(Resource):
     @patterns_ns.doc('execute_pattern_with_files')
     @patterns_ns.expect(pattern_file_execution_request, validate=False)
     @patterns_ns.marshal_with(pattern_execution_response)
-    def post(self):
+    def post(self):  # pylint: disable=too-many-return-statements
         """Execute a pattern with file uploads.
 
         Use multipart/form-data with:
@@ -820,7 +820,7 @@ class PatternTemplate(Resource):
 
     @patterns_ns.doc('get_pattern_template')
     @patterns_ns.marshal_with(pattern_template)
-    def get(self, pattern_id):
+    def get(self, pattern_id):  # pylint: disable=too-many-nested-blocks
         """Get a JSON template with default/example values for pattern inputs.
 
         Returns a template that can be used as a starting point for

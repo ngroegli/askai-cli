@@ -9,29 +9,8 @@ from askai.utils import (get_piped_input, get_file_input, build_format_instructi
                    encode_file_to_base64, generate_output_format_template)
 
 
-class MessageBuilder:
-    """Builds mess                # Create multimodal message with PDF URL - using proper structure as per documentation
-                # The URL should be directly in the file_data field
-                user_message = {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_question},
-                        {
-                            "type": "file",
-                            "file": {
-                                "filename": pdf_filename,
-                                "file_data": pdf_url
-                            }
-                        }
-                    ]
-                }
-
-                # Add metadata to indicate this needs plugin processing
-                user_message["metadata"] = {
-                    "requires_pdf_processing": True
-                }
-
-                messages.append(user_message)eraction from various input sources."""
+class MessageBuilder:  # pylint: disable=too-few-public-methods
+    """Builds messages for AI interaction from various input sources."""
 
     def __init__(self, pattern_manager, logger):
         self.pattern_manager = pattern_manager

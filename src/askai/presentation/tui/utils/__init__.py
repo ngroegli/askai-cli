@@ -3,12 +3,9 @@
 import os
 from typing import Dict, Any, Optional
 
-try:
-    import textual
-    TEXTUAL_AVAILABLE = True
-except ImportError:
-    textual = None
-    TEXTUAL_AVAILABLE = False
+import textual
+
+TEXTUAL_AVAILABLE = True
 
 
 def get_terminal_size() -> tuple[int, int]:
@@ -52,8 +49,8 @@ def get_theme_colors() -> Dict[str, str]:
             'surface': '#f8f9fa',
             'text': '#212529',
         }
-    else:  # dark theme (default)
-        return {
+    # dark theme (default)
+    return {
             'primary': '#3b82f6',
             'secondary': '#6b7280',
             'success': '#10b981',
@@ -77,7 +74,7 @@ def is_chat_file(filename: str) -> bool:
 
 def safe_import_textual() -> Optional[Any]:
     """Safely import textual with error handling."""
-    return textual if TEXTUAL_AVAILABLE else None
+    return textual
 
 
 __all__ = [

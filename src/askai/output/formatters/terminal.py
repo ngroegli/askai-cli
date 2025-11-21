@@ -13,7 +13,7 @@ from rich.markdown import Markdown
 from .base import BaseDisplayFormatter
 
 
-class TerminalFormatter(BaseDisplayFormatter):
+class TerminalFormatter(BaseDisplayFormatter):  # pylint: disable=too-few-public-methods
     """Formatter for terminal/console output with colors and formatting."""
 
     # ANSI color codes

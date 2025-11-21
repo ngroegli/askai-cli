@@ -6,7 +6,7 @@ and cleaning content for processing.
 
 import json
 import logging
-from typing import Union, Dict
+from typing import Union, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,42 +23,62 @@ class ResponseNormalizer:
             Normalized string response
         """
         if isinstance(response, dict):
-            # Handle OpenRouter response format
-            if 'choices' in response and response['choices']:
-                choice = response['choices'][0]
-                if 'message' in choice and 'content' in choice['message']:
-                    return choice['message']['content']
-                if 'text' in choice:
-                    return choice['text']
+            return self._normalize_dict_response(response)
 
-            # Handle direct content format
-            if 'content' in response:
-                return response['content']
-
-            # Handle result format
-            if 'result' in response:
-                if isinstance(response['result'], str):
-                    return response['result']
-                return json.dumps(response['result'], indent=2)
-
-            # Handle raw message format
-            if 'message' in response and isinstance(response['message'], dict):
-                if 'content' in response['message']:
-                    return response['message']['content']
-
-            # Fall back to JSON representation
-            try:
-                return json.dumps(response, indent=2)
-            except (TypeError, ValueError):
-                return str(response)
-
-        if hasattr(response, 'replace'):  # String-like objects
+        # String-like objects
+        if hasattr(response, 'replace'):
             return response
+
         # Handle other types
+        return self._to_json_or_str(response)
+
+    def _normalize_dict_response(self, response: Dict) -> str:
+        """Normalize dictionary response to string."""
+        # Try various response formats in order
+        content = (
+            self._extract_from_choices(response) or
+            self._extract_direct_content(response) or
+            self._extract_result(response) or
+            self._extract_from_message(response) or
+            self._to_json_or_str(response)
+        )
+        return content
+
+    def _extract_from_choices(self, response: Dict) -> Optional[str]:
+        """Extract content from choices format."""
+        if 'choices' in response and response['choices']:
+            choice = response['choices'][0]
+            if 'message' in choice and 'content' in choice['message']:
+                return choice['message']['content']
+            if 'text' in choice:
+                return choice['text']
+        return None
+
+    def _extract_direct_content(self, response: Dict) -> Optional[str]:
+        """Extract direct content field."""
+        return response.get('content')
+
+    def _extract_result(self, response: Dict) -> Optional[str]:
+        """Extract and format result field."""
+        if 'result' in response:
+            result = response['result']
+            if isinstance(result, str):
+                return result
+            return json.dumps(result, indent=2)
+        return None
+
+    def _extract_from_message(self, response: Dict) -> Optional[str]:
+        """Extract content from nested message."""
+        if 'message' in response and isinstance(response['message'], dict):
+            return response['message'].get('content')
+        return None
+
+    def _to_json_or_str(self, obj: Any) -> str:
+        """Convert object to JSON string or fallback to str()."""
         try:
-            return json.dumps(response, indent=2)
+            return json.dumps(obj, indent=2)
         except (TypeError, ValueError):
-            return str(response)
+            return str(obj)
 
     def clean_content(self, content: str) -> str:
         """Clean and format content.

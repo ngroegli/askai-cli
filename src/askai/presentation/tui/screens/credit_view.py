@@ -1,19 +1,13 @@
 """Credit balance view screen for the TUI."""
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Container
-from textual.widgets import Header, Footer, Button
 from textual.binding import Binding
+from textual.containers import Horizontal, Container
+from textual.widgets import Header, Footer, Button, Static
 
 from askai.core.ai.openrouter import OpenRouterClient
-try:
-    from askai.presentation.tui.styles import StyledStatic
-    from textual.widgets import Static  # Import for query_one type hints
-except ImportError:
-    # Fallback if styled components not available
-    from textual.widgets import Static
-    StyledStatic = Static
 from askai.presentation.tui.screens.base_screen import BaseScreen
+from askai.presentation.tui.styles import StyledStatic
 
 
 class CreditViewScreen(BaseScreen):

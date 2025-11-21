@@ -131,7 +131,7 @@ class CommandHandler:
 
         return False
 
-    def handle_chat_commands(self, args):
+    def handle_chat_commands(self, args):  # pylint: disable=too-many-return-statements,too-many-branches
         """Handle chat-related commands (CLI only, except for interactive mode)."""
         # Check if interactive TUI mode should be used
         if self.handle_interactive_mode(args):
@@ -205,7 +205,7 @@ class CommandHandler:
 
         return False
 
-    def _handle_chat_management(self):
+    def _handle_chat_management(self):  # pylint: disable=too-many-nested-blocks
         """Handle chat file management, including repair and deletion of corrupted files."""
         # Scan for corrupted files
         corrupted_files = self.chat_manager.scan_corrupted_chat_files()
@@ -328,7 +328,7 @@ class CommandHandler:
         else:
             print_error_or_warnings("Invalid choice.", is_warning=True, exit_on_error=False)
 
-    def handle_openrouter_commands(self, args):
+    def handle_openrouter_commands(self, args):  # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
         """Handle OpenRouter-related commands."""
         if args.openrouter is None:
             return False

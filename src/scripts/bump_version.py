@@ -220,7 +220,7 @@ def generate_changelog_entry(new_version, bump_type):
 
     return entry
 
-def main():
+def main():  # pylint: disable=too-many-branches
     """Main function for version bumping."""
     parser = argparse.ArgumentParser(description="Bump version for AskAI CLI")
     parser.add_argument('bump_type', nargs='?', choices=['patch', 'minor', 'major'],

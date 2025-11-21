@@ -7,7 +7,7 @@ from typing import Optional
 import logging
 
 
-class BaseDisplayFormatter(ABC):
+class BaseDisplayFormatter(ABC):  # pylint: disable=too-few-public-methods
     """Base class for formatters that format content for different display outputs."""
 
     def __init__(self, logger: Optional[logging.Logger] = None):

@@ -56,49 +56,43 @@ class ContentExtractor:
         Returns:
             Parsed JSON data or None if no valid JSON found
         """
+        # Try direct JSON parsing first
+        result = self._try_direct_json_parse(text)
+        if result is not None:
+            return result
+
+        # Fall back to regex pattern extraction
+        return self._extract_from_malformed_json(text)
+
+    def _try_direct_json_parse(self, text: str) -> Optional[Dict]:
+        """Try to parse text as direct JSON with nested checks."""
         try:
-            # Try to parse the entire text as JSON first
             parsed = json.loads(text.strip())
 
-            # Check if the parsed JSON contains a 'results' key with nested data
+            # Check for nested 'results' key
             if isinstance(parsed, dict) and 'results' in parsed:
                 return parsed['results']
 
-            # Check if any values in the parsed JSON are themselves JSON strings
+            # Check for nested JSON strings in values
             if isinstance(parsed, dict):
-                for value in parsed.values():
-                    if isinstance(value, str):
-                        try:
-                            # Try to parse the string value as JSON
-                            nested_json = json.loads(value)
-                            if isinstance(nested_json, dict):
-                                # If successful, check if it has a 'results' structure
-                                if 'results' in nested_json:
-                                    return nested_json['results']
-                                return nested_json
-                        except json.JSONDecodeError:
-                            continue
+                nested = self._extract_nested_json_strings(parsed)
+                if nested is not None:
+                    return nested
 
             return parsed
         except json.JSONDecodeError:
-            # Try to extract content from malformed JSON using regex patterns
-            return self._extract_from_malformed_json(text)
+            return None
 
-        # Look for JSON blocks in the text
-        json_patterns = [
-            r'```json\s*\n(.*?)\n```',
-            r'```\s*\n(\{.*?\})\s*\n```',
-            r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})',
-        ]
-
-        for pattern in json_patterns:
-            matches = re.findall(pattern, text, re.DOTALL | re.MULTILINE)
-            for match in matches:
+    def _extract_nested_json_strings(self, parsed_dict: Dict) -> Optional[Dict]:
+        """Extract JSON from string values within a parsed dictionary."""
+        for value in parsed_dict.values():
+            if isinstance(value, str):
                 try:
-                    return json.loads(match.strip())
+                    nested_json = json.loads(value)
+                    if isinstance(nested_json, dict):
+                        return nested_json.get('results', nested_json)
                 except json.JSONDecodeError:
                     continue
-
         return None
 
     def _extract_content_by_patterns(self, text: str) -> Dict[str, str]:

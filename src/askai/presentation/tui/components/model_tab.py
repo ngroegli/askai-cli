@@ -3,32 +3,20 @@ Model Browser Tab Component.
 Handles AI model browsing and selection.
 """
 
-from typing import TYPE_CHECKING
-from .base_tab import BaseTabComponent
+from askai.core.ai import OpenRouterClient
 
+from .base_tab import BaseTabComponent
 # pylint: disable=import-error
 from .styles import (
     Static, Button, ListView, ListItem, Label, Input,
-    Vertical, Horizontal, VerticalScroll, Message, StatusMixin
+    Vertical, Horizontal, VerticalScroll, Message
 )
 
-try:
-    from askai.core.ai import OpenRouterClient
-except ImportError:
-    if not TYPE_CHECKING:
-        OpenRouterClient = object
 
-if TYPE_CHECKING:
-    from textual.widgets import Static, Button, ListView, ListItem, Label, Input
-    from textual.containers import Vertical, Horizontal, VerticalScroll
-    from textual.message import Message
-    from askai.core.ai import OpenRouterClient
-
-
-class ModelTab(BaseTabComponent, StatusMixin):
+class ModelTab(BaseTabComponent):
     """Model Browser tab component."""
 
-    class ModelSelected(Message):
+    class ModelSelected(Message):  # pylint: disable=too-few-public-methods
         """Message sent when a model is selected."""
         def __init__(self, model_data: dict) -> None:
             self.model_data = model_data

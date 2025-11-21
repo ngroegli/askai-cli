@@ -167,39 +167,55 @@ class PatternOutput:
             tuple: (is_valid, error_message)
         """
         if value is None:
-            if self.required:
-                return False, f"'{self.name}' output is required"
-            return True, None
+            return (False, f"'{self.name}' output is required") if self.required else (True, None)
 
         # Validate based on output type
-        if self.output_type == OutputType.JSON:
-            try:
-                # Parse string to JSON if needed
-                if isinstance(value, str):
-                    value = json.loads(value)
-            except json.JSONDecodeError as e:
-                return False, f"Invalid JSON: {str(e)}"
+        validators = {
+            OutputType.JSON: self._validate_json,
+            OutputType.TABLE: self._validate_table,
+            OutputType.LIST: self._validate_list,
+        }
 
-        elif self.output_type == OutputType.TABLE:
-            is_list_of_lists = (
-                isinstance(value, (list, tuple)) and
-                all(isinstance(row, (list, tuple)) for row in value)
-            )
-            if not is_list_of_lists:
-                return False, "Table output must be a list of lists"
-
-        elif self.output_type == OutputType.LIST:
-            if not isinstance(value, (list, tuple)):
-                return False, "List output must be a list or tuple"
+        validator = validators.get(self.output_type)
+        if validator:
+            return validator(value)
 
         # Text types accept any string value
-        elif self.output_type in (
-            OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN,
-            OutputType.HTML, OutputType.CSS, OutputType.JS
-        ):
-            if not isinstance(value, str):
-                return False, f"{self.output_type.value} output must be a string"
+        if self.output_type in (OutputType.TEXT, OutputType.CODE, OutputType.MARKDOWN,
+                                OutputType.HTML, OutputType.CSS, OutputType.JS):
+            return self._validate_text(value)
 
+        return True, None
+
+    def _validate_json(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate JSON output."""
+        try:
+            if isinstance(value, str):
+                json.loads(value)
+            return True, None
+        except json.JSONDecodeError as e:
+            return False, f"Invalid JSON: {str(e)}"
+
+    def _validate_table(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate table output."""
+        is_list_of_lists = (
+            isinstance(value, (list, tuple)) and
+            all(isinstance(row, (list, tuple)) for row in value)
+        )
+        if not is_list_of_lists:
+            return False, "Table output must be a list of lists"
+        return True, None
+
+    def _validate_list(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate list output."""
+        if not isinstance(value, (list, tuple)):
+            return False, "List output must be a list or tuple"
+        return True, None
+
+    def _validate_text(self, value: Any) -> tuple[bool, Optional[str]]:
+        """Validate text-based output types."""
+        if not isinstance(value, str):
+            return False, f"{self.output_type.value} output must be a string"
         return True, None
 
     def should_prompt_for_execution(self) -> bool:
