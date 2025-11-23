@@ -24,7 +24,7 @@ class ModelProvider(Enum):
     CUSTOM = "custom"
 
 @dataclass
-class ModelConfiguration:
+class ModelConfiguration:  # pylint: disable=too-few-public-methods
     """
     Configuration for an AI model with customizable parameters.
 
@@ -133,7 +133,7 @@ class PatternFunctionality:
         return cls(features=features)
 
 @dataclass
-class PatternConfiguration:
+class PatternConfiguration:  # pylint: disable=too-many-instance-attributes
     """
     Complete configuration for an AI interaction pattern.
 
@@ -151,6 +151,7 @@ class PatternConfiguration:
 
     @classmethod
     def from_components(cls, purpose: PatternPurpose, functionality: PatternFunctionality,
+                       *,
                        model_config: Optional[Dict[str, Any]] = None,
                        format_instructions: Optional[str] = None,
                        example_conversation: Optional[List[Dict[str, str]]] = None,

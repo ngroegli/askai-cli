@@ -40,7 +40,7 @@ class OutputAction(Enum):
     NONE = "none"         # Do nothing with this output
 
 @dataclass
-class PatternOutput:
+class PatternOutput:  # pylint: disable=too-many-instance-attributes
     """Defines the expected output from a pattern.
 
     This class represents the contract for how an AI should structure its output

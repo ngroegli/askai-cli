@@ -16,9 +16,10 @@ class MessageBuilder:  # pylint: disable=too-few-public-methods
         self.pattern_manager = pattern_manager
         self.logger = logger
 
-    def build_messages(self, question=None, file_input=None, pattern_id=None,
+    def build_messages(self, *, question=None, file_input=None, pattern_id=None,
                       pattern_input=None, response_format="rawtext", url=None, image=None,
                       pdf=None, image_url=None, pdf_url=None):
+        # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """Builds the message list for OpenRouter.
 
         Args:
@@ -398,6 +399,7 @@ class MessageBuilder:  # pylint: disable=too-few-public-methods
         return messages, resolved_pattern_id
 
     def _handle_pattern_context(self, pattern_id, pattern_input, messages):
+        # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """Handle pattern-specific context and add to messages."""
         # Handle pattern selection if no specific ID was provided
         if pattern_id == 'new':

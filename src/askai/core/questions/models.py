@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any
 
 
 @dataclass
-class QuestionContext:
+class QuestionContext:  # pylint: disable=too-many-instance-attributes
     """Context information for processing a question."""
     question: Optional[str] = None
     file_input: Optional[str] = None
@@ -23,7 +23,7 @@ class QuestionContext:
 
 
 @dataclass
-class QuestionResponse:
+class QuestionResponse:  # pylint: disable=too-few-public-methods
     """Response from question processing."""
     content: str
     created_files: Optional[list] = None

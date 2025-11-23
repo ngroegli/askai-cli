@@ -132,7 +132,85 @@ class PatternTab(BaseTabComponent):
             except Exception:
                 pass
 
-    async def _display_pattern_info(self):  # pylint: disable=too-many-nested-blocks
+    def _format_inputs_info(self, inputs):
+        """Format inputs information for display."""
+        info_text = "\n📥 Inputs:\n"
+        for inp in inputs:
+            # Handle both dict and object inputs
+            if isinstance(inp, dict):
+                inp_name = inp.get('name', 'unknown')
+                inp_desc = inp.get('description', 'No description')
+                inp_required = inp.get('required', False)
+            else:
+                # Handle object inputs
+                inp_name = getattr(inp, 'name', 'unknown')
+                inp_desc = getattr(inp, 'description', 'No description')
+                inp_required = getattr(inp, 'required', False)
+
+            req_indicator = "✅" if inp_required else "⚪"
+            info_text += f"  {req_indicator} {inp_name}: {inp_desc}\n"
+        return info_text
+
+    def _format_outputs_info(self, outputs):
+        """Format outputs information for display."""
+        info_text = "\n📤 Outputs:\n"
+        for out in outputs:
+            # Handle both dict and object outputs
+            if isinstance(out, dict):
+                out_type = out.get('type', out.get('name', 'text'))
+                out_desc = out.get('description', 'No description')
+            else:
+                # Handle object outputs
+                out_type = getattr(out, 'type', getattr(out, 'name', 'text'))
+                out_desc = getattr(out, 'description', 'No description')
+
+            info_text += f"  📄 {out_type}: {out_desc}\n"
+        return info_text
+
+    def _collect_input_values(self, expected_inputs, status_display):
+        """Collect and validate input values from widgets.
+
+        Returns:
+            dict: Collected input values, or None if validation failed
+        """
+        pattern_inputs = {}
+        for inp in expected_inputs:
+            # Handle both dict and object inputs
+            if isinstance(inp, dict):
+                inp_name = inp.get('name', 'unknown')
+                inp_required = inp.get('required', False)
+            else:
+                inp_name = getattr(inp, 'name', 'unknown')
+                inp_required = getattr(inp, 'required', False)
+
+            # Try to find the input widget
+            try:
+                input_widget = self.query_one(f"#input-{inp_name}")
+                value = ""
+
+                # Handle different widget types
+                if isinstance(input_widget, Input):
+                    value = input_widget.value.strip()
+                elif isinstance(input_widget, TextArea):
+                    value = input_widget.text.strip()
+                else:
+                    # Fallback - try both attributes safely
+                    value = getattr(input_widget, 'value', getattr(input_widget, 'text', '')).strip()
+
+                if inp_required and not value:
+                    status_display.update(f"❌ Required field '{inp_name}' is empty")
+                    return None
+
+                if value:  # Only include non-empty values
+                    pattern_inputs[inp_name] = value
+
+            except Exception:
+                if inp_required:
+                    status_display.update(f"❌ Could not read required field '{inp_name}'")
+                    return None
+        return pattern_inputs
+
+    async def _display_pattern_info(self):  # pylint: disable=too-many-nested-blocks,too-many-locals,too-many-branches,too-many-statements
         """Display information about the selected pattern."""
         if not self.selected_pattern:
             return
@@ -169,35 +247,10 @@ class PatternTab(BaseTabComponent):
                     info_text += f"🔒 Private: {'Yes' if is_private else 'No'}\n"
 
                     if inputs:
-                        info_text += "\n📥 Inputs:\n"
-                        for inp in inputs:
-                            # Handle both dict and object inputs
-                            if isinstance(inp, dict):
-                                inp_name = inp.get('name', 'unknown')
-                                inp_desc = inp.get('description', 'No description')
-                                inp_required = inp.get('required', False)
-                            else:
-                                # Handle object inputs
-                                inp_name = getattr(inp, 'name', 'unknown')
-                                inp_desc = getattr(inp, 'description', 'No description')
-                                inp_required = getattr(inp, 'required', False)
-
-                            req_indicator = "✅" if inp_required else "⚪"
-                            info_text += f"  {req_indicator} {inp_name}: {inp_desc}\n"
+                        info_text += self._format_inputs_info(inputs)
 
                     if outputs:
-                        info_text += "\n📤 Outputs:\n"
-                        for out in outputs:
-                            # Handle both dict and object outputs
-                            if isinstance(out, dict):
-                                out_type = out.get('type', out.get('name', 'text'))
-                                out_desc = out.get('description', 'No description')
-                            else:
-                                # Handle object outputs
-                                out_type = getattr(out, 'type', getattr(out, 'name', 'text'))
-                                out_desc = getattr(out, 'description', 'No description')
-
-                            info_text += f"  📄 {out_type}: {out_desc}\n"
+                        info_text += self._format_outputs_info(outputs)
 
                     pattern_info.update(info_text)
 
@@ -262,7 +315,7 @@ class PatternTab(BaseTabComponent):
         elif event.button.id == "refresh-button":
             self._load_patterns()
 
-    async def _execute_pattern(self) -> None:  # pylint: disable=too-many-nested-blocks
+    async def _execute_pattern(self) -> None:  # pylint: disable=too-many-nested-blocks,too-many-branches
         """Execute the selected pattern with collected input values."""
         if not self.selected_pattern:
             try:
@@ -287,41 +340,10 @@ class PatternTab(BaseTabComponent):
                 pattern_content = self.pattern_manager.get_pattern_content(pattern_id)
                 if pattern_content:
                     expected_inputs = pattern_content.get('inputs', [])
-
-                    for inp in expected_inputs:
-                        # Handle both dict and object inputs
-                        if isinstance(inp, dict):
-                            inp_name = inp.get('name', 'unknown')
-                            inp_required = inp.get('required', False)
-                        else:
-                            inp_name = getattr(inp, 'name', 'unknown')
-                            inp_required = getattr(inp, 'required', False)
-
-                        # Try to find the input widget
-                        try:
-                            input_widget = self.query_one(f"#input-{inp_name}")
-                            value = ""
-
-                            # Handle different widget types
-                            if isinstance(input_widget, Input):
-                                value = input_widget.value.strip()
-                            elif isinstance(input_widget, TextArea):
-                                value = input_widget.text.strip()
-                            else:
-                                # Fallback - try both attributes safely
-                                value = getattr(input_widget, 'value', getattr(input_widget, 'text', '')).strip()
-
-                            if inp_required and not value:
-                                status_display.update(f"❌ Required field '{inp_name}' is empty")
-                                return
-
-                            if value:  # Only include non-empty values
-                                pattern_inputs[inp_name] = value
-
-                        except Exception:
-                            if inp_required:
-                                status_display.update(f"❌ Could not read required field '{inp_name}'")
-                                return
+                    collect_result = self._collect_input_values(expected_inputs, status_display)
+                    if collect_result is None:
+                        return  # Validation failed
+                    pattern_inputs = collect_result
         except Exception:
             pass
 

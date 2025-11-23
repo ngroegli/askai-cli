@@ -154,6 +154,7 @@ def create_release(version, release_notes=None):
     return True
 
 def main():
+    # pylint: disable=too-many-locals
     """Main function for creating releases."""
     parser = argparse.ArgumentParser(description="Create release for AskAI CLI")
     parser.add_argument('--version', help='Version to release (default: current version)')

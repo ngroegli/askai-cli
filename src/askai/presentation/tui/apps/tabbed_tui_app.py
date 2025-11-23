@@ -16,7 +16,7 @@ from .components import QuestionTab, PatternTab, ChatTab, ModelTab, CreditsTab
 TEXTUAL_AVAILABLE = True
 
 
-class TabbedTUIApp(App):
+class TabbedTUIApp(App):  # pylint: disable=too-many-instance-attributes
     """Simplified tabbed TUI application using components."""
 
     BINDINGS = [
@@ -227,7 +227,7 @@ class TabbedTUIApp(App):
                 return
 
             # Create a simple args object from question_data
-            class SimpleArgs:  # pylint: disable=too-few-public-methods
+            class SimpleArgs:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
                 """Simple arguments container for question processing."""
 
                 def __init__(self, question_data):

@@ -39,9 +39,7 @@ class MarkdownFormatter(BaseDisplayFormatter):  # pylint: disable=too-few-public
             formatted = content
 
         # Apply any custom formatters from kwargs
-        for key, value in kwargs.items():
-            if key.startswith('format_') and callable(value):
-                formatted = value(formatted)
+        formatted = self._apply_custom_formatters(formatted, **kwargs)
 
         return str(formatted)
 

@@ -56,9 +56,10 @@ class ChatManager:
         return chat_id
 
     def add_conversation(self, chat_id: str, messages: List[Dict[str, str]],
-                        response: str, outputs: Optional[List[Dict[str, Any]]] = None,
+                        response: str, *, outputs: Optional[List[Dict[str, Any]]] = None,
                         system_outputs: Optional[List] = None,
                         system_config: Optional[Any] = None) -> None:
+        # pylint: disable=too-many-locals
         """Add a new conversation to the chat history."""
         chat_file = self._get_chat_file_path(chat_id)
         if not os.path.exists(chat_file):
@@ -402,7 +403,7 @@ class ChatManager:
 
         return chat_id, messages
 
-    def store_chat_conversation(self, chat_id, messages, response, resolved_system_id, system_manager):
+    def store_chat_conversation(self, chat_id, messages, response, *, resolved_system_id, system_manager):
         """Store conversation in chat history as a simple logbook."""
         if not chat_id:
             return

@@ -30,6 +30,22 @@ class BaseDisplayFormatter(ABC):  # pylint: disable=too-few-public-methods
             str: Formatted content
         """
 
+    def _apply_custom_formatters(self, content: str, **kwargs) -> str:
+        """Apply custom formatter functions from kwargs.
+
+        Args:
+            content: Content to format
+            kwargs: May contain custom formatter functions prefixed with 'format_'
+
+        Returns:
+            str: Content after applying custom formatters
+        """
+        formatted = content
+        for key, value in kwargs.items():
+            if key.startswith('format_') and callable(value):
+                formatted = str(value(formatted))
+        return formatted
+
     def _truncate_content(self, content: str, max_length: int = 1000,
                          ellipsis: str = "...\n[content truncated]") -> str:
         """Truncate content if it exceeds maximum length.

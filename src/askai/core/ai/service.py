@@ -81,8 +81,9 @@ class AIService:
             model_name=config["default_model"]
         )
 
-    def get_ai_response(self, messages, model_name=None, pattern_id=None,
+    def get_ai_response(self, messages, model_name=None, *, pattern_id=None,
                        debug=False, pattern_manager=None, enable_url_search=False):
+        # pylint: disable=too-many-locals
         """Get response from AI model with progress spinner.
 
         Args:

@@ -351,6 +351,7 @@ class OpenRouterClient:
         self,
         messages: List[Dict[str, Any]],
         model_config: Optional[Any] = None,
+        *,
         debug: bool = False,
         web_search_options: Optional[Dict[str, Any]] = None,
         web_plugin_config: Optional[Dict[str, Any]] = None
@@ -498,6 +499,7 @@ class OpenRouterClient:
         self,
         endpoint: str,
         headers: Dict[str, str],
+        *,
         method: str = "GET",
         data: Optional[Dict[str, Any]] = None,
         success_handler: Optional[Callable[[requests.Response], Any]] = None,

@@ -150,6 +150,7 @@ class PatternManager:
         return sorted(patterns, key=lambda x: x['name'])
 
     def _parse_pattern_inputs(self, content: str) -> Tuple[List[PatternInput], List[InputGroup]]:
+        # pylint: disable=too-many-locals
         """Parse pattern inputs and input groups from markdown content.
 
         Args:

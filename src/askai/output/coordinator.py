@@ -20,7 +20,7 @@ from .processors.directory import DirectoryManager
 
 logger = logging.getLogger(__name__)
 
-class OutputCoordinator:
+class OutputCoordinator:  # pylint: disable=too-many-instance-attributes
     """Coordinates all output processing operations.
 
     This class serves as the main facade for output handling, orchestrating
@@ -64,6 +64,7 @@ class OutputCoordinator:
             self,
             response: Union[str, Dict],
             output_config: Optional[Dict[str, Any]] = None,
+            *,
             console_output: bool = True,
             file_output: bool = False,
             pattern_outputs: Optional[List[PatternOutput]] = None
@@ -365,12 +366,7 @@ class OutputCoordinator:
             output_dir = self.directory_manager.get_output_directory()
             if output_dir:
                 for content, output in self.pending_files:
-                    file_path = self._get_output_file_path(output, output_dir)
-                    if file_path:
-                        success = self.file_writer_chain.write_by_extension(content, file_path)
-                        if success:
-                            created_files.append(file_path)
-                            logger.info("Created file: %s", file_path)
+                    self._write_file_output(content, output, output_dir, created_files)
 
         # Clear pending operations after execution
         self.pending_commands = []
@@ -393,6 +389,23 @@ class OutputCoordinator:
                 content = pattern_contents[output.name]
                 if content:
                     self.pending_files.append((content, output))
+
+    def _write_file_output(self, content: str, output, output_dir: Optional[str], created_files: List[str]) -> None:
+        """Write a single file output.
+
+        Args:
+            content: Content to write
+            output: Pattern output definition
+            output_dir: Directory to write to
+            created_files: List to append created file paths to
+        """
+        if content and output_dir:
+            file_path = self._get_output_file_path(output, output_dir)
+            if file_path:
+                success = self.file_writer_chain.write_by_extension(content, file_path)
+                if success:
+                    created_files.append(file_path)
+                    logger.info("Created file: %s", file_path)
 
     def _create_pattern_files(
         self, pattern_contents: Dict[str, str], pattern_outputs: List[PatternOutput]
@@ -421,13 +434,7 @@ class OutputCoordinator:
         for output in pattern_outputs:
             if output.action == OutputAction.WRITE and output.name in pattern_contents:
                 content = pattern_contents[output.name]
-                if content and output_dir:
-                    file_path = self._get_output_file_path(output, output_dir)
-                    if file_path:
-                        success = self.file_writer_chain.write_by_extension(content, file_path)
-                        if success:
-                            created_files.append(file_path)
-                            logger.info("Created file: %s", file_path)
+                self._write_file_output(content, output, output_dir, created_files)
 
         return created_files
 

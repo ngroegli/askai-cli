@@ -42,17 +42,18 @@ except ImportError:
 
 from askai.utils import load_config, setup_logger, print_error_or_warnings
 
-def _process_pattern_output(resolved_pattern_id, pattern_manager, base_path, config, response, logger):
+def _process_pattern_output(resolved_pattern_id, response, *, pattern_manager=None, base_path=None, config=None, logger):
     """Process pattern output and normalize response format."""
     # Get pattern outputs for auto-execution handling
     if resolved_pattern_id:
         # Make sure pattern_manager is initialized
-        if pattern_manager is None:
+        if pattern_manager is None and base_path and config:
             pattern_manager = PatternManager(base_path, config)
 
-        pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
-        if pattern_data:
-            _ = pattern_data.get('outputs', [])
+        if pattern_manager:
+            pattern_data = pattern_manager.get_pattern_content(resolved_pattern_id)
+            if pattern_data:
+                _ = pattern_data.get('outputs', [])
 
     # Check if the response is already a properly formatted JSON with a 'results' field
     return _normalize_json_response(response, logger)
@@ -285,7 +286,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     # Process output based on mode
     if using_pattern:
         response = _process_pattern_output(
-            resolved_pattern_id, pattern_manager, base_path, config, response, logger
+            resolved_pattern_id, response,
+            pattern_manager=pattern_manager, base_path=base_path, config=config, logger=logger
         )
 
         logger.debug("Using pattern manager to handle response for %s", resolved_pattern_id)

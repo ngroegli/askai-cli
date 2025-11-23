@@ -45,7 +45,7 @@ class InputGroup:
         )
 
 @dataclass
-class PatternInput:
+class PatternInput:  # pylint: disable=too-many-instance-attributes
     """
     Represents an input parameter for a pattern with validation capabilities.
 

@@ -107,6 +107,7 @@ class CreditsTab(BaseTabComponent):
             status_display.update(f"❌ Error: {e}")
 
     def _update_credit_display(self):
+        # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """Update the credit display with real data."""
         if not self.credit_data:
             return

@@ -81,7 +81,7 @@ class AskQuestion(Resource):
             processor = QuestionProcessor(config, logger, base_path)
 
             # Create mock args object for compatibility
-            class MockArgs:  # pylint: disable=missing-class-docstring,too-few-public-methods
+            class MockArgs:  # pylint: disable=missing-class-docstring,too-few-public-methods,too-many-instance-attributes
                 def __init__(self, data):
                     self.question = data.get('question')
                     self.file_input = data.get('file_input')

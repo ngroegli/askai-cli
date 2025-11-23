@@ -352,6 +352,7 @@ class ModelBrowserScreen(BaseScreen):
                 await self.display_model_details()
 
     async def display_model_details(self) -> None:
+        # pylint: disable=too-many-branches
         """Display detailed information about the selected model."""
         if not self.selected_model:
             return
